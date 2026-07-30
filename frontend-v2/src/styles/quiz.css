@@ -1,0 +1,344 @@
+/* ─── Question ────────────────────────────────────────────────────── */
+
+.question-card {
+    padding: var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--e-2);
+}
+
+.question-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-4);
+}
+
+/* The question is body copy, not a display headline: at page-title scale it
+   consumed six lines on a 390px screen and flattened the hierarchy. */
+.q-text {
+    margin: 0;
+    color: var(--c-ink);
+    font-family: var(--font-body);
+    font-size: var(--fs-400);
+    font-weight: var(--fw-semibold);
+    line-height: var(--lh-snug);
+    letter-spacing: 0;
+    text-wrap: pretty;
+}
+
+/* ─── Answers ─────────────────────────────────────────────────────── */
+
+.answers {
+    display: grid;
+    gap: var(--sp-3);
+    margin-top: var(--sp-5);
+}
+
+.answer {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    min-height: 3.25rem;
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
+    color: var(--c-ink);
+    cursor: pointer;
+    font-size: var(--fs-200);
+    line-height: var(--lh-snug);
+    text-align: left;
+}
+
+.answer:hover:not(:disabled) {
+    border-color: var(--c-primary);
+    background: var(--c-primary-tint);
+}
+
+.answer:hover:not(:disabled) .answer-mark {
+    background: var(--c-primary);
+    color: var(--c-primary-on);
+}
+
+.answer:disabled {
+    cursor: default;
+}
+
+/* Answered options stay legible: dimming the whole row hid the explanation
+   context that learners need after a wrong answer. */
+.answer:disabled:not(.is-correct):not(.is-wrong):not(.is-selected) {
+    border-color: var(--c-line);
+    color: var(--c-muted);
+}
+
+.answer-mark {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--r-pill);
+    background: var(--c-well);
+    color: var(--c-muted);
+    font-size: var(--fs-100);
+    font-weight: var(--fw-semibold);
+}
+
+.answer-state {
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.answer-state svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.answer.is-selected {
+    border-color: var(--c-primary);
+    background: var(--c-primary-tint);
+}
+
+.answer.is-selected .answer-mark {
+    background: var(--c-primary);
+    color: var(--c-primary-on);
+}
+
+.answer.is-correct {
+    border-color: var(--c-ok);
+    background: var(--c-ok-tint);
+}
+
+.answer.is-correct .answer-mark {
+    background: var(--c-ok);
+    color: var(--c-surface);
+}
+
+.answer.is-correct .answer-state {
+    color: var(--c-ok);
+}
+
+.answer.is-wrong {
+    border-color: var(--c-err);
+    background: var(--c-err-tint);
+}
+
+.answer.is-wrong .answer-mark {
+    background: var(--c-err);
+    color: var(--c-surface);
+}
+
+.answer.is-wrong .answer-state {
+    color: var(--c-err);
+}
+
+/* ─── Feedback ────────────────────────────────────────────────────── */
+
+.feedback {
+    display: grid;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+    padding: var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--e-2);
+}
+
+.feedback:focus {
+    outline: none;
+}
+
+.feedback.ok {
+    border-color: var(--c-ok-line);
+    background: var(--c-ok-tint);
+}
+
+.feedback.error {
+    border-color: var(--c-err-line);
+    background: var(--c-err-tint);
+}
+
+.verdict {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--fs-400);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0;
+}
+
+.verdict svg {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.feedback.ok .verdict {
+    color: var(--c-ok);
+}
+
+.feedback.error .verdict {
+    color: var(--c-err);
+}
+
+.feedback-text {
+    color: var(--c-ink-2);
+    font-size: var(--fs-200);
+    line-height: var(--lh-relaxed);
+}
+
+.confidence-actions {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+/* ─── Score ───────────────────────────────────────────────────────── */
+
+.score-panel {
+    display: grid;
+    justify-items: center;
+    gap: var(--sp-4);
+    padding: var(--sp-7) var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--e-2);
+    text-align: center;
+}
+
+/* Conic-gradient dial: one element, no SVG, degrades to a plain disc. */
+.score-dial {
+    display: grid;
+    place-items: center;
+    width: 9.5rem;
+    height: 9.5rem;
+    border-radius: var(--r-pill);
+    background:
+        conic-gradient(
+            var(--c-primary) calc(var(--dial) * 1%),
+            var(--c-surface-sunken) 0
+        );
+}
+
+.score-dial-inner {
+    display: grid;
+    place-items: center;
+    gap: 0;
+    width: 7.75rem;
+    height: 7.75rem;
+    border-radius: var(--r-pill);
+    background: var(--c-surface);
+}
+
+.score-value {
+    color: var(--c-ink);
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: var(--fw-display);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.score-unit {
+    color: var(--c-subtle);
+    font-size: var(--fs-100);
+}
+
+.score-headline {
+    margin: 0;
+    font-size: var(--fs-600);
+}
+
+/* ─── Answer review list ──────────────────────────────────────────── */
+
+.review-list {
+    display: grid;
+    gap: var(--sp-2);
+    margin: var(--sp-3) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.review-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-sm);
+    background: var(--c-surface);
+    font-size: var(--fs-200);
+}
+
+.review-item svg {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.15rem;
+}
+
+.review-item.ok svg {
+    color: var(--c-ok);
+}
+
+.review-item.err svg {
+    color: var(--c-err);
+}
+
+/* ─── Disclosure ──────────────────────────────────────────────────── */
+
+.disclosure {
+    padding: var(--sp-4) var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+}
+
+.disclosure > summary {
+    color: var(--c-primary);
+    cursor: pointer;
+    font-size: var(--fs-200);
+    font-weight: var(--fw-semibold);
+    list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+.disclosure > summary::before {
+    display: inline-block;
+    margin-right: var(--sp-2);
+    content: "▸";
+    transition: transform var(--t-fast) var(--ease);
+}
+
+.disclosure[open] > summary::before {
+    content: "▾";
+}
+
+/* Two answer columns once there is room for them. */
+@media (min-width: 45rem) {
+    .answers {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .answers.answers-single {
+        grid-template-columns: 1fr;
+    }
+
+    .confidence-actions {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

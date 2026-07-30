@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot-режим — Игрок</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #6366f1;
+            --bg-secondary: #4f46e5;
+            --text-primary: #ffffff;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+        .logo { font-size: 64px; margin-bottom: 16px; }
+        .title { font-size: 28px; font-weight: 700; margin-bottom: 24px; }
+        .input {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            background: var(--success);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .waiting-screen { display: none; }
+        .waiting-screen.active { display: block; }
+        .game-code { font-size: 64px; font-weight: 700; letter-spacing: 8px; margin: 24px 0; }
+        .question-screen { display: none; }
+        .question-screen.active { display: block; }
+        .question-text {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 32px 0;
+            line-height: 1.5;
+        }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .option {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 48px;
+            font-weight: 700;
+            transition: all 0.1s;
+        }
+        .option:active { transform: scale(0.95); }
+        .option.correct { background: var(--success); border-color: var(--success); }
+        .option.wrong { background: var(--error); border-color: var(--error); }
+        .option.selected { background: rgba(255,255,255,0.3); }
+        .timer {
+            font-size: 72px;
+            font-weight: 700;
+            margin: 24px 0;
+        }
+        .result-screen { display: none; }
+        .result-screen.active { display: block; }
+        .result-correct {
+            font-size: 48px;
+            margin: 32px 0;
+        }
+        .score-display {
+            font-size: 36px;
+            font-weight: 700;
+        }
+        .leaderboard-screen { display: none; }
+        .leaderboard-screen.active { display: block; }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        .leaderboard-item.you { background: rgba(255,255,255,0.2); }
+        .hidden { display: none !important; }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Join Screen -->
+        <div class="card" id="join-screen">
+            <div class="logo">🎮</div>
+            <h1 class="title">Kahoot-режим</h1>
+            <input type="text" class="input" id="game-code" placeholder="Код игры" maxlength="8" style="text-transform: uppercase;">
+            <input type="text" class="input" id="player-name" placeholder="Ваше имя">
+            <input type="text" class="input" id="team-name" placeholder="Команда (необязательно)">
+            <button class="btn btn-primary" onclick="joinGame()">Войти</button>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div class="waiting-screen" id="waiting-screen">
+            <div class="card">
+                <div class="logo">⏳</div>
+                <h2>Ожидание начала игры...</h2>
+                <p style="margin-top: 16px; color: rgba(255,255,255,0.7);">
+                    Хост скоро начнёт игру
+                </p>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div class="question-screen" id="question-screen">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                <div style="font-size: 16px; opacity: 0.7;">
+                    Вопрос <span id="question-number">1</span> из <span id="total-questions">10</span>
+                </div>
+                <div class="timer" id="timer" style="font-size: 32px; margin: 0;">30</div>
+            </div>
+            <div class="question-text" id="question-text">Вопрос</div>
+            <div class="options" id="options"></div>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="result-screen" id="result-screen">
+            <div class="card">
+                <div class="result-correct" id="result-correct">✅</div>
+                <div style="font-size: 18px; margin-bottom: 16px;" id="result-message">Правильно!</div>
+                <div class="score-display">+<span id="points">0</span> очков</div>
+                <div style="margin-top: 16px;" id="score-total">Ваш счёт: 0</div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div class="leaderboard-screen" id="leaderboard-screen">
+            <div class="card">
+                <h2 style="margin-bottom: 24px;">🏆 Рейтинг</h2>
+                <div id="leaderboard-list"></div>
+            </div>
+        </div>
+
+        <!-- Final Results -->
+        <div class="card hidden" id="final-results">
+            <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+            <h2>Игра окончена!</h2>
+            <div style="margin: 32px 0;" id="final-result"></div>
+            <div class="score-display" id="final-score">0 очков</div>
+            <button class="btn btn-secondary" onclick="location.reload()" style="margin-top: 24px;">Новая игра</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let gameId = null;
+        let playerId = null;
+        let reconnectToken = null;
+        let playerName = null;
+        let score = 0;
+        let reconnectAttempts = 0;
+        let isReconnecting = false;
+        let timerInterval = null;
+
+        let teamName = '';
+
+        function joinGame() {
+            gameId = document.getElementById('game-code').value.trim().toUpperCase();
+            playerName = document.getElementById('player-name').value.trim();
+            teamName = (document.getElementById('team-name')?.value || '').trim();
+
+            if (!gameId || !playerName) {
+                showBanner('Введите код игры и ваше имя!', 'error');
+                return;
+            }
+            if (playerName.length > 20) {
+                showBanner('Имя слишком длинное (макс. 20 символов)', 'error');
+                return;
+            }
+
+            connect(false);
+
+            // Сохраняем данные для reconnect
+            localStorage.setItem('glm_game_id', gameId);
+            localStorage.setItem('glm_player_name', playerName);
+            localStorage.setItem('glm_team_name', teamName);
+            // Очищаем старый reconnect_token при новом входе
+            localStorage.removeItem('glm_reconnect_token');
+        }
+
+        function showBanner(message, type = 'info') {
+            const banner = document.createElement('div');
+            const bg = type === 'error' ? 'rgba(244,67,54,0.95)' : 'rgba(33,150,243,0.95)';
+            banner.style.cssText = `position:fixed;top:24px;left:50%;transform:translateX(-50%);background:${bg};color:white;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+            banner.textContent = message;
+            document.body.appendChild(banner);
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                banner.style.transition = 'opacity 0.3s';
+                setTimeout(() => banner.remove(), 300);
+            }, 4000);
+        }
+
+        function connect(isReconnect = false) {
+            if (ws) {
+                try { ws.onclose = null; ws.close(); } catch (e) {}
+            }
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+            ws.onopen = () => {
+                reconnectAttempts = 0;
+                isReconnecting = false;
+                hideReconnecting();
+
+                // При reconnect отправляем player_id и reconnect_token для восстановления
+                const savedPlayerId = localStorage.getItem('glm_player_id');
+                const savedReconnectToken = localStorage.getItem('glm_reconnect_token');
+                ws.send(JSON.stringify({
+                    type: 'join_game',
+                    game_id: gameId,
+                    player_name: playerName,
+                    team_name: teamName || localStorage.getItem('glm_team_name') || '',
+                    player_id: isReconnect && savedPlayerId ? savedPlayerId : null,
+                    reconnect_token: isReconnect && savedReconnectToken ? savedReconnectToken : null
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {}
+            };
+
+            ws.onerror = (e) => {
+                console.error('WebSocket error:', e);
+                if (!isReconnecting) handleDisconnect();
+            };
+
+            ws.onclose = () => {
+                if (!isReconnecting) handleDisconnect();
+            };
+        }
+
+        function handleDisconnect() {
+            if (isReconnecting) return;
+            if (!document.getElementById('final-results').classList.contains('hidden')) {
+                return;
+            }
+            if (reconnectAttempts >= 5) {
+                localStorage.removeItem('glm_player_id');
+                localStorage.removeItem('glm_reconnect_token');
+                showBanner('Потеряно соединение с сервером. Перезагрузите страницу.', 'error');
+                return;
+            }
+            isReconnecting = true;
+            reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            showReconnecting();
+            setTimeout(() => {
+                isReconnecting = false;
+                connect(true);
+            }, delay);
+        }
+
+        function showReconnecting() {
+            let indicator = document.getElementById('reconnect-indicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'reconnect-indicator';
+                indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(255,152,0,0.9);padding:8px 16px;border-radius:8px;font-size:14px;z-index:1000;';
+                document.body.appendChild(indicator);
+            }
+            indicator.textContent = `🔄 Переподключение... (${reconnectAttempts}/5)`;
+        }
+
+        function hideReconnecting() {
+            const indicator = document.getElementById('reconnect-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        // Auto-reconnect on page reload if game data is saved
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedGameId = localStorage.getItem('glm_game_id');
+            const savedName = localStorage.getItem('glm_player_name');
+            if (savedGameId && savedName) {
+                gameId = savedGameId;
+                playerName = savedName;
+                document.getElementById('game-code').value = gameId;
+                document.getElementById('player-name').value = playerName;
+                connect(true);
+            }
+        });
+
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'joined':
+                    playerId = data.player_id;
+                    reconnectToken = data.reconnect_token;
+                    localStorage.setItem('glm_player_id', playerId);
+                    localStorage.setItem('glm_reconnect_token', reconnectToken);
+                    document.getElementById('join-screen').classList.add('hidden');
+                    document.getElementById('waiting-screen').classList.add('active');
+                    break;
+
+                case 'reconnected':
+                    playerId = data.player_id;
+                    score = data.score;
+                    localStorage.setItem('glm_player_id', playerId);
+
+                    // Убираем индикатор reconnect
+                    const indicator = document.getElementById('reconnect-indicator');
+                    if (indicator) indicator.remove();
+
+                    // Восстанавливаем нужный экран
+                    restoreScreenAfterReconnect(data);
+                    break;
+
+                case 'game_starting':
+                    document.getElementById('waiting-screen').classList.remove('active');
+                    document.getElementById('total-questions').textContent = data.question_count;
+                    break;
+
+                case 'new_question':
+                    showQuestion(data);
+                    break;
+
+                case 'answer_result':
+                    showAnswerResult(data);
+                    break;
+
+                case 'answer_reveal':
+                    showLeaderboard(data);
+                    break;
+
+                case 'game_ended':
+                    showFinalResults(data);
+                    break;
+
+                case 'error':
+                    showBanner(data.message, 'error');
+                    if (data.message.includes('not found') || data.message.includes('expired')) {
+                        localStorage.removeItem('glm_game_id');
+                        localStorage.removeItem('glm_player_id');
+                        localStorage.removeItem('glm_reconnect_token');
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                    break;
+            }
+        }
+
+        function restoreScreenAfterReconnect(data) {
+            document.getElementById('join-screen').classList.add('hidden');
+
+            // Скрываем все игровые экраны
+            document.getElementById('waiting-screen').classList.remove('active');
+            document.getElementById('question-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('leaderboard-screen').classList.remove('active');
+
+            if (data.state === 'waiting') {
+                document.getElementById('waiting-screen').classList.add('active');
+            } else if (data.state === 'active') {
+                // Ждем new_question от сервера
+            } else if (data.state === 'finished') {
+                // Запрашиваем финальные результаты
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'get_results', game_id: gameId }));
+                }
+            }
+        }
+
+        function showQuestion(data) {
+            hasAnswered = false;
+            document.getElementById('question-screen').classList.add('active');
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('leaderboard-screen').classList.remove('active');
+
+            document.getElementById('question-number').textContent = data.question_number;
+            document.getElementById('question-text').textContent = data.question.text;
+
+            const colors = ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6'];
+            const textColors = ['#fff', '#fff', '#000', '#fff'];
+            document.getElementById('options').innerHTML = data.question.options.map((opt, i) => `
+                <div class="option" style="background: ${colors[i]}; color: ${textColors[i]};" onclick="submitAnswer(${i})">
+                    ${opt.substring(0, 50)}
+                </div>
+            `).join('');
+
+            // Timer
+            if (timerInterval) clearInterval(timerInterval);
+            let timeLeft = data.time_limit;
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) clearInterval(timerInterval);
+            }, 1000);
+        }
+
+        let hasAnswered = false;
+
+        function submitAnswer(answer) {
+            if (hasAnswered) return;
+            hasAnswered = true;
+
+            const options = document.querySelectorAll('.option');
+            options.forEach((opt, index) => {
+                opt.style.pointerEvents = 'none';
+                opt.style.opacity = index === answer ? '1' : '0.5';
+                if (index === answer) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showBanner('Нет соединения с сервером', 'error');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'submit_answer',
+                game_id: gameId,
+                player_id: playerId,
+                answer: answer
+            }));
+        }
+
+        function showAnswerResult(data) {
+            document.getElementById('question-screen').classList.remove('active');
+            document.getElementById('result-screen').classList.add('active');
+
+            const correctEl = document.getElementById('result-correct');
+            const messageEl = document.getElementById('result-message');
+
+            if (data.is_correct) {
+                correctEl.textContent = '✅';
+                messageEl.textContent = 'Правильно!';
+            } else {
+                correctEl.textContent = '❌';
+                messageEl.textContent = 'Неправильно';
+            }
+
+            score += data.points;
+            document.getElementById('points').textContent = data.points;
+            document.getElementById('score-total').textContent = `Ваш счёт: ${score}`;
+        }
+
+        function showLeaderboard(data) {
+            document.getElementById('result-screen').classList.remove('active');
+            document.getElementById('leaderboard-screen').classList.add('active');
+
+            const teams = data.team_leaderboard || [];
+            const teamHtml = teams.length ? `
+                <div style="margin-bottom:16px;text-align:left;">
+                    <div style="opacity:0.8;margin-bottom:8px;">Команды</div>
+                    ${teams.map((t, i) => `<div style="display:flex;justify-content:space-between;margin:6px 0;"><span>${t.name}</span><strong>${t.score}</strong></div>`).join('')}
+                </div>
+            ` : '';
+
+            document.getElementById('leaderboard-list').innerHTML = teamHtml + data.leaderboard.map((player, i) => `
+                <div class="leaderboard-item ${player.name === playerName ? 'you' : ''}">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 18px;">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎖'}</span>
+                        <span>${player.name}${player.team_name ? ' · ' + player.team_name : ''}</span>
+                        ${player.name === playerName ? '(Вы)' : ''}
+                    </div>
+                    <span style="font-weight: 700;">${player.score}</span>
+                </div>
+            `).join('');
+        }
+
+        function showFinalResults(data) {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('question-screen').classList.remove('active');
+            document.getElementById('leaderboard-screen').classList.remove('active');
+            document.getElementById('final-results').classList.remove('hidden');
+
+            // Очищаем localStorage после окончания игры
+            localStorage.removeItem('glm_player_id');
+            localStorage.removeItem('glm_reconnect_token');
+            localStorage.removeItem('glm_game_id');
+            localStorage.removeItem('glm_player_name');
+
+            const me = data.leaderboard.find(p => p.name === playerName);
+            if (me && typeof me.score === 'number') {
+                score = me.score;
+            }
+            const position = data.leaderboard.findIndex(p => p.name === playerName) + 1;
+            const medals = ['🥇', '🥈', '🥉'];
+
+            document.getElementById('final-result').innerHTML = `
+                ${position <= 3 ? `<div style="font-size: 64px;">${medals[position - 1]}</div>` : ''}
+                <div style="font-size: 24px;">Вы заняли ${position} место</div>
+                <div style="color: rgba(255,255,255,0.7);">из ${data.leaderboard.length} игроков</div>
+            `;
+
+            document.getElementById('final-score').textContent = `${score} очков`;
+        }
+    </script>
+</body>
+</html>

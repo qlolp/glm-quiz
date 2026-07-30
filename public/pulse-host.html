@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пульс зала — хост</title>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0c0c0e; color: #fff; margin: 0; min-height: 100vh; }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 28px; margin-bottom: 8px; }
+        .sub { color: #9fa0a0; margin-bottom: 24px; }
+        .code { font-size: 48px; letter-spacing: 6px; font-weight: 800; color: #6366f1; margin: 16px 0; }
+        .card { background: #141618; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 10px; background: #6366f1; color: #fff; font-weight: 600; cursor: pointer; margin-right: 8px; margin-top: 8px; }
+        .btn.secondary { background: #2a2a2e; }
+        .bar { height: 28px; background: #1c1c1e; border-radius: 8px; overflow: hidden; margin: 8px 0 16px; }
+        .bar > span { display: block; height: 100%; background: #6366f1; transition: width 0.4s; }
+        .meta { color: #9fa0a0; font-size: 14px; }
+        a { color: #a5b4fc; }
+        select, input { width: 100%; padding: 10px; border-radius: 8px; background: #1c1c1e; color: #fff; border: 1px solid rgba(255,255,255,0.15); margin-top: 8px; box-sizing:border-box; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <h1>📡 Пульс зала</h1>
+        <p class="sub">Один вопрос — анонимные ответы — распределение %. Без гонки очков.
+            Игроки: <a href="/pulse-player.html">pulse-player.html</a></p>
+
+        <div class="card">
+            <div class="meta">Код сессии</div>
+            <div class="code" id="pulse-code">······</div>
+            <div class="meta">Игроков: <span id="player-count">0</span> · Ответов: <span id="answer-count">0</span></div>
+        </div>
+
+        <div class="card">
+            <label class="meta">Тип вопроса</label>
+            <select id="question-kind">
+                <option value="mc">Выбор ответа (MC)</option>
+                <option value="scale">Шкала / Likert</option>
+            </select>
+            <div id="mc-fields">
+                <label class="meta">Вопрос (или случайный)</label>
+                <select id="question-select"><option value="">Случайный вопрос</option></select>
+            </div>
+            <div id="scale-fields" style="display:none;">
+                <label class="meta">Утверждение или вопрос</label>
+                <input id="scale-text" maxlength="200" placeholder="Насколько вы готовы внедрить практику?">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <input id="scale-min" type="number" min="0" max="9" value="1" aria-label="Минимум шкалы">
+                    <input id="scale-max" type="number" min="1" max="10" value="5" aria-label="Максимум шкалы">
+                    <input id="label-min" maxlength="40" placeholder="Совсем не готов">
+                    <input id="label-max" maxlength="40" placeholder="Полностью готов">
+                </div>
+            </div>
+            <div>
+                <button class="btn" id="ask-btn">Задать вопрос</button>
+                <button class="btn secondary" id="results-btn">Показать результаты</button>
+            </div>
+            <div id="question-preview" style="margin-top:16px;font-size:18px;line-height:1.4;"></div>
+        </div>
+
+        <div class="card" id="results-card" style="display:none;">
+            <h2 style="margin-bottom:12px;">Распределение</h2>
+            <div id="results-bars"></div>
+        </div>
+
+        <p><a href="/">← Викторина</a> · <a href="/realtime-host.html">Kahoot</a></p>
+    </div>
+    <script>
+        let ws = null;
+        let pulseId = sessionStorage.getItem('pulse_host_id') || null;
+        let hostToken = sessionStorage.getItem('pulse_host_token') || null;
+        let currentQuestion = null;
+
+        function setCode(id) {
+            pulseId = id;
+            document.getElementById('pulse-code').textContent = id || '······';
+        }
+
+        function forgetSession() {
+            pulseId = null;
+            hostToken = null;
+            sessionStorage.removeItem('pulse_host_id');
+            sessionStorage.removeItem('pulse_host_token');
+        }
+
+        function renderDistribution(distribution, mean = null) {
+            const card = document.getElementById('results-card');
+            const bars = document.getElementById('results-bars');
+            card.style.display = 'block';
+            if (currentQuestion?.kind === 'scale') {
+                bars.innerHTML = `<div style="font-size:28px;font-weight:700;margin-bottom:16px;">Среднее: ${mean ?? '—'}</div>` +
+                    distribution.map(d => `<div class="meta">${d.index} — ${d.percent}% (${d.count})</div>
+                        <div class="bar"><span style="width:${d.percent}%"></span></div>`).join('');
+                return;
+            }
+            const letters = ['А', 'Б', 'В', 'Г'];
+            bars.innerHTML = distribution.map((d, i) => {
+                const label = currentQuestion?.options?.[i] || letters[i];
+                return `<div class="meta">${letters[i]}. ${label} — ${d.percent}% (${d.count})</div>
+                    <div class="bar"><span style="width:${d.percent}%"></span></div>`;
+            }).join('');
+        }
+
+        async function loadQuestions() {
+            try {
+                const res = await fetch('/api/questions');
+                const data = await res.json();
+                const sel = document.getElementById('question-select');
+                (data.questions || []).forEach(q => {
+                    const opt = document.createElement('option');
+                    opt.value = q.id;
+                    opt.textContent = `#${q.id} ${(q.question || '').slice(0, 80)}`;
+                    sel.appendChild(opt);
+                });
+            } catch (e) {}
+        }
+
+        function connect() {
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${location.host}`);
+            ws.onopen = () => {
+                // Reattach to the existing room instead of orphaning it with a new code
+                if (pulseId && hostToken) {
+                    ws.send(JSON.stringify({ type: 'pulse_reconnect_host', pulse_id: pulseId, host_token: hostToken }));
+                } else {
+                    ws.send(JSON.stringify({ type: 'pulse_create' }));
+                }
+            };
+            ws.onmessage = (ev) => {
+                const data = JSON.parse(ev.data);
+                handle(data);
+            };
+            ws.onclose = () => setTimeout(connect, 2000);
+        }
+
+        function handle(data) {
+            if (data.type === 'pulse_created') {
+                hostToken = data.host_token;
+                sessionStorage.setItem('pulse_host_id', data.pulse_id);
+                sessionStorage.setItem('pulse_host_token', data.host_token);
+                setCode(data.pulse_id);
+            }
+            if (data.type === 'pulse_host_reconnected') {
+                setCode(data.pulse_id);
+                document.getElementById('player-count').textContent = data.player_count ?? 0;
+                document.getElementById('answer-count').textContent = data.answered ?? 0;
+                if (data.question) {
+                    currentQuestion = data.question;
+                    document.getElementById('question-preview').textContent = data.question.text;
+                }
+                if (data.state === 'results' && data.distribution) {
+                    renderDistribution(data.distribution, data.mean);
+                }
+            }
+            if (data.type === 'pulse_player_joined' || data.type === 'pulse_player_left') {
+                document.getElementById('player-count').textContent = data.player_count;
+                if (typeof data.answered === 'number') {
+                    document.getElementById('answer-count').textContent = data.answered;
+                }
+            }
+            if (data.type === 'pulse_question') {
+                currentQuestion = data.question;
+                document.getElementById('question-preview').textContent = data.question.text;
+                document.getElementById('answer-count').textContent = '0';
+                document.getElementById('results-card').style.display = 'none';
+            }
+            if (data.type === 'pulse_answer_count') {
+                document.getElementById('answer-count').textContent = data.answered;
+                document.getElementById('player-count').textContent = data.player_count;
+            }
+            if (data.type === 'pulse_results') {
+                renderDistribution(data.distribution, data.mean);
+            }
+            if (data.type === 'error') {
+                // Room is gone (or token no longer valid): start a fresh one
+                if (data.code === 'pulse_not_found' || data.code === 'pulse_forbidden') {
+                    forgetSession();
+                    setCode(null);
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'pulse_create' }));
+                    }
+                    return;
+                }
+                alert(data.message);
+            }
+        }
+
+        document.getElementById('ask-btn').onclick = () => {
+            if (!ws || !pulseId) return;
+            const kind = document.getElementById('question-kind').value;
+            const qid = document.getElementById('question-select').value;
+            const payload = {
+                type: 'pulse_ask',
+                pulse_id: pulseId,
+                kind
+            };
+            if (kind === 'scale') {
+                payload.text = document.getElementById('scale-text').value.trim();
+                payload.scale_min = Number(document.getElementById('scale-min').value);
+                payload.scale_max = Number(document.getElementById('scale-max').value);
+                payload.label_min = document.getElementById('label-min').value.trim();
+                payload.label_max = document.getElementById('label-max').value.trim();
+                if (!payload.text) return alert('Введите вопрос для шкалы');
+            } else {
+                payload.question_id = qid ? Number(qid) : null;
+            }
+            ws.send(JSON.stringify(payload));
+        };
+        document.getElementById('results-btn').onclick = () => {
+            if (!ws || !pulseId) return;
+            ws.send(JSON.stringify({ type: 'pulse_results', pulse_id: pulseId }));
+        };
+
+        document.getElementById('question-kind').onchange = (event) => {
+            const scale = event.target.value === 'scale';
+            document.getElementById('mc-fields').style.display = scale ? 'none' : 'block';
+            document.getElementById('scale-fields').style.display = scale ? 'block' : 'none';
+        };
+        setCode(pulseId);
+        loadQuestions();
+        connect();
+    </script>
+</body>
+</html>

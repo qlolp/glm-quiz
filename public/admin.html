@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — GLM Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --text-tertiary: #6b6b6b;
+            --border: rgba(255, 255, 255, 0.1);
+            --border-secondary: rgba(255, 255, 255, 0.05);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            display: none;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .version-badge {
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-select {
+            min-width: 150px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .tab-badge {
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 6px;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Questions Table */
+        .questions-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .questions-table thead {
+            background: var(--bg-tertiary);
+        }
+
+        .questions-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .questions-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+
+        .questions-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .questions-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .question-preview {
+            max-width: 400px;
+        }
+
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .question-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .options-preview {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--accent);
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Question Edit Form */
+        .edit-options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .edit-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .correct-radio {
+            width: 20px;
+            height: 20px;
+        }
+
+        .option-label {
+            min-width: 32px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .option-input {
+            flex: 1;
+        }
+
+        /* Question Stats */
+        .question-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .stat-bar {
+            width: 60px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: var(--success);
+        }
+
+        .stat-bar-fill.low {
+            background: var(--error);
+        }
+
+        .stat-bar-fill.medium {
+            background: var(--warning);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 10000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        /* Changelog */
+        .changelog-entry {
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .changelog-version {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .changelog-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .changelog-changes {
+            font-size: 14px;
+        }
+
+        .changelog-changes ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .changelog-changes li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .changelog-changes li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .header-right {
+                width: 100%;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .questions-table {
+                font-size: 12px;
+            }
+
+            .question-preview {
+                max-width: 200px;
+            }
+
+            .btn-group {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* Difficulty indicators */
+        .difficulty-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .difficulty-easy {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+        }
+
+        .difficulty-medium {
+            background: rgba(255, 152, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .difficulty-hard {
+            background: rgba(244, 67, 54, 0.2);
+            color: var(--error);
+        }
+
+        /* Category colors */
+        .category-ethics { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .category-forms_of_service { background: rgba(168, 85, 247, 0.2); color: #a78bfa; }
+        .category-safety { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .category-spb_specific { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+        .category-documentation { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .category-rights { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .category-service_types { background: rgba(244, 114, 182, 0.2); color: #f472b6; }
+        .category-emergency { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+        .category-care_standards { background: rgba(20, 184, 166, 0.2); color: #2dd4bf; }
+        .category-mobility { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+        .category-accessibility { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="login-screen">
+        <div class="login-card">
+            <h1 class="login-title">🔐 Админ-панель</h1>
+            <p class="login-subtitle">GLM Quiz — Управление контентом</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">Пароль администратора</label>
+                    <input type="password" id="password" class="form-input" placeholder="Введите пароль" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div class="container admin-panel" id="admin-panel">
+        <div class="header">
+            <div class="header-left">
+                <h1>📝 Управление вопросами</h1>
+                <span class="version-badge">v1.0.0</span>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" onclick="exportQuestions()">
+                    📤 Экспорт
+                </button>
+                <button class="btn btn-secondary" onclick="showImportModal()">
+                    📥 Импорт
+                </button>
+                <button class="btn btn-danger" onclick="logout()">
+                    🚪 Выход
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">-</div>
+                <div class="stat-label">Всего вопросов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-categories">-</div>
+                <div class="stat-label">Категорий</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-results">-</div>
+                <div class="stat-label">Результатов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-avg">-%</div>
+                <div class="stat-label">Средний балл</div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="search-input" class="form-input" placeholder="🔍 Поиск по вопросам...">
+            </div>
+            <select id="category-filter" class="form-select filter-select">
+                <option value="">Все категории</option>
+            </select>
+            <select id="difficulty-filter" class="form-select filter-select">
+                <option value="">Вся сложность</option>
+                <option value="easy">Легкие (>70% правильных)</option>
+                <option value="medium">Средние (40-70%)</option>
+                <option value="hard">Сложные (<40%)</option>
+            </select>
+            <button class="btn btn-primary" onclick="showAddQuestionModal()">
+                ➕ Добавить вопрос
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="showTab(event, 'questions')">
+                Вопросы
+                <span class="tab-badge" id="questions-count">0</span>
+            </div>
+            <div class="tab" onclick="showTab(event, 'analytics')">
+                Аналитика
+            </div>
+            <div class="tab" onclick="showTab(event, 'weak')">
+                Плохие вопросы
+            </div>
+            <div class="tab" onclick="showTab(event, 'changelog')">
+                История изменений
+            </div>
+            <div class="tab" onclick="showTab(event, 'settings')">
+                ⚙️ Настройки
+            </div>
+            <div class="tab" onclick="showTab(event, 'user-questions')">
+                Предложенные вопросы
+                <span class="tab-badge" id="user-questions-count">0</span>
+            </div>
+            <div class="tab" onclick="showTab(event, 'reports')">
+                Жалобы
+                <span class="tab-badge" id="reports-count">0</span>
+            </div>
+        </div>
+
+        <!-- Questions Tab -->
+        <div class="tab-content active" id="tab-questions">
+            <table class="questions-table">
+                <thead>
+                    <tr>
+                        <th width="50">ID</th>
+                        <th>Вопрос</th>
+                        <th width="120">Категория</th>
+                        <th width="100">Сложность</th>
+                        <th width="100">Статистика</th>
+                        <th width="150">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="questions-table-body">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-icon">⏳</div>
+                            <div>Загрузка вопросов...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div class="tab-content" id="tab-analytics">
+            <div id="analytics-content">
+                <div class="empty-state">
+                    <div class="empty-icon">📊</div>
+                    <div>Аналитика будет доступна после загрузки данных</div>
+                </div>
+            </div>
+            <p style="margin-top:16px;"><a href="/stage-heatmap.html" style="color:var(--accent);">Открыть stage-heatmap →</a></p>
+        </div>
+
+        <!-- Weak questions Tab -->
+        <div class="tab-content" id="tab-weak">
+            <div id="weak-content">
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div>Загрузка…</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changelog Tab -->
+        <div class="tab-content" id="tab-changelog">
+            <div id="changelog-content"></div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-content" id="tab-settings">
+            <div style="max-width: 600px;">
+                <h2 style="margin-bottom: 20px;">Настройки системы</h2>
+
+                <div class="form-group">
+                    <label class="form-label">Версия банка вопросов</label>
+                    <input type="text" class="form-input" id="settings-version" value="1.0.0">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Описание версии</label>
+                    <textarea class="form-textarea" id="settings-version-notes" placeholder="Опишите изменения в этой версии..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveVersion()">
+                    💾 Сохранить версию в CHANGELOG
+                </button>
+
+                <div style="margin-top: 32px;">
+                    <h3 style="margin-bottom: 16px;">Импорт/Экспорт</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary" onclick="exportQuestions()">
+                            📤 Экспорт всех вопросов (JSON)
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportCSV()">
+                            📊 Экспорт результатов (CSV)
+                        </button>
+                        <button class="btn btn-secondary" onclick="showImportModal()">
+                            📥 Импорт вопросов
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User-submitted Questions Tab -->
+        <div class="tab-content" id="tab-user-questions">
+            <table class="questions-table">
+                <thead>
+                    <tr>
+                        <th width="50">ID</th>
+                        <th>Вопрос</th>
+                        <th width="120">Категория</th>
+                        <th width="150">Дата</th>
+                        <th width="200">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="user-questions-table-body">
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-icon">⏳</div>
+                            <div>Загрузка предложенных вопросов...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Reports Tab -->
+        <div class="tab-content" id="tab-reports">
+            <table class="questions-table">
+                <thead>
+                    <tr>
+                        <th width="50">ID</th>
+                        <th>Вопрос</th>
+                        <th width="140">Причина</th>
+                        <th>Комментарий</th>
+                        <th width="150">Дата</th>
+                        <th width="200">Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-table-body">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-icon">⏳</div>
+                            <div>Загрузка жалоб...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Edit/Add Question Modal -->
+    <div class="modal-overlay" id="question-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Редактировать вопрос</h2>
+                <button class="modal-close" onclick="closeQuestionModal()">&times;</button>
+            </div>
+            <form id="question-form">
+                <input type="hidden" id="edit-question-id">
+                <input type="hidden" id="edit-question-source" value="default">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Текст вопроса</label>
+                        <textarea class="form-textarea" id="edit-question-text" required placeholder="Введите текст вопроса..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Категория</label>
+                        <select class="form-select" id="edit-category" required>
+                            <option value="ethics">Этика и коммуникация</option>
+                            <option value="forms_of_service">Формы обслуживания</option>
+                            <option value="safety">Безопасность</option>
+                            <option value="spb_specific">СПб специфика</option>
+                            <option value="documentation">Документация</option>
+                            <option value="rights">Права получателей</option>
+                            <option value="service_types">Виды услуг</option>
+                            <option value="emergency">Чрезвычайные ситуации</option>
+                            <option value="care_standards">Стандарты ухода</option>
+                            <option value="mobility">Мобильность</option>
+                            <option value="accessibility">Доступная среда</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Варианты ответов (выберите правильный)</label>
+                        <div class="edit-options">
+                            <div class="edit-option">
+                                <input type="radio" name="correct-answer" value="0" class="correct-radio" checked>
+                                <span class="option-label">А</span>
+                                <input type="text" class="form-input option-input" id="edit-option-a" required placeholder="Вариант А">
+                            </div>
+                            <div class="edit-option">
+                                <input type="radio" name="correct-answer" value="1" class="correct-radio">
+                                <span class="option-label">Б</span>
+                                <input type="text" class="form-input option-input" id="edit-option-b" required placeholder="Вариант Б">
+                            </div>
+                            <div class="edit-option">
+                                <input type="radio" name="correct-answer" value="2" class="correct-radio">
+                                <span class="option-label">В</span>
+                                <input type="text" class="form-input option-input" id="edit-option-c" required placeholder="Вариант В">
+                            </div>
+                            <div class="edit-option">
+                                <input type="radio" name="correct-answer" value="3" class="correct-radio">
+                                <span class="option-label">Г</span>
+                                <input type="text" class="form-input option-input" id="edit-option-d" required placeholder="Вариант Г">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Объяснение (показывается в режиме тренировки)</label>
+                        <textarea class="form-textarea" id="edit-explanation" placeholder="Объяснение правильного ответа (3-5 предложений)..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Источник (нормативный акт)</label>
+                        <input type="text" class="form-input" id="edit-reference" placeholder="Например: Федеральный закон №442-ФЗ, ст. 5">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeQuestionModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="import-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Импорт вопросов</h2>
+                <button class="modal-close" onclick="closeImportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Выберите файл JSON</label>
+                    <input type="file" id="import-file" accept=".json" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Или вставьте JSON код</label>
+                    <textarea class="form-textarea" id="import-json" placeholder='[{"id": 51, "question": "...", "options": [...], "correct": 0}]'></textarea>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary);">
+                    ⚠️ Импорт добавит вопросы к существующим. Дубликаты по ID будут перезаписаны.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="executeImport()">Импортировать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuration
+        const API_BASE = '/api';
+        const CATEGORY_NAMES = {
+            'ethics': 'Этика и коммуникация',
+            'forms_of_service': 'Формы обслуживания',
+            'safety': 'Безопасность',
+            'spb_specific': 'СПб специфика',
+            'documentation': 'Документация',
+            'rights': 'Права получателей',
+            'service_types': 'Виды услуг',
+            'emergency': 'Чрезвычайные ситуации',
+            'care_standards': 'Стандарты ухода',
+            'mobility': 'Мобильность',
+            'accessibility': 'Доступная среда'
+        };
+
+        // State
+        let questions = [];
+        let questionStats = {};
+        let filteredQuestions = [];
+        let userQuestions = [];
+        let reports = [];
+
+        // Auth
+        if (localStorage.getItem('adminAuth') === 'true') {
+            showAdminPanel();
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            try {
+                const response = await fetch(`${API_BASE}/auth/admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await response.json();
+                if (data.valid) {
+                    localStorage.setItem('adminAuth', 'true');
+                    if (data.token) localStorage.setItem('adminToken', data.token);
+                    showAdminPanel();
+                } else {
+                    showToast('Неверный пароль', 'error');
+                }
+            } catch (error) {
+                showToast('Ошибка проверки пароля', 'error');
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('adminAuth');
+            localStorage.removeItem('adminToken');
+            location.reload();
+        }
+
+        function adminFetch(url, options = {}) {
+            const token = localStorage.getItem('adminToken');
+            const headers = Object.assign({}, options.headers || {});
+            if (token) headers.Authorization = 'Bearer ' + token;
+            return fetch(url, Object.assign({}, options, { headers }));
+        }
+
+        function showAdminPanel() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').classList.add('active');
+            loadData();
+        }
+
+        // Load Data
+        async function loadData() {
+            try {
+                const [questionsRes, statsRes, dashboardRes, userQuestionsRes, reportsRes] = await Promise.all([
+                    adminFetch(`${API_BASE}/default-questions`),
+                    adminFetch(`${API_BASE}/analytics`),
+                    adminFetch(`${API_BASE}/stats/dashboard`),
+                    adminFetch(`${API_BASE}/questions/user`),
+                    adminFetch(`${API_BASE}/questions/reports`)
+                ]);
+
+                const questionsData = await questionsRes.json();
+                questions = questionsData.questions || [];
+
+                const statsData = await statsRes.json();
+                const dashboardData = dashboardRes.ok ? await dashboardRes.json() : {};
+
+                // Build question stats map
+                if (statsData.question_stats) {
+                    statsData.question_stats.forEach(stat => {
+                        questionStats[stat.id] = stat;
+                    });
+                }
+
+                if (userQuestionsRes.ok) {
+                    const userQuestionsData = await userQuestionsRes.json();
+                    userQuestions = userQuestionsData.questions || [];
+                }
+
+                if (reportsRes.ok) {
+                    const reportsData = await reportsRes.json();
+                    reports = reportsData.reports || [];
+                }
+
+                updateStats(statsData, dashboardData);
+                populateCategoryFilter();
+                applyFilters();
+                renderUserQuestions();
+                renderReports();
+                loadChangelog();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Ошибка загрузки данных', 'error');
+                renderEmptyState('Ошибка загрузки данных');
+            }
+        }
+
+        function updateStats(stats, dashboard) {
+            document.getElementById('stat-total').textContent = questions.length;
+
+            const categories = new Set(questions.map(q => q.category));
+            document.getElementById('stat-categories').textContent = categories.size;
+
+            if (dashboard && dashboard.total_quizzes !== undefined) {
+                document.getElementById('stat-results').textContent = dashboard.total_quizzes;
+            } else if (stats.total_users !== undefined) {
+                document.getElementById('stat-results').textContent = stats.total_users;
+            }
+
+            if (dashboard && dashboard.average_score !== undefined) {
+                document.getElementById('stat-avg').textContent = Math.round(dashboard.average_score) + '%';
+            } else if (stats.average_score !== undefined) {
+                document.getElementById('stat-avg').textContent = Math.round(stats.average_score) + '%';
+            }
+        }
+
+        function populateCategoryFilter() {
+            const select = document.getElementById('category-filter');
+            const categories = [...new Set(questions.map(q => q.category))];
+
+            select.innerHTML = '<option value="">Все категории</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = CATEGORY_NAMES[cat] || cat;
+                select.appendChild(option);
+            });
+        }
+
+        // Filters
+        document.getElementById('search-input').addEventListener('input', applyFilters);
+        document.getElementById('category-filter').addEventListener('change', applyFilters);
+        document.getElementById('difficulty-filter').addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const categoryFilter = document.getElementById('category-filter').value;
+            const difficultyFilter = document.getElementById('difficulty-filter').value;
+
+            filteredQuestions = questions.filter(q => {
+                // Search filter
+                if (searchTerm && !q.question.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                // Category filter
+                if (categoryFilter && q.category !== categoryFilter) {
+                    return false;
+                }
+
+                // Difficulty filter
+                if (difficultyFilter) {
+                    const stat = questionStats[q.id];
+                    const accuracy = stat ? stat.accuracy_percent : 50;
+
+                    if (difficultyFilter === 'easy' && accuracy < 70) return false;
+                    if (difficultyFilter === 'medium' && (accuracy < 40 || accuracy > 70)) return false;
+                    if (difficultyFilter === 'hard' && accuracy >= 40) return false;
+                }
+
+                return true;
+            });
+
+            renderQuestionsTable();
+        }
+
+        // Render Questions Table
+        function renderQuestionsTable() {
+            const tbody = document.getElementById('questions-table-body');
+            document.getElementById('questions-count').textContent = filteredQuestions.length;
+
+            if (filteredQuestions.length === 0) {
+                renderEmptyState('Нет вопросов, соответствующих фильтрам');
+                return;
+            }
+
+            tbody.innerHTML = filteredQuestions.map(q => {
+                const stat = questionStats[q.id];
+                const accuracy = stat ? stat.accuracy_percent : null;
+                const timesAnswered = stat ? stat.times_answered : 0;
+
+                let difficultyClass = 'difficulty-medium';
+                let difficultyLabel = '—';
+                if (accuracy !== null) {
+                    if (accuracy >= 70) {
+                        difficultyClass = 'difficulty-easy';
+                        difficultyLabel = 'Легко';
+                    } else if (accuracy < 40) {
+                        difficultyClass = 'difficulty-hard';
+                        difficultyLabel = 'Сложно';
+                    } else {
+                        difficultyLabel = 'Средне';
+                    }
+                }
+
+                return `
+                    <tr>
+                        <td><strong>${q.id}</strong></td>
+                        <td>
+                            <div class="question-preview">
+                                <div class="question-text">${escapeHtml(q.question)}</div>
+                                <div class="question-meta">
+                                    ${q.reference ? '📚 ' + escapeHtml(q.reference) : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="category-badge category-${q.category}">
+                                ${CATEGORY_NAMES[q.category] || q.category}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="difficulty-indicator ${difficultyClass}">${difficultyLabel}</span>
+                        </td>
+                        <td>
+                            <div class="question-stat">
+                                <span>${timesAnswered} раз</span>
+                                ${accuracy !== null ? `
+                                    <span>(${accuracy}%)</span>
+                                ` : ''}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-secondary btn-sm" onclick="editQuestion(${q.id})">
+                                    ✏️
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})">
+                                    🗑
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderEmptyState(message) {
+            document.getElementById('questions-table-body').innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <div>${message}</div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Tabs
+        function showTab(event, tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.currentTarget.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            if (tabName === 'analytics') {
+                renderAnalytics();
+            }
+            if (tabName === 'weak') {
+                loadWeakQuestions();
+            } else if (tabName === 'user-questions') {
+                renderUserQuestions();
+            } else if (tabName === 'reports') {
+                renderReports();
+            }
+        }
+
+        // Question Modal
+        function showAddQuestionModal() {
+            document.getElementById('modal-title').textContent = 'Добавить вопрос';
+            document.getElementById('edit-question-id').value = '';
+            document.getElementById('edit-question-source').value = 'default';
+            document.getElementById('question-form').reset();
+
+            // Set default category
+            document.getElementById('edit-category').value = 'ethics';
+
+            document.getElementById('question-modal').classList.add('active');
+        }
+
+        function editQuestion(id) {
+            const q = questions.find(q => q.id === id);
+            if (!q) return;
+
+            document.getElementById('edit-question-source').value = 'default';
+            document.getElementById('modal-title').textContent = 'Редактировать вопрос #' + id;
+            document.getElementById('edit-question-id').value = id;
+            document.getElementById('edit-question-text').value = q.question;
+            document.getElementById('edit-category').value = q.category || 'general';
+            document.getElementById('edit-option-a').value = q.options[0];
+            document.getElementById('edit-option-b').value = q.options[1];
+            document.getElementById('edit-option-c').value = q.options[2];
+            document.getElementById('edit-option-d').value = q.options[3];
+            document.getElementById('edit-explanation').value = q.explanation || '';
+            document.getElementById('edit-reference').value = q.reference || '';
+
+            // Set correct answer
+            const correctRadio = document.querySelector(`input[name="correct-answer"][value="${q.correct}"]`);
+            if (correctRadio) correctRadio.checked = true;
+
+            document.getElementById('question-modal').classList.add('active');
+        }
+
+        function closeQuestionModal() {
+            document.getElementById('question-modal').classList.remove('active');
+        }
+
+        // Form Submit
+        document.getElementById('question-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('edit-question-id').value;
+            const isEdit = id !== '';
+
+            const data = {
+                question: document.getElementById('edit-question-text').value,
+                category: document.getElementById('edit-category').value,
+                options: [
+                    document.getElementById('edit-option-a').value,
+                    document.getElementById('edit-option-b').value,
+                    document.getElementById('edit-option-c').value,
+                    document.getElementById('edit-option-d').value
+                ],
+                correct: parseInt(document.querySelector('input[name="correct-answer"]:checked').value),
+                explanation: document.getElementById('edit-explanation').value || null,
+                reference: document.getElementById('edit-reference').value || null,
+                difficulty: 'medium'
+            };
+
+            try {
+                const source = document.getElementById('edit-question-source').value;
+                let url, method, body;
+
+                if (source === 'user') {
+                    url = isEdit ? `${API_BASE}/questions/${id}` : `${API_BASE}/questions`;
+                    method = isEdit ? 'PUT' : 'POST';
+                    body = JSON.stringify({
+                        question_text: data.question,
+                        options: data.options,
+                        correct_answer: data.correct,
+                        category: data.category,
+                        explanation: data.explanation,
+                        reference_link: data.reference
+                    });
+                } else {
+                    url = isEdit ? `${API_BASE}/default-questions/${id}` : `${API_BASE}/default-questions`;
+                    method = isEdit ? 'PUT' : 'POST';
+                    body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
+                });
+
+                if (response.ok) {
+                    showToast(isEdit ? 'Вопрос обновлён!' : 'Вопрос добавлен!', 'success');
+                    closeQuestionModal();
+                    loadData(); // Reload data
+                } else {
+                    showToast('Ошибка сохранения', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving question:', error);
+                showToast('Ошибка сети', 'error');
+            }
+        });
+
+        // Delete Question
+        async function deleteQuestion(id) {
+            if (!confirm(`Удалить вопрос #${id}? Это действие нельзя отменить.`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/default-questions/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Вопрос удалён', 'success');
+                    loadData();
+                } else {
+                    showToast('Ошибка удаления', 'error');
+                }
+            } catch (error) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        // ========== USER-SUBMITTED QUESTIONS MODERATION ==========
+
+        function renderUserQuestions() {
+            const tbody = document.getElementById('user-questions-table-body');
+            document.getElementById('user-questions-count').textContent = userQuestions.length;
+
+            if (userQuestions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <div>Нет предложенных вопросов</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = userQuestions.map(q => `
+                <tr>
+                    <td><strong>${q.id}</strong></td>
+                    <td>
+                        <div class="question-preview">
+                            <div class="question-text">${escapeHtml(q.question_text)}</div>
+                            <div class="options-preview" style="margin-top: 6px;">
+                                ${['А','Б','В','Г'].map((l, i) => `<span style="${i === q.correct_answer ? 'color: var(--success); font-weight: 600;' : ''}">${l}. ${escapeHtml(q[`option_${String.fromCharCode(97 + i)}`])}</span>`).join(' • ')}
+                            </div>
+                            ${q.explanation ? `<div class="question-meta" style="margin-top: 6px;">💡 ${escapeHtml(q.explanation)}</div>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="category-badge category-${q.category}">
+                            ${CATEGORY_NAMES[q.category] || q.category}
+                        </span>
+                    </td>
+                    <td>${new Date(q.created_at).toLocaleString('ru-RU')}</td>
+                    <td>
+                        <div class="btn-group" style="flex-wrap: wrap;">
+                            <button class="btn btn-success btn-sm" onclick="approveUserQuestion(${q.id})">✅ В банк</button>
+                            <button class="btn btn-secondary btn-sm" onclick="editUserQuestion(${q.id})">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUserQuestion(${q.id})">🗑</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editUserQuestion(id) {
+            const q = userQuestions.find(q => q.id === id);
+            if (!q) return;
+
+            document.getElementById('edit-question-source').value = 'user';
+            document.getElementById('modal-title').textContent = 'Редактировать предложенный вопрос #' + id;
+            document.getElementById('edit-question-id').value = id;
+            document.getElementById('edit-question-text').value = q.question_text;
+            document.getElementById('edit-category').value = q.category || 'general';
+            document.getElementById('edit-option-a').value = q.option_a;
+            document.getElementById('edit-option-b').value = q.option_b;
+            document.getElementById('edit-option-c').value = q.option_c;
+            document.getElementById('edit-option-d').value = q.option_d;
+            document.getElementById('edit-explanation').value = q.explanation || '';
+            document.getElementById('edit-reference').value = q.reference_link || '';
+
+            const correctRadio = document.querySelector(`input[name="correct-answer"][value="${q.correct_answer}"]`);
+            if (correctRadio) correctRadio.checked = true;
+
+            document.getElementById('question-modal').classList.add('active');
+        }
+
+        async function approveUserQuestion(id) {
+            if (!confirm('Добавить этот вопрос в основной банк вопросов?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/questions/${id}/approve-to-bank`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    showToast('Вопрос добавлен в банк', 'success');
+                    loadData();
+                } else {
+                    showToast('Ошибка добавления в банк', 'error');
+                }
+            } catch (error) {
+                console.error('Approve error:', error);
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        async function deleteUserQuestion(id) {
+            if (!confirm(`Удалить предложенный вопрос #${id}? Это действие нельзя отменить.`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/questions/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Вопрос удалён', 'success');
+                    loadData();
+                } else {
+                    showToast('Ошибка удаления', 'error');
+                }
+            } catch (error) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        // ========== REPORTS MODERATION ==========
+
+        function renderReports() {
+            const tbody = document.getElementById('reports-table-body');
+            document.getElementById('reports-count').textContent = reports.length;
+
+            if (reports.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <div>Нет жалоб</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = reports.map(r => `
+                <tr>
+                    <td><strong>${r.id}</strong></td>
+                    <td>
+                        <div class="question-preview">
+                            <div class="question-text">${escapeHtml(r.question_text)}</div>
+                            <div class="question-meta">Вопрос #${r.question_id}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="category-badge">${escapeHtml(r.reason)}</span>
+                    </td>
+                    <td>${escapeHtml(r.comment || '—')}</td>
+                    <td>${new Date(r.created_at).toLocaleString('ru-RU')}</td>
+                    <td>
+                        <div class="btn-group" style="flex-wrap: wrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="editReportedQuestion(${r.question_id})">✏️ Вопрос</button>
+                            <button class="btn btn-success btn-sm" onclick="resolveReport(${r.id})">✅ Закрыть</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteReport(${r.id})">🗑</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function editReportedQuestion(questionId) {
+            const q = questions.find(q => q.id === questionId) || userQuestions.find(q => q.id === questionId);
+            if (!q) {
+                showToast('Вопрос не найден в банке или в предложенных', 'error');
+                return;
+            }
+
+            if (questions.some(question => question.id === questionId)) {
+                editQuestion(questionId);
+            } else {
+                editUserQuestion(questionId);
+            }
+        }
+
+        async function resolveReport(id) {
+            try {
+                const response = await fetch(`${API_BASE}/questions/reports/${id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'resolved' })
+                });
+
+                if (response.ok) {
+                    showToast('Жалоба закрыта', 'success');
+                    loadData();
+                } else {
+                    showToast('Ошибка закрытия жалобы', 'error');
+                }
+            } catch (error) {
+                console.error('Resolve report error:', error);
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        async function deleteReport(id) {
+            if (!confirm(`Удалить жалобу #${id}?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/questions/reports/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Жалоба удалена', 'success');
+                    loadData();
+                } else {
+                    showToast('Ошибка удаления', 'error');
+                }
+            } catch (error) {
+                showToast('Ошибка сети', 'error');
+            }
+        }
+
+        // Export
+        async function exportQuestions() {
+            try {
+                const response = await fetch(`${API_BASE}/export`);
+                const data = await response.json();
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `quiz-questions-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast('Вопросы экспортированы!', 'success');
+            } catch (error) {
+                showToast('Ошибка экспорта', 'error');
+            }
+        }
+
+        async function exportCSV() {
+            try {
+                const response = await fetch(`${API_BASE}/export/csv`);
+                const csv = await response.text();
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `quiz-results-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast('Результаты экспортированы!', 'success');
+            } catch (error) {
+                showToast('Ошибка экспорта', 'error');
+            }
+        }
+
+        // Import
+        function showImportModal() {
+            document.getElementById('import-modal').classList.add('active');
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.remove('active');
+            document.getElementById('import-file').value = '';
+            document.getElementById('import-json').value = '';
+        }
+
+        async function executeImport() {
+            const fileInput = document.getElementById('import-file');
+            const jsonText = document.getElementById('import-json').value;
+
+            let data;
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const text = await file.text();
+                data = JSON.parse(text);
+            } else if (jsonText) {
+                data = JSON.parse(jsonText);
+            } else {
+                showToast('Выберите файл или вставьте JSON', 'error');
+                return;
+            }
+
+            const importQuestions = data.questions || data;
+
+            if (!Array.isArray(importQuestions)) {
+                showToast('Неверный формат JSON', 'error');
+                return;
+            }
+
+            try {
+                const payload = importQuestions.map(q => ({
+                    id: q.id,
+                    question: q.question || q.question_text,
+                    options: q.options || [q.option_a, q.option_b, q.option_c, q.option_d],
+                    correct: q.correct !== undefined ? q.correct : q.correct_answer,
+                    category: q.category || 'general',
+                    explanation: q.explanation,
+                    reference: q.reference || q.reference_link,
+                    difficulty: q.difficulty || 'medium'
+                })).filter(q => q.question && Array.isArray(q.options) && q.options.length === 4 && q.correct !== undefined);
+
+                if (payload.length === 0) {
+                    showToast('Нет валидных вопросов для импорта', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/default-questions/import`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ questions: payload })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast(`Импортировано ${result.imported} вопросов`, 'success');
+                    closeImportModal();
+                    loadData();
+                } else {
+                    showToast('Ошибка импорта', 'error');
+                }
+            } catch (error) {
+                console.error('Import error:', error);
+                showToast('Ошибка импорта', 'error');
+            }
+        }
+
+        // Analytics
+        async function loadWeakQuestions() {
+            const container = document.getElementById('weak-content');
+            try {
+                const res = await adminFetch(`${API_BASE}/analytics/weak-questions`);
+                if (!res.ok) throw new Error('fail');
+                const data = await res.json();
+                const flagLabels = {
+                    low_accuracy: 'Низкая точность',
+                    always_wrong: 'Всегда неверно',
+                    always_correct: 'Всегда верно',
+                    low_volume: 'Мало ответов',
+                    no_answers: 'Нет ответов'
+                };
+                if (!data.questions || data.questions.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><div>Аномалий пока нет</div></div>';
+                    return;
+                }
+                container.innerHTML = `
+                    <h3 style="margin-bottom:16px;">Плохие / аномальные вопросы (${data.total})</h3>
+                    <table class="questions-table">
+                        <thead><tr><th>ID</th><th>Вопрос</th><th>Точность</th><th>Флаги</th></tr></thead>
+                        <tbody>
+                            ${data.questions.map(q => `
+                                <tr>
+                                    <td>${q.id}</td>
+                                    <td>
+                                        <div class="question-text">${escapeHtml((q.question_text || '').slice(0, 120))}</div>
+                                        <div class="question-meta">${escapeHtml(q.category || '')}</div>
+                                    </td>
+                                    <td>${q.accuracy_percent === null ? '—' : q.accuracy_percent + '%'} <span style="color:var(--text-tertiary)">(${q.times_correct}/${q.times_answered})</span></td>
+                                    <td>${(q.flags || []).map(f => flagLabels[f] || f).join(', ')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state">Не удалось загрузить</div>';
+            }
+        }
+
+        function renderAnalytics() {
+            const container = document.getElementById('analytics-content');
+
+            if (Object.keys(questionStats).length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div>Статистика будет доступна после прохождения викторины</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by difficulty (lowest accuracy first)
+            const sortedStats = Object.entries(questionStats)
+                .map(([id, stat]) => ({
+                    id: parseInt(id),
+                    ...stat,
+                    question: questions.find(q => q.id === parseInt(id))
+                }))
+                .filter(item => item.question && item.times_answered >= 3)
+                .sort((a, b) => a.accuracy_percent - b.accuracy_percent);
+
+            if (sortedStats.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📊</div>
+                        <div>Недостаточно данных для анализа (нужно минимум 3 ответа на вопрос)</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <h3 style="margin-bottom: 20px;">Самые сложные вопросы</h3>
+                <table class="questions-table">
+                    <thead>
+                        <tr>
+                            <th>Вопрос</th>
+                            <th width="120">Правильных</th>
+                            <th width="100">Сложность</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedStats.slice(0, 10).map(item => {
+                            const difficultyClass = item.accuracy_percent < 40 ? 'difficulty-hard' :
+                                                  item.accuracy_percent < 70 ? 'difficulty-medium' : 'difficulty-easy';
+                            const difficultyLabel = item.accuracy_percent < 40 ? 'Сложно' :
+                                                 item.accuracy_percent < 70 ? 'Средне' : 'Легко';
+
+                            return `
+                                <tr>
+                                    <td>
+                                        <div class="question-preview">
+                                            <div class="question-text">${escapeHtml(item.question.question)}</div>
+                                            <div class="question-meta">ID: ${item.id} • ${CATEGORY_NAMES[item.question.category] || ''}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="question-stat">
+                                            ${item.accuracy_percent}%
+                                            <span style="color: var(--text-tertiary);">(${item.times_correct}/${item.times_answered})</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="difficulty-indicator ${difficultyClass}">${difficultyLabel}</span>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Changelog
+        function loadChangelog() {
+            const container = document.getElementById('changelog-content');
+
+            // Load from version.json (CHANGELOG.md does not exist)
+            fetch('/version.json')
+                .then(res => res.json())
+                .then(data => {
+                    const entries = [];
+                    if (data.changes && data.changes.current) {
+                        entries.push(data.changes.current);
+                    }
+                    if (data.changes && Array.isArray(data.changes.history)) {
+                        entries.push(...data.changes.history);
+                    }
+
+                    container.innerHTML = entries.map(entry => `
+                        <div class="changelog-entry">
+                            <div class="changelog-version">${escapeHtml(entry.version || '')} <span style="color: var(--text-secondary);">${escapeHtml(entry.date || '')}</span></div>
+                            <div class="changelog-changes">
+                                <ul>
+                                    ${(entry.changes || []).map(change => `<li>${escapeHtml(change)}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `).join('') || '<div class="empty-state"><div class="empty-icon">📋</div><div>История изменений пуста</div></div>';
+                })
+                .catch(() => {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div>История изменений недоступна</div></div>';
+                });
+        }
+
+        // Save Version
+        async function saveVersion() {
+            const version = document.getElementById('settings-version').value;
+            const notes = document.getElementById('settings-version-notes').value;
+
+            if (!version || !notes) {
+                showToast('Заполните все поля', 'error');
+                return;
+            }
+
+            showToast('Версия сохранена (локально)', 'success');
+            // In production, this would save to version.json on the server
+            document.getElementById('settings-version-notes').value = '';
+        }
+
+        // Utility
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

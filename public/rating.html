@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг — Викторина</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --accent: #6366f1;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 28px; }
+        .user-rank-card {
+            background: var(--accent);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .user-rank-position {
+            width: 60px; height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 600;
+        }
+        .user-rank-info { flex: 1; }
+        .user-rank-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+        .user-rank-org { font-size: 14px; opacity: 0.9; }
+        .user-rank-score { font-size: 32px; font-weight: 600; }
+        .leaderboard { display: flex; flex-direction: column; gap: 12px; }
+        .rank-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .rank-row:hover { border-color: var(--accent); }
+        .rank-row.top-1 { border-color: var(--gold); background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(255,215,0,0.1) 100%); }
+        .rank-row.top-2 { border-color: var(--silver); background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(192,192,192,0.1) 100%); }
+        .rank-row.top-3 { border-color: var(--bronze); background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(205,127,50,0.1) 100%); }
+        .rank-position {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            font-weight: 600;
+        }
+        .rank-position.gold { background: var(--gold); color: #000; }
+        .rank-position.silver { background: var(--silver); color: #000; }
+        .rank-position.bronze { background: var(--bronze); color: #000; }
+        .rank-avatar {
+            width: 48px; height: 48px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .rank-info { flex: 1; }
+        .rank-name { font-weight: 600; margin-bottom: 2px; }
+        .rank-org { font-size: 13px; color: var(--text-secondary); }
+        .rank-score { font-size: 20px; font-weight: 600; color: var(--accent); }
+        .rank-change { font-size: 14px; }
+        .rank-change.up { color: var(--accent); }
+        .rank-change.down { color: #f44336; }
+        .rank-change.same { color: var(--text-secondary); }
+        .nav-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        @media (max-width: 480px) {
+            .rank-row { padding: 12px; }
+            .rank-avatar { width: 40px; height: 40px; font-size: 16px; }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+    <script src="/js/user.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏆 Рейтинг участников</h1>
+            <a href="/" class="nav-btn">← Викторина</a>
+        </header>
+
+        <div id="user-rank"></div>
+
+        <h3 style="margin: 20px 0 16px;">Таблица лидеров</h3>
+        <div class="leaderboard" id="leaderboard"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentUser = null;
+
+        async function loadRating() {
+            try {
+                const [leaderboardRes, userRes] = await Promise.all([
+                    fetch(`${API_BASE}/leaderboard`),
+                    isLoggedIn() ? authFetch(`${API_BASE}/users/${getCurrentUser().id}`, { redirectOnUnauthorized: false }) : null
+                ]);
+
+                const data = await leaderboardRes.json();
+                currentUser = userRes ? await userRes.json().then(r => r.user) : null;
+
+                renderUserRank(data.leaderboard || []);
+                renderLeaderboard(data.leaderboard || []);
+            } catch (error) {
+                console.error('Error loading rating:', error);
+            }
+        }
+
+        // getCurrentUser() is provided by /js/user.js
+
+        function renderUserRank(leaderboard) {
+            const container = document.getElementById('user-rank');
+            const user = getCurrentUser();
+
+            if (!user) {
+                container.innerHTML = `
+                    <div class="user-rank-card" style="background: var(--bg-tertiary); text-align: center;">
+                        <p style="margin-bottom: 16px;">Войдите, чтобы увидеть свой позицию в рейтинге</p>
+                        <a href="/register.html" class="nav-btn" style="display: inline-block; padding: 12px 24px;">Зарегистрироваться</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const userPosition = leaderboard.findIndex(u => u.id === user.id) + 1;
+
+            container.innerHTML = `
+                <div class="user-rank-card">
+                    <div class="user-rank-position">#${userPosition || '-'}</div>
+                    <div class="user-rank-info">
+                        <div class="user-rank-name">${escapeHtml(user.display_name || user.username)}</div>
+                        ${user.organization ? `<div class="user-rank-org">${escapeHtml(user.organization)}</div>` : ''}
+                    </div>
+                    <div class="user-rank-score">${user.total_score || 0}</div>
+                </div>
+            `;
+        }
+
+        function renderLeaderboard(leaderboard) {
+            const container = document.getElementById('leaderboard');
+
+            if (leaderboard.length === 0) {
+                container.innerHTML = '<div class="empty-state">Рейтинг пока пуст. Пройдите викторину, чтобы попасть сюда!</div>';
+                return;
+            }
+
+            const medals = ['🥇', '🥈', '🥉'];
+            const medalsClass = ['gold', 'silver', 'bronze'];
+
+            container.innerHTML = leaderboard.map((u, i) => `
+                <div class="rank-row ${i < 3 ? `top-${i + 1}` : ''}">
+                    <div class="rank-position ${i < 3 ? medalsClass[i] : ''}">
+                        ${i < 3 ? medals[i] : i + 1}
+                    </div>
+                    <div class="rank-avatar">${escapeHtml((u.display_name || u.username)[0])}</div>
+                    <div class="rank-info">
+                        <div class="rank-name">${escapeHtml(u.display_name || u.username)}</div>
+                        ${u.organization ? `<div class="rank-org">${escapeHtml(u.organization)}</div>` : ''}
+                    </div>
+                    <div class="rank-score">${u.total_score || 0}</div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        loadRating();
+        const ratingInterval = setInterval(loadRating, 30000); // Update every 30 seconds
+        window.addEventListener('beforeunload', () => clearInterval(ratingInterval));
+    </script>
+</body>
+</html>

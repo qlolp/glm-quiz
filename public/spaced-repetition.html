@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интервальное повторение — GLM Quiz</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --text-tertiary: #6b6b6b;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 { font-size: 28px; }
+        .nav-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value { font-size: 32px; font-weight: 600; }
+        .stat-label { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+        .stat-card.due .stat-value { color: var(--success); }
+        .stat-card.new .stat-value { color: var(--info); }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .flashcard {
+            perspective: 1000px;
+            width: 100%;
+            height: 400px;
+            margin: 0 auto 24px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .flashcard-inner.flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+        }
+        .flashcard-back { transform: rotateY(180deg); }
+        .question-text { font-size: 20px; text-align: center; line-height: 1.6; }
+        .options { display: grid; gap: 12px; margin-top: 24px; }
+        .option {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option:hover { border-color: var(--accent); }
+        .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.1); }
+        .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.1); }
+        .answer-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .quality-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .quality-btn.again { background: var(--error); color: white; }
+        .quality-btn.hard { background: var(--warning); color: white; }
+        .quality-btn.good { background: var(--info); color: white; }
+        .quality-btn.easy { background: var(--success); color: white; }
+        .category-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 6px 12px;
+            background: var(--accent);
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .progress-section {
+            margin-bottom: 24px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--success) 100%);
+            transition: width 0.3s;
+        }
+        .category-list {
+            display: grid;
+            gap: 12px;
+        }
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        .category-name { flex: 1; }
+        .category-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-icon { font-size: 48px; margin-bottom: 16px; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 16px;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-secondary { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); }
+        .hidden { display: none !important; }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+    <script src="/js/user.js"></script>
+    <script src="/js/event-delegation.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🧠 Интервальное повторение</h1>
+            <a href="/" class="nav-btn">← Викторина</a>
+        </header>
+
+        <!-- Dashboard Screen -->
+        <div class="screen active" id="dashboard-screen">
+            <div class="stats-grid">
+                <div class="stat-card due">
+                    <div class="stat-value" id="due-today">0</div>
+                    <div class="stat-label">Повторить сегодня</div>
+                </div>
+                <div class="stat-card new">
+                    <div class="stat-value" id="total-cards">0</div>
+                    <div class="stat-label">Всего карточек</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="mature-cards">0</div>
+                    <div class="stat-label">Освоенных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avg-ease">2.5</div>
+                    <div class="stat-label">Ср. сложность</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">📊 Прогресс по категориям</h3>
+                <div class="category-list" id="category-progress"></div>
+            </div>
+
+            <div style="text-align: center;">
+                <button class="btn btn-primary" data-action="startSession" id="start-btn" style="font-size: 18px; padding: 16px 48px;">
+                    🚀 Начать повторение
+                </button>
+                <p style="margin-top: 12px; color: var(--text-secondary); font-size: 14px;">
+                    <span id="study-time">~5 минут</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Study Screen -->
+        <div class="screen" id="study-screen">
+            <div class="progress-section">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">
+                    <span>Прогресс</span>
+                    <span><span id="reviewed-count">0</span>/<span id="total-count">0</span></span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="session-progress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="flashcard">
+                <div class="flashcard-inner" id="flashcard">
+                    <div class="flashcard-face flashcard-front">
+                        <span class="category-badge" id="card-category">Категория</span>
+                        <div class="question-text" id="card-question">Вопрос</div>
+                    </div>
+                    <div class="flashcard-face flashcard-back">
+                        <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--success);">
+                            Правильный ответ
+                        </div>
+                        <div class="question-text" id="card-answer">Ответ</div>
+                        <div class="explanation" id="card-explanation"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="options" id="card-options"></div>
+
+            <div class="answer-buttons hidden" id="quality-buttons">
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 16px;">
+                    Как хорошо вы знали этот вопрос?
+                </p>
+                <button class="quality-btn again" data-action="rateCard" data-arg="0">
+                    👎 Снова
+                    <div style="font-size: 11px; margin-top: 4px;">&lt;1 мин</div>
+                </button>
+                <button class="quality-btn hard" data-action="rateCard" data-arg="3">
+                    😓 Сложно
+                    <div style="font-size: 11px; margin-top: 4px;">2 дня</div>
+                </button>
+                <button class="quality-btn good" data-action="rateCard" data-arg="4">
+                    🤔 Нормально
+                    <div style="font-size: 11px; margin-top: 4px;">4 дня</div>
+                </button>
+                <button class="quality-btn easy" data-action="rateCard" data-arg="5">
+                    😊 Легко
+                    <div style="font-size: 11px; margin-top: 4px;">7+ дней</div>
+                </button>
+            </div>
+
+            <div style="text-align: center; margin-top: 16px;">
+                <button class="btn btn-secondary" data-action="exitSession">✕ Завершить</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="screen" id="results-screen">
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🎉</div>
+                <h2>Сессия завершена!</h2>
+                <div class="stats-grid" style="margin-top: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-value" id="result-reviewed">0</div>
+                        <div class="stat-label">Повторено</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="result-correct">0</div>
+                        <div class="stat-label">Правильно</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="result-avg-ease">2.5</div>
+                        <div class="stat-label">Ср. сложность</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" data-action="reloadPage">Вернуться в начало</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentUser = null;
+        let sessionQueue = [];
+        let currentCard = null;
+        let sessionStats = { reviewed: 0, correct: 0, totalEase: 0 };
+
+        // Check auth
+        function checkAuth() {
+            const storedUser = getCurrentUser(); const stored = storedUser.id ? JSON.stringify(storedUser) : null;
+            if (stored) {
+                currentUser = JSON.parse(stored);
+            } else {
+                // Create guest user
+                currentUser = {
+                    id: 'guest_' + Date.now(),
+                    display_name: 'Гость'
+                };
+                localStorage.setItem('quiz_user', JSON.stringify(currentUser));
+                localStorage.setItem('userId', currentUser.id || '');
+                localStorage.setItem('username', currentUser.username || currentUser.display_name || '');
+            }
+        }
+
+        // Load stats
+        async function loadStats() {
+            try {
+                const res = await authFetch(`${API_BASE}/spaced-repetition/stats`, { redirectOnUnauthorized: false });
+                const data = await res.json();
+
+                document.getElementById('due-today').textContent = data.due_today || 0;
+                document.getElementById('total-cards').textContent = data.total_cards || 0;
+                document.getElementById('mature-cards').textContent = data.mature_cards || 0;
+                document.getElementById('avg-ease').textContent = data.avg_ease_factor || '2.5';
+
+                // Category progress
+                const categoryList = document.getElementById('category-progress');
+                if (data.by_category && data.by_category.length > 0) {
+                    categoryList.innerHTML = data.by_category.map(cat => `
+                        <div class="category-item">
+                            <div class="category-name">${cat.category}</div>
+                            <div class="category-stats">
+                                <span>📚 ${cat.count}</span>
+                                <span>🔄 ${cat.due}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    categoryList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <div>Начните с режима викторины для добавления карточек</div>
+                        </div>
+                    `;
+                }
+
+                // Update study time estimate
+                const dueToday = data.due_today || 0;
+                const studyMinutes = Math.max(1, Math.ceil(dueToday / 3));
+                document.getElementById('study-time').textContent = `~${studyMinutes} минут`;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Start session
+        async function startSession() {
+            try {
+                const res = await authFetch(`${API_BASE}/spaced-repetition/due?limit=20`, { redirectOnUnauthorized: false });
+                const data = await res.json();
+
+                sessionQueue = [...data.due, ...data.new];
+
+                if (sessionQueue.length === 0) {
+                    alert('Нет карточек для повторения! Пройдите викторину для добавления новых вопросов.');
+                    return;
+                }
+
+                document.getElementById('dashboard-screen').classList.remove('active');
+                document.getElementById('study-screen').classList.add('active');
+                document.getElementById('total-count').textContent = sessionQueue.length;
+
+                sessionStats = { reviewed: 0, correct: 0, totalEase: 0 };
+                showNextCard();
+            } catch (error) {
+                console.error('Error starting session:', error);
+            }
+        }
+
+        // Show next card
+        function showNextCard() {
+            if (sessionQueue.length === 0) {
+                showResults();
+                return;
+            }
+
+            currentCard = sessionQueue.shift();
+
+            document.getElementById('card-question').textContent = currentCard.question;
+            document.getElementById('card-category').textContent = currentCard.category || 'general';
+            document.getElementById('card-answer').textContent = 'Выберите ответ';
+            document.getElementById('card-explanation').textContent = '';
+
+            document.getElementById('flashcard').classList.remove('flipped');
+            document.getElementById('quality-buttons').classList.add('hidden');
+
+            const letters = ['А', 'Б', 'В', 'Г'];
+            document.getElementById('card-options').innerHTML = currentCard.options.map((opt, i) => `
+                <div class="option" data-action="selectOption" data-arg="${i}">
+                    <span style="font-weight: 600; margin-right: 8px;">${letters[i]}.</span>${opt}
+                </div>
+            `).join('');
+
+            document.getElementById('reviewed-count').textContent = sessionStats.reviewed;
+            const progress = (sessionStats.reviewed / (parseInt(document.getElementById('total-count').textContent))) * 100;
+            document.getElementById('session-progress').style.width = `${progress}%`;
+        }
+
+        async function selectOption(selected) {
+            const options = document.querySelectorAll('.option');
+            let result;
+            try {
+                result = await checkAnswer(currentCard.id, selected);
+            } catch (e) {
+                console.error('Check answer failed:', e);
+                return;
+            }
+
+            const correct = result.correctIndex;
+            options.forEach((opt, i) => {
+                opt.removeAttribute('data-action');
+                opt.classList.add('disabled');
+                if (i === correct) {
+                    opt.classList.add('correct');
+                } else if (i === selected) {
+                    opt.classList.add('wrong');
+                }
+            });
+
+            if (selected === correct) {
+                sessionStats.correct++;
+            }
+
+            document.getElementById('card-answer').textContent = currentCard.options[correct] || '';
+            document.getElementById('card-explanation').textContent = result.explanation || '';
+
+            // Flip card and show quality buttons
+            setTimeout(() => {
+                document.getElementById('flashcard').classList.add('flipped');
+                document.getElementById('quality-buttons').classList.remove('hidden');
+            }, 500);
+        }
+
+        // Rate card
+        async function rateCard(quality) {
+            if (!currentCard) return;
+
+            try {
+                await authFetch(`${API_BASE}/spaced-repetition/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    redirectOnUnauthorized: false,
+                    body: JSON.stringify({
+                        question_id: currentCard.id,
+                        quality: quality
+                    })
+                });
+
+                sessionStats.reviewed++;
+                sessionStats.totalEase += currentCard.ease_factor || 2.5;
+
+                showNextCard();
+            } catch (error) {
+                console.error('Error rating card:', error);
+            }
+        }
+
+        // Show results
+        function showResults() {
+            document.getElementById('study-screen').classList.remove('active');
+            document.getElementById('results-screen').classList.add('active');
+
+            document.getElementById('result-reviewed').textContent = sessionStats.reviewed;
+            document.getElementById('result-correct').textContent = sessionStats.correct;
+            document.getElementById('result-avg-ease').textContent = sessionStats.reviewed > 0
+                ? (sessionStats.totalEase / sessionStats.reviewed).toFixed(2)
+                : '2.5';
+        }
+
+        // Exit session
+        function exitSession() {
+            if (confirm('Завершить сессию? Прогресс будет сохранён.')) {
+                showResults();
+            }
+        }
+
+        // Init
+        checkAuth();
+        loadStats();
+    </script>
+</body>
+</html>

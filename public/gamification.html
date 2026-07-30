@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Достижения — Викторина</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --accent: #6366f1;
+            --gold: #ffd700;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* Enhanced animations */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes achievementUnlock {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px var(--accent); }
+            50% { box-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent); }
+        }
+
+        .fade-in { animation: slideIn 0.5s ease forwards; }
+        .pulse { animation: pulse 2s ease-in-out infinite; }
+        .achievement-card.unlocked { animation: achievementUnlock 0.6s ease forwards; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .nav-btn {
+            padding: 12px 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: translateX(-4px);
+        }
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            background: var(--bg-secondary);
+            padding: 8px;
+            border-radius: 16px;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+        .tab.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        .tab-content {
+            display: none;
+            animation: slideIn 0.5s ease forwards;
+        }
+        .tab-content.active { display: block; }
+        .leaderboard-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .leaderboard-row:hover {
+            transform: translateX(8px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .leaderboard-rank {
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+        .leaderboard-row:hover .leaderboard-rank {
+            transform: scale(1.1);
+        }
+        .leaderboard-rank.gold {
+            background: linear-gradient(135deg, var(--gold) 0%, #ffed4e 100%);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .leaderboard-rank.silver {
+            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(192, 192, 192, 0.4);
+        }
+        .leaderboard-rank.bronze {
+            background: linear-gradient(135deg, #cd7f32 0%, #daa06d 100%);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(205, 127, 50, 0.4);
+        }
+        .leaderboard-avatar {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            transition: transform 0.3s;
+        }
+        .leaderboard-row:hover .leaderboard-avatar {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .leaderboard-info { flex: 1; }
+        .leaderboard-name {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .leaderboard-org {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .leaderboard-score {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .achievement-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            opacity: 0.5;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .achievement-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        .achievement-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+        }
+        .achievement-card:hover::before {
+            left: 100%;
+        }
+        .achievement-card.unlocked {
+            opacity: 1;
+            border-color: var(--accent);
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(99, 102, 241, 0.1) 100%);
+        }
+        .achievement-card.unlocked:hover {
+            animation: glow 2s ease-in-out infinite;
+        }
+        .achievement-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            filter: grayscale(1);
+            transition: filter 0.3s;
+        }
+        .achievement-card.unlocked .achievement-icon {
+            filter: grayscale(0);
+        }
+        .achievement-card:hover .achievement-icon {
+            transform: scale(1.1) rotate(5deg);
+            transition: transform 0.3s;
+        }
+        .achievement-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .achievement-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .achievement-points {
+            display: inline-block;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .achievement-card.locked .achievement-points {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            box-shadow: none;
+        }
+        .user-profile {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .user-profile::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        .profile-avatar {
+            width: 96px; height: 96px;
+            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s;
+        }
+        .profile-avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .profile-info { flex: 1; position: relative; z-index: 1; }
+        .profile-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .profile-stats { display: flex; gap: 32px; margin-top: 16px; }
+        .profile-stat {
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            min-width: 100px;
+            transition: transform 0.3s;
+        }
+        .profile-stat:hover {
+            transform: translateY(-4px);
+        }
+        .profile-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .profile-stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .login-card {
+            max-width: 400px;
+            margin: 60px auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+        .login-input {
+            width: 100%;
+            padding: 12px;
+            margin: 16px 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+    <script src="/js/user.js"></script>
+    <script src="/js/event-delegation.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏆 Достижения</h1>
+            <a href="/" class="nav-btn">← Викторина</a>
+        </header>
+
+        <div id="login-section">
+            <div class="login-card">
+                <h2>Войдите для сохранения прогресса</h2>
+                <p style="color: var(--text-secondary); margin: 16px 0;">Используйте имя пользователя для отслеживания достижений</p>
+                <input type="text" class="login-input" id="username-input" placeholder="Ваше имя">
+                <button class="btn btn-primary" data-action="login">Войти</button>
+            </div>
+        </div>
+
+        <div id="profile-section" style="display: none;">
+            <div class="user-profile">
+                <div class="profile-avatar" id="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profile-name">Пользователь</div>
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="stat-score">0</div>
+                            <div class="profile-stat-label">Очков</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="stat-quizzes">0</div>
+                            <div class="profile-stat-label">Викторин</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-value" id="stat-achievements">0</div>
+                            <div class="profile-stat-label">Достижений</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="nav-btn" data-action="logout">Выйти</button>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-action="showTab" data-arg="achievements">Мои достижения</div>
+                <div class="tab" data-action="showTab" data-arg="leaderboard">Рейтинг</div>
+                <div class="tab" data-action="showTab" data-arg="all">Все достижения</div>
+            </div>
+
+            <div class="tab-content active" id="tab-achievements">
+                <div class="achievements-grid" id="my-achievements"></div>
+            </div>
+
+            <div class="tab-content" id="tab-leaderboard">
+                <div id="leaderboard"></div>
+            </div>
+
+            <div class="tab-content" id="tab-all">
+                <div class="achievements-grid" id="all-achievements"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentUser = null;
+
+        function login() {
+            const username = document.getElementById('username-input').value.trim();
+            if (!username) return alert('Введите имя');
+
+            fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            })
+            .then(res => res.json())
+            .then(data => {
+                setUserSession(data.user, data.token);
+                currentUser = data.user;
+                showProfile();
+            });
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function logout() {
+            clearUserSession();
+            currentUser = null;
+            location.reload();
+        }
+
+        function showProfile() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('profile-section').style.display = 'block';
+
+            document.getElementById('profile-name').textContent = currentUser.display_name || currentUser.username;
+            document.getElementById('stat-score').textContent = currentUser.total_score || 0;
+            document.getElementById('stat-quizzes').textContent = currentUser.quizzes_completed || 0;
+
+            loadAchievements();
+            loadLeaderboard();
+        }
+
+        async function loadAchievements() {
+            try {
+                const [allRes, userRes] = await Promise.all([
+                    fetch(`${API_BASE}/achievements`),
+                    authFetch(`${API_BASE}/users/${currentUser.id}`, { redirectOnUnauthorized: false })
+                ]);
+
+                const allData = await allRes.json();
+                const userData = await userRes.json();
+
+                const allAchievements = allData.achievements || [];
+                const userAchievements = userData.achievements || [];
+                const unlockedIds = userAchievements.map(a => a.id);
+
+                document.getElementById('stat-achievements').textContent = userAchievements.length;
+
+                // My achievements (unlocked only)
+                document.getElementById('my-achievements').innerHTML = allAchievements
+                    .filter(a => unlockedIds.includes(a.id))
+                    .map(a => renderAchievementCard(a, true))
+                    .join('') || '<p style="text-align: center; color: var(--text-secondary);">Пока нет достижений</p>';
+
+                // All achievements
+                document.getElementById('all-achievements').innerHTML = allAchievements
+                    .map(a => renderAchievementCard(a, unlockedIds.includes(a.id)))
+                    .join('');
+            } catch (error) {
+                console.error('Error loading achievements:', error);
+            }
+        }
+
+        function renderAchievementCard(a, unlocked) {
+            return `
+                <div class="achievement-card ${unlocked ? 'unlocked' : ''}">
+                    <div class="achievement-icon">${a.icon}</div>
+                    <div class="achievement-title">${a.title}</div>
+                    <div class="achievement-desc">${a.description}</div>
+                    <div class="achievement-points">${a.points} очков</div>
+                </div>
+            `;
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch(`${API_BASE}/leaderboard`);
+                const data = await res.json();
+
+                const medals = ['🥇', '🥈', '🥉'];
+                document.getElementById('leaderboard').innerHTML = (data.leaderboard || []).map((u, i) => `
+                    <div class="leaderboard-row">
+                        <div class="leaderboard-rank ${i < 3 ? ['gold', 'silver', 'bronze'][i] : ''}">
+                            ${i < 3 ? medals[i] : i + 1}
+                        </div>
+                        <div class="leaderboard-avatar">${escapeHtml(u.display_name?.[0] || u.username?.[0] || '?')}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">${escapeHtml(u.display_name || u.username)}</div>
+                        </div>
+                        <div class="leaderboard-score">${u.total_score}</div>
+                    </div>
+                `).join('') || '<p style="text-align: center; color: var(--text-secondary);">Рейтинг пуст</p>';
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        function showTab(event, tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        // Check for saved user session
+        if (isLoggedIn()) {
+            currentUser = getCurrentUser();
+            showProfile();
+        }
+    </script>
+</body>
+</html>

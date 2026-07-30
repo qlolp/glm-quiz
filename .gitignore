@@ -1,0 +1,53 @@
+# Secrets and local env
+.env
+*.env
+.env.*
+!.env.example
+
+# Databases and backups
+server/quiz.db
+server/quiz.db-*
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.bak
+*.backup
+backups/
+**/backups/
+
+# Dependencies
+node_modules/
+server/node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Private keys and credentials
+*.pem
+*.key
+id_rsa
+id_ed25519
+id_ecdsa
+*_rsa
+*_ed25519
+credentials.json
+secrets/
+
+# Build / local artifacts
+dist/
+.cache/
+coverage/
+*.log
+npm-debug.log*
+
+# Design review screenshots (large binary artifacts)
+design-review/
+
+# Local staging / deploy temp
+/tmp/

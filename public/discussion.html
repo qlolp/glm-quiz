@@ -1,0 +1,128 @@
+<!-- Discussion Section Template (to be integrated into index.html) -->
+
+<div class="discussion-section" style="margin-top: 24px; padding: 20px; background: var(--bg-tertiary); border-radius: 12px;">
+    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">💬 Обсуждение</h3>
+
+    <!-- Rating -->
+    <div class="question-rating" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <span style="font-size: 14px; color: var(--text-secondary);">Оцените вопрос:</span>
+        <button class="rating-btn" onclick="rateQuestion('up')" title="Полезный">
+            👍 <span id="rating-up">0</span>
+        </button>
+        <button class="rating-btn" onclick="rateQuestion('down')" title="непонятный">
+            👎 <span id="rating-down">0</span>
+        </button>
+    </div>
+
+    <!-- Comments List -->
+    <div class="comments-list" id="comments-list">
+        <!-- Comments will be loaded here -->
+    </div>
+
+    <!-- Add Comment Form -->
+    <div class="comment-form" style="margin-top: 16px;">
+        <textarea
+            id="comment-input"
+            placeholder="Напишите ваш комментарий..."
+            style="width: 100%; min-height: 80px; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 14px; font-family: inherit; resize: vertical;"
+        ></textarea>
+        <button
+            onclick="submitComment()"
+            class="btn btn-secondary btn-small"
+            style="margin-top: 8px;"
+        >
+            Отправить комментарий
+        </button>
+    </div>
+</div>
+
+<script>
+// Discussion functions (to be added to main script)
+
+let questionComments = {};
+
+function loadComments(questionId) {
+    // Load from API or localStorage
+    const saved = localStorage.getItem('glm_quiz_comments');
+    if (saved) {
+        try {
+            const allComments = JSON.parse(saved);
+            questionComments = allComments[questionId] || [];
+            renderComments();
+        } catch (e) {
+            questionComments = [];
+        }
+    }
+}
+
+function renderComments() {
+    const container = document.getElementById('comments-list');
+    if (!container) return;
+
+    if (questionComments.length === 0) {
+        container.innerHTML = '<p style="font-size: 13px; color: var(--text-tertiary); text-align: center;">Пока нет комментариев. Будьте первым!</p>';
+        return;
+    }
+
+    container.innerHTML = questionComments.map(c => `
+        <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
+            <div style="font-size: 13px; font-weight: 500; margin-bottom: 4px;">${c.author || 'Аноним'}</div>
+            <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">${c.text}</div>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px;">${new Date(c.date).toLocaleDateString('ru-RU')}</div>
+        </div>
+    `).join('');
+}
+
+function submitComment() {
+    const input = document.getElementById('comment-input');
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    const comment = {
+        id: Date.now(),
+        text: text,
+        author: 'Вы', // Можно заменить на имя пользователя
+        date: new Date().toISOString()
+    };
+
+    questionComments.push(comment);
+    saveComments();
+    renderComments();
+    input.value = '';
+}
+
+function saveComments() {
+    let allComments = {};
+    const saved = localStorage.getItem('glm_quiz_comments');
+    if (saved) {
+        try {
+            allComments = JSON.parse(saved);
+        } catch (e) {}
+    }
+
+    // Get current question ID
+    const currentQ = questions[currentQuestion];
+    if (currentQ) {
+        allComments[currentQ.id] = questionComments;
+        localStorage.setItem('glm_quiz_comments', JSON.stringify(allComments));
+    }
+}
+
+function rateQuestion(type) {
+    // Simple rating system
+    const key = `question_rating_${questions[currentQuestion].id}`;
+    let ratings = JSON.parse(localStorage.getItem(key) || '{"up":0,"down":0}');
+
+    if (!ratings.voted) {
+        ratings[type]++;
+        ratings.voted = true;
+        localStorage.setItem(key, JSON.stringify(ratings));
+
+        document.getElementById('rating-up').textContent = ratings.up;
+        document.getElementById('rating-down').textContent = ratings.down;
+    }
+}
+</script>
+
+    <script src="/js/suppress-logs.js"></script>

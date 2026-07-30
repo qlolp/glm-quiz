@@ -1,0 +1,246 @@
+/* ─── Landing: numbered steps ─────────────────────────────────────── */
+
+.steps {
+    display: grid;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+}
+
+.step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: var(--sp-3);
+    counter-increment: step;
+}
+
+.step::before {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--r-pill);
+    background: var(--c-surface);
+    color: var(--c-accent);
+    font-family: var(--font-display);
+    font-size: var(--fs-100);
+    font-weight: var(--fw-display);
+    content: counter(step);
+}
+
+.step-title {
+    display: block;
+    color: var(--c-ink);
+    font-weight: var(--fw-semibold);
+}
+
+.step-text {
+    color: var(--c-muted);
+    font-size: var(--fs-200);
+}
+
+/* ─── Stat tiles ──────────────────────────────────────────────────── */
+
+/* Narrow enough that three tiles stay on one row at 360px rather than
+   wrapping into a two-plus-one orphan. */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+    gap: var(--sp-2);
+}
+
+.stat {
+    display: grid;
+    align-content: start;
+    gap: var(--sp-1);
+    padding: var(--sp-3);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
+}
+
+.stat-value {
+    color: var(--c-ink);
+    font-family: var(--font-display);
+    font-size: var(--fs-500);
+    font-weight: var(--fw-display);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+
+.stat-label {
+    color: var(--c-subtle);
+    font-size: var(--fs-100);
+}
+
+/* ─── History rows ────────────────────────────────────────────────── */
+
+.record-list {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.record {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
+}
+
+.record-score {
+    color: var(--c-ink);
+    font-family: var(--font-display);
+    font-size: var(--fs-400);
+    font-weight: var(--fw-display);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─── Link list ───────────────────────────────────────────────────── */
+
+.link-list {
+    display: grid;
+    gap: 0;
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
+    overflow: hidden;
+}
+
+.link-list a {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: var(--tap-min);
+    padding: var(--sp-3) var(--sp-4);
+    border-top: 1px solid var(--c-line);
+    color: var(--c-ink-2);
+    font-size: var(--fs-200);
+    font-weight: var(--fw-medium);
+    text-decoration: none;
+}
+
+.link-list a:first-child {
+    border-top: 0;
+}
+
+.link-list a:hover {
+    background: var(--c-primary-tint);
+    color: var(--c-primary);
+}
+
+.link-list svg {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--c-subtle);
+}
+
+.link-list a:hover svg {
+    color: var(--c-primary);
+}
+
+.link-list .link-arrow {
+    margin-left: auto;
+}
+
+/* ─── Host: copy rows ─────────────────────────────────────────────── */
+
+.copy-row {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
+}
+
+.copy-label {
+    color: var(--c-ink);
+    font-size: var(--fs-200);
+    font-weight: var(--fw-semibold);
+}
+
+.copy-value {
+    display: block;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-xs);
+    background: var(--c-surface-sunken);
+    color: var(--c-muted);
+    font-size: var(--fs-100);
+}
+
+/* ─── Case scenario ───────────────────────────────────────────────── */
+
+.scenario {
+    padding: var(--sp-4) var(--sp-5);
+    border-left: 3px solid var(--c-line-strong);
+    background: var(--c-well);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    color: var(--c-ink-2);
+    font-size: var(--fs-200);
+    line-height: var(--lh-relaxed);
+}
+
+/* ─── Step rail for multi-step cases ──────────────────────────────── */
+
+.step-rail {
+    display: flex;
+    gap: var(--sp-1);
+    margin-bottom: var(--sp-4);
+    list-style: none;
+    padding: 0;
+}
+
+.step-rail li {
+    flex: 1;
+    height: 0.25rem;
+    border-radius: var(--r-pill);
+    background: var(--c-surface-sunken);
+}
+
+.step-rail li.is-done {
+    background: var(--c-ok);
+}
+
+.step-rail li.is-current {
+    background: var(--c-primary);
+}
+
+/* ─── Quality rating row ──────────────────────────────────────────── */
+
+.quality-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-2);
+}
+
+.quality-row .button {
+    padding-inline: var(--sp-3);
+}
+
+@media (min-width: 30rem) {
+    .quality-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 45rem) {
+    .copy-row {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+    }
+
+    .copy-row .button {
+        grid-row: 1 / span 2;
+        grid-column: 2;
+    }
+}

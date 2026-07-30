@@ -1,0 +1,33 @@
+{
+  "roles": {
+    "social_worker": {
+      "id": "social_worker",
+      "name": "Социальный работник",
+      "description": "Для специалистов по социальной работе",
+      "categories": ["ethics", "forms_of_service", "documentation", "rights", "service_types", "communication", "quality", "mission"],
+      "question_count": 50
+    },
+    "junior_staff": {
+      "id": "junior_staff",
+      "name": "Младший персонал",
+      "description": "Для персонала, осуществляющего уход",
+      "categories": ["safety", "care_standards", "emergency", "mobility", "accessibility", "service_types"],
+      "question_count": 40
+    },
+    "manager": {
+      "id": "manager",
+      "name": "Руководитель",
+      "description": "Для директоров и руководителей отделений",
+      "categories": ["ethics", "forms_of_service", "spb_specific", "documentation", "quality", "mission"],
+      "question_count": 35
+    },
+    "all": {
+      "id": "all",
+      "name": "Все вопросы",
+      "description": "Полный банк вопросов без фильтрации",
+      "categories": ["ethics", "forms_of_service", "safety", "spb_specific", "documentation", "rights", "service_types", "emergency", "care_standards", "mobility", "accessibility", "communication", "quality", "mission"],
+      "question_count": 50
+    }
+  },
+  "default_role": "all"
+}

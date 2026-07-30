@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои сертификаты — GLM Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        /* User Info Card */
+        .user-card {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .user-info h2 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .user-info p {
+            color: var(--text-secondary);
+        }
+
+        .user-stats {
+            display: flex;
+            gap: 32px;
+            margin-left: auto;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Certificates Grid */
+        .certificates-section h3 {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .certificates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .certificate-card {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .certificate-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--success), var(--accent));
+        }
+
+        .certificate-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .cert-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .cert-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .cert-score {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 8px;
+        }
+
+        .cert-date {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .cert-code {
+            font-family: monospace;
+            font-size: 11px;
+            background: var(--bg-tertiary);
+            padding: 6px 10px;
+            border-radius: 4px;
+            color: var(--accent);
+            margin-bottom: 16px;
+            word-break: break-all;
+        }
+
+        .cert-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5558e6;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #252527;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .qr-display {
+            text-align: center;
+        }
+
+        #modal-qr-code {
+            margin: 20px auto;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .modal-code {
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--accent);
+            word-break: break-all;
+            margin-bottom: 8px;
+        }
+
+        /* Progress Badge */
+        .progress-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--success);
+            margin-bottom: 24px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+    <script src="/js/user.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🎓 Мои сертификаты</h1>
+                <p>Ваши достижения и квалификации</p>
+            </div>
+            <a href="/" class="back-link">← На главную</a>
+        </div>
+
+        <!-- User Info -->
+        <div class="user-card" id="user-card">
+            <div class="user-avatar" id="user-avatar">?</div>
+            <div class="user-info">
+                <h2 id="user-name">Загрузка...</h2>
+                <p id="user-org">-</p>
+            </div>
+            <div class="user-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-quizzes">0</div>
+                    <div class="stat-label">Викторин</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-certs">0</div>
+                    <div class="stat-label">Сертификатов</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress to next certificate -->
+        <div class="progress-badge hidden" id="next-cert-badge">
+            <span>📊 До следующего сертификата: наберите <strong id="next-cert-needed">90%</strong> в тесте</span>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Загрузка сертификатов...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state hidden" id="empty-state">
+            <div class="empty-icon">🎓</div>
+            <div class="empty-title">У вас пока нет сертификатов</div>
+            <div class="empty-text">
+                Сертификаты выдаются за прохождение тестов с результатом 90% и выше
+            </div>
+            <a href="/" class="btn btn-primary" style="text-decoration: none; display: inline-flex;">
+                Пройти тест
+            </a>
+        </div>
+
+        <!-- Certificates Grid -->
+        <div class="certificates-section hidden" id="certificates-section">
+            <h3>Полученные сертификаты</h3>
+            <div class="certificates-grid" id="certificates-grid">
+                <!-- Certificates will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div class="modal-overlay" id="qr-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeQRModal()">×</button>
+            <div class="qr-display">
+                <h3 style="margin-bottom: 16px;">QR-код для верификации</h3>
+                <canvas id="modal-qr-code"></canvas>
+                <div class="modal-code" id="modal-code"></div>
+                <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
+                    Отсканируйте код или перейдите по ссылке для проверки подлинности
+                </p>
+                <a id="verify-link" href="#" target="_blank" class="btn btn-secondary" style="text-decoration: none;">
+                    🔗 Открыть страницу верификации
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentUser = null;
+        let certificates = [];
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            currentUser = getCurrentUser();
+
+            if (!isLoggedIn()) {
+                window.location.href = '/register.html';
+                return;
+            }
+
+            await loadUserData();
+        });
+
+        async function loadUserData() {
+            try {
+                const userResponse = await authFetch(`${API_BASE}/users/${currentUser.id}`, { redirectOnUnauthorized: true });
+                const userData = await userResponse.json();
+
+                if (userData.user) {
+                    document.getElementById('user-name').textContent = userData.user.display_name || userData.user.username;
+                    document.getElementById('user-org').textContent = userData.user.organization || 'Социальное обслуживание';
+                    document.getElementById('user-avatar').textContent = (userData.user.display_name || userData.user.username).charAt(0).toUpperCase();
+                    document.getElementById('stat-quizzes').textContent = userData.user.quizzes_completed || 0;
+                }
+
+                // Load certificates
+                const certResponse = await authFetch(`${API_BASE}/certificates/user/${currentUser.id}`, { redirectOnUnauthorized: true });
+                const certData = await certResponse.json();
+
+                certificates = certData.certificates || [];
+                document.getElementById('stat-certs').textContent = certificates.length;
+
+                document.getElementById('loading').classList.add('hidden');
+
+                if (certificates.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    document.getElementById('next-cert-badge').classList.remove('hidden');
+                } else {
+                    document.getElementById('certificates-section').classList.remove('hidden');
+                    renderCertificates();
+                }
+
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: var(--error);">Ошибка загрузки данных</p>
+                    <button class="btn btn-secondary" onclick="location.reload()" style="margin-top: 16px;">Попробовать снова</button>
+                `;
+            }
+        }
+
+        function renderCertificates() {
+            const grid = document.getElementById('certificates-grid');
+            grid.innerHTML = '';
+
+            certificates.forEach((cert, index) => {
+                const date = new Date(cert.issue_date).toLocaleDateString('ru-RU', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const card = document.createElement('div');
+                card.className = 'certificate-card';
+                const escapedCertId = escapeHtml(cert.id);
+                const escapedCode = escapeHtml(cert.verification_code);
+                card.innerHTML = `
+                    <div class="cert-icon">🏆</div>
+                    <div class="cert-title">Сертификат #${index + 1}</div>
+                    <div class="cert-score">${(cert.percentage ?? 0).toFixed(1)}%</div>
+                    <div class="cert-date">Выдан: ${date}</div>
+                    <div class="cert-code">Код: ${escapedCode}</div>
+                    <div class="cert-actions">
+                        <button class="btn btn-primary" onclick="downloadCertificate('${escapedCertId}', '${escapedCode}')">
+                            💾 Скачать
+                        </button>
+                        <button class="btn btn-secondary" onclick="showQRCode('${escapedCode}')">
+                            🔍 QR
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function showQRCode(code) {
+            const modal = document.getElementById('qr-modal');
+            const canvas = document.getElementById('modal-qr-code');
+            const codeDisplay = document.getElementById('modal-code');
+            const verifyLink = document.getElementById('verify-link');
+
+            codeDisplay.textContent = code;
+            verifyLink.href = `/verify-certificate.html?code=${code}`;
+
+            // Check if QRCode library is loaded
+            if (typeof QRCode === 'undefined' || !QRCode.toCanvas) {
+                console.warn('QRCode library not loaded, using fallback');
+                canvas.style.display = 'none';
+                modal.classList.add('active');
+                return;
+            }
+
+            try {
+                QRCode.toCanvas(canvas, code, {
+                    width: 200,
+                    margin: 2,
+                    color: { dark: '#000000', light: '#ffffff' }
+                }, function(err) {
+                    if (err) {
+                        console.error('QR generation failed:', err);
+                        canvas.style.display = 'none';
+                    }
+                });
+            } catch(e) {
+                console.error('QR generation error:', e);
+                canvas.style.display = 'none';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeQRModal() {
+            document.getElementById('qr-modal').classList.remove('active');
+        }
+
+        async function downloadCertificate(certId, code) {
+            // Server-side HTML template has proper Cyrillic font support
+            window.open(`${API_BASE}/certificates/${certId}/download`, '_blank');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('qr-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'qr-modal') {
+                closeQRModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeQRModal();
+            }
+        });
+    </script>
+</body>
+</html>

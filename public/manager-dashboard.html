@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд руководителя — GLM Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --text-tertiary: #6b6b6b;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 { font-size: 28px; }
+        .nav-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .stat-value { font-size: 32px; font-weight: 600; }
+        .stat-label { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+        .grid { display: grid; gap: 20px; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .chart-container { height: 250px; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover { background: var(--bg-tertiary); }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-success { background: rgba(76, 175, 80, 0.2); color: var(--success); }
+        .badge-warning { background: rgba(255, 152, 0, 0.2); color: var(--warning); }
+        .badge-error { background: rgba(244, 67, 54, 0.2); color: var(--error); }
+        .weak-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .weak-area.critical { border-left: 3px solid var(--error); }
+        .weak-area.attention { border-left: 3px solid var(--warning); }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-secondary { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 Дашборд руководителя</h1>
+            <div style="display: flex; gap: 12px;">
+                <a href="/admin.html" class="nav-btn">Админка</a>
+                <a href="/" class="nav-btn">Викторина</a>
+            </div>
+        </header>
+
+        <!-- Overview Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-users">-</div>
+                <div class="stat-label">Пользователей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-quizzes">-</div>
+                <div class="stat-label">Викторин пройдено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-avg-score">-%</div>
+                <div class="stat-label">Средний балл</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-completion">-%</div>
+                <div class="stat-label">Завершили тест</div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <select id="period-filter" class="filter-select">
+                <option value="7">Последние 7 дней</option>
+                <option value="30">Последние 30 дней</option>
+                <option value="90">Последние 90 дней</option>
+                <option value="all">Всё время</option>
+            </select>
+            <select id="department-filter" class="filter-select">
+                <option value="">Все отделы</option>
+                <option value="ПНИ">ПНИ</option>
+                <option value="КЦСОН">КЦСОН</option>
+            </select>
+            <button class="btn btn-primary" onclick="exportReport()">📤 Экспорт отчёта</button>
+        </div>
+
+        <div class="grid grid-2">
+            <!-- Activity Chart -->
+            <div class="card">
+                <div class="card-title">📈 Активность за неделю</div>
+                <div class="chart-container">
+                    <canvas id="activity-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Category Performance -->
+            <div class="card">
+                <div class="card-title">📊 Результаты по категориям</div>
+                <div class="chart-container">
+                    <canvas id="category-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <!-- Weak Areas -->
+            <div class="card">
+                <div class="card-title">⚠️ Проблемные области</div>
+                <div id="weak-areas"></div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-title">🕐 Последние результаты</div>
+                <div id="recent-activity"></div>
+            </div>
+        </div>
+
+        <!-- Top Performers -->
+        <div class="card">
+            <div class="card-title">🏆 Топ сотрудников</div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Сотрудник</th>
+                        <th>Организация</th>
+                        <th>Баллов</th>
+                        <th>Викторин</th>
+                        <th>Ср. балл</th>
+                    </tr>
+                </thead>
+                <tbody id="top-performers"></tbody>
+            </table>
+        </div>
+
+        <!-- Department Competency -->
+        <div class="card" id="dept-card" style="display: none;">
+            <div class="card-title">🏢 Матрица компетенций отдела</div>
+            <div id="dept-message" style="display: none; color: var(--text-secondary); padding: 20px;"></div>
+            <div class="chart-container" id="dept-chart-container">
+                <canvas id="dept-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let activityChart = null;
+        let categoryChart = null;
+        let deptChart = null;
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const department = document.getElementById('department-filter').value;
+                const days = document.getElementById('period-filter').value;
+
+                const dateFrom = days !== 'all' ? new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
+
+                const params = new URLSearchParams();
+                if (department) params.append('department', department);
+                if (dateFrom) params.append('date_from', dateFrom);
+
+                const res = await fetch(`${API_BASE}/dashboard/manager?${params}`);
+                const data = await res.json();
+
+                renderStats(data.overview);
+                renderActivityChart(data.weekly_trend);
+                renderCategoryChart(data.category_performance);
+                renderWeakAreas(data.weak_areas);
+                renderRecentActivity(data.recent_activity);
+                renderTopPerformers(data.top_performers);
+
+                if (department) {
+                    document.getElementById('dept-card').style.display = 'block';
+                    renderDeptChart(department);
+                } else {
+                    document.getElementById('dept-card').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function renderStats(overview) {
+            document.getElementById('stat-users').textContent = overview.total_users || 0;
+            document.getElementById('stat-quizzes').textContent = overview.total_quizzes || 0;
+            document.getElementById('stat-avg-score').textContent = (overview.average_score || 0) + '%';
+            document.getElementById('stat-completion').textContent = overview.completion_rate + '%';
+        }
+
+        function renderActivityChart(data) {
+            const ctx = document.getElementById('activity-chart').getContext('2d');
+
+            if (activityChart) activityChart.destroy();
+
+            const labels = data.map(d => new Date(d.date).toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'short' }));
+            const quizzes = data.map(d => d.quiz_count);
+            const avgScores = data.map(d => d.avg_score.toFixed(1));
+
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Викторин',
+                        data: quizzes,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Средний балл',
+                        data: avgScores,
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#9fa0a0' } }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9fa0a0' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9fa0a0' } }
+                    }
+                }
+            });
+        }
+
+        function renderCategoryChart(data) {
+            const ctx = document.getElementById('category-chart').getContext('2d');
+
+            if (categoryChart) categoryChart.destroy();
+
+            const categoryNames = {
+                'ethics': 'Этика',
+                'forms_of_service': 'Формы обслуживания',
+                'safety': 'Безопасность',
+                'spb_specific': 'СПб специфика',
+                'documentation': 'Документация',
+                'rights': 'Права получателей'
+            };
+
+            categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => categoryNames[d.category] || d.category),
+                    datasets: [{
+                        label: 'Точность %',
+                        data: data.map(d => d.avg_accuracy.toFixed(1)),
+                        backgroundColor: data.map(d => {
+                            const acc = parseFloat(d.avg_accuracy);
+                            if (acc >= 70) return 'rgba(76, 175, 80, 0.7)';
+                            if (acc >= 40) return 'rgba(255, 152, 0, 0.7)';
+                            return 'rgba(244, 67, 54, 0.7)';
+                        }),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#9fa0a0' }
+                        },
+                        x: { grid: { display: false }, ticks: { color: '#9fa0a0' } }
+                    }
+                }
+            });
+        }
+
+        function renderWeakAreas(areas) {
+            const container = document.getElementById('weak-areas');
+
+            if (!areas || areas.length === 0) {
+                container.innerHTML = '<div class="empty-state">✅ Все категории в норме!</div>';
+                return;
+            }
+
+            container.innerHTML = areas.map(area => `
+                <div class="weak-area ${area.priority}">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${area.category}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            Точность: ${area.accuracy}%
+                        </div>
+                    </div>
+                    <span class="badge ${area.priority === 'critical' ? 'badge-error' : 'badge-warning'}">
+                        ${area.priority === 'critical' ? 'Критично' : 'Внимание'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderRecentActivity(activities) {
+            const container = document.getElementById('recent-activity');
+
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<div class="empty-state">Нет данных</div>';
+                return;
+            }
+
+            container.innerHTML = activities.slice(0, 10).map(activity => {
+                const percent = Math.round(activity.score / activity.total_questions * 100);
+                const badgeClass = percent >= 90 ? 'badge-success' : percent >= 70 ? 'badge-warning' : 'badge-error';
+
+                return `
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <div>${escapeHtml(activity.username) || 'Аноним'}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                ${new Date(activity.created_at).toLocaleString('ru')}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600;">${activity.score}/${activity.total_questions}</div>
+                            <span class="badge ${badgeClass}">${percent}%</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTopPerformers(performers) {
+            const tbody = document.getElementById('top-performers');
+
+            if (!performers || performers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Нет данных</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = performers.map((p, i) => {
+                const avgScore = p.quizzes_completed > 0 ? (p.total_score / p.quizzes_completed).toFixed(1) : '0';
+                return `
+                    <tr>
+                        <td><strong>${i + 1}</strong></td>
+                        <td>${escapeHtml(p.display_name || p.username)}</td>
+                        <td>${escapeHtml(p.organization) || '-'}</td>
+                        <td>${p.total_score}</td>
+                        <td>${p.quizzes_completed}</td>
+                        <td>${avgScore}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderDeptChart(department) {
+            fetch(`${API_BASE}/competency/department/${encodeURIComponent(department)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const ctx = document.getElementById('dept-chart').getContext('2d');
+                    if (deptChart) deptChart.destroy();
+
+                    const messageEl = document.getElementById('dept-message');
+                    const chartContainer = document.getElementById('dept-chart-container');
+
+                    if (!data.categories || data.categories.length === 0) {
+                        if (messageEl) {
+                            messageEl.textContent = 'Нет данных по отделу. Данные появятся после прохождения тестов.';
+                            messageEl.style.display = 'block';
+                        }
+                        if (chartContainer) chartContainer.style.display = 'none';
+                        return;
+                    }
+
+                    if (messageEl) messageEl.style.display = 'none';
+                    if (chartContainer) chartContainer.style.display = 'block';
+
+                    const labels = data.categories.map(c => c.category);
+                    const correctPct = data.categories.map(c => c.total_questions > 0 ? Math.round(c.total_correct / c.total_questions * 100) : 0);
+
+                    deptChart = new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: `${department} (${data.total_members} чел.)`,
+                                data: correctPct,
+                                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                                borderColor: '#6366f1',
+                                pointBackgroundColor: '#6366f1'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    ticks: { color: '#9fa0a0', backdropColor: 'transparent' },
+                                    grid: { color: 'rgba(255,255,255,0.1)' },
+                                    pointLabels: { color: '#9fa0a0', font: { size: 11 } }
+                                }
+                            },
+                            plugins: { legend: { labels: { color: '#fff' } } }
+                        }
+                    });
+                }).catch(err => console.error('Error loading dept chart:', err));
+        }
+
+        function exportReport() {
+            const data = {
+                generated_at: new Date().toISOString(),
+                period: document.getElementById('period-filter').value,
+                stats: {
+                    users: document.getElementById('stat-users').textContent,
+                    quizzes: document.getElementById('stat-quizzes').textContent,
+                    avg_score: document.getElementById('stat-avg-score').textContent
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        document.getElementById('period-filter').addEventListener('change', loadDashboard);
+        document.getElementById('department-filter').addEventListener('change', loadDashboard);
+
+        // Initial load
+        loadDashboard();
+    </script>
+</body>
+</html>

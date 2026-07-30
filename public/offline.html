@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оффлайн режим — Викторина</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --text-tertiary: #6b6b6b;
+            --accent: #4a4a4a;
+            --accent-hover: #5a5a5a;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .offline-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px 32px;
+            text-align: center;
+        }
+
+        .offline-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .offline-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .offline-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.8;
+        }
+
+        .offline-features {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 32px;
+            text-align: left;
+        }
+
+        .offline-feature {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .offline-feature.available {
+            border-color: #4caf50;
+        }
+
+        .offline-feature.unavailable {
+            border-color: #f44336;
+            opacity: 0.7;
+        }
+
+        .feature-icon {
+            font-size: 20px;
+        }
+
+        .feature-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .offline-actions {
+            display: grid;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--text-secondary);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-hover);
+        }
+
+        .connection-status {
+            margin-top: 24px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f44336;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.online {
+            background: #4caf50;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .saved-progress-info {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            border: 1px solid #4caf50;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .saved-progress-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .offline-card {
+                padding: 32px 24px;
+            }
+
+            .offline-icon {
+                font-size: 48px;
+            }
+
+            .offline-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-card">
+            <div class="offline-icon">📡</div>
+            <h1 class="offline-title">Нет подключения к интернету</h1>
+            <p class="offline-text">
+                Некоторые функции могут быть недоступны. Ваш прогресс сохранён локально и синхронизируется при восстановлении соединения.
+            </p>
+
+            <div class="offline-features">
+                <div class="offline-feature available">
+                    <span class="feature-icon">✅</span>
+                    <span class="feature-text">Просмотр сохранённых вопросов</span>
+                </div>
+                <div class="offline-feature available">
+                    <span class="feature-icon">✅</span>
+                    <span class="feature-text">Продолжение викторины</span>
+                </div>
+                <div class="offline-feature available">
+                    <span class="feature-icon">✅</span>
+                    <span class="feature-text">Сохранение прогресса</span>
+                </div>
+                <div class="offline-feature unavailable">
+                    <span class="feature-icon">❌</span>
+                    <span class="feature-text">Загрузка новых вопросов</span>
+                </div>
+                <div class="offline-feature unavailable">
+                    <span class="feature-icon">❌</span>
+                    <span class="feature-text">Отправка результатов на сервер</span>
+                </div>
+            </div>
+
+            <div class="offline-actions">
+                <a href="/" class="btn btn-primary">
+                    🔄 Проверить соединение
+                </a>
+                <a href="/status.html" class="btn btn-secondary">
+                    📊 Статус сервера
+                </a>
+                <button class="btn btn-secondary" onclick="if(typeof hardRefreshApp==='function')hardRefreshApp(); else location.reload(true);">
+                    🧹 Сбросить кэш приложения
+                </button>
+                <a href="/" class="btn btn-secondary">
+                    📝 Продолжить викторину
+                </a>
+            </div>
+
+            <div class="connection-status">
+                <div class="status-indicator">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Проверка соединения...</span>
+                </div>
+                <p class="status-text">
+                    Последняя проверка: <span id="last-check">--</span>
+                </p>
+
+                <div class="saved-progress-info" id="saved-progress" style="display: none;">
+                    <div class="saved-progress-icon">💾</div>
+                    <div>Найден сохранённый прогресс: <span id="progress-info">--</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check connection status
+        function checkConnection() {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const lastCheck = document.getElementById('last-check');
+
+            const isOnline = navigator.onLine;
+            const now = new Date();
+            lastCheck.textContent = now.toLocaleTimeString('ru-RU');
+
+            if (isOnline) {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Соединение восстановлено';
+                statusText.style.color = '#4caf50';
+
+                // Try to fetch from server
+                fetch('/api/health', { method: 'HEAD' })
+                    .then(() => {
+                        statusText.textContent = 'Сервер доступен';
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 1500);
+                    })
+                    .catch(() => {
+                        statusText.textContent = 'Соединение есть, но сервер недоступен';
+                    });
+            } else {
+                statusDot.classList.remove('online');
+                statusText.textContent = 'Нет соединения';
+                statusText.style.color = '#f44336';
+            }
+
+            // Check for saved progress
+            const savedProgress = localStorage.getItem('glm_quiz_progress');
+            if (savedProgress) {
+                try {
+                    const progress = JSON.parse(savedProgress);
+                    const savedProgressDiv = document.getElementById('saved-progress');
+                    const progressInfo = document.getElementById('progress-info');
+
+                    savedProgressDiv.style.display = 'block';
+                    progressInfo.textContent =
+                        `Вопрос ${progress.currentQuestion + 1} из ${progress.questions?.length || 50}`;
+                } catch (e) {
+                    console.error('Failed to parse saved progress:', e);
+                }
+            }
+        }
+
+        // Initial check
+        checkConnection();
+
+        // Listen for connection changes
+        window.addEventListener('online', () => {
+            checkConnection();
+        });
+
+        window.addEventListener('offline', () => {
+            checkConnection();
+        });
+
+        // Periodic check every 10 seconds
+        const connectionInterval = setInterval(checkConnection, 10000);
+        window.addEventListener('beforeunload', () => clearInterval(connectionInterval));
+    </script>
+</body>
+</html>

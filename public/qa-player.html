@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Q&A — участник</title>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <style>
+        body{margin:0;background:#0c0c0e;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:620px;margin:auto;padding:24px}.card{background:#141618;border:1px solid #ffffff1a;border-radius:16px;padding:18px;margin:14px 0}.hidden{display:none}input,textarea{width:100%;box-sizing:border-box;background:#1c1c1e;border:1px solid #ffffff26;border-radius:11px;color:#fff;padding:14px;font-size:16px}input{text-align:center;font-size:22px;letter-spacing:4px;text-transform:uppercase}textarea{min-height:100px;resize:vertical}.btn{width:100%;margin-top:10px;border:0;border-radius:10px;padding:13px;background:#6366f1;color:#fff;font-weight:700;cursor:pointer}.question{background:#141618;border:1px solid #ffffff1a;border-radius:13px;padding:15px;margin:11px 0}.question.highlight{border:2px solid #f59e0b}.row{display:flex;gap:12px;justify-content:space-between}.vote{border:0;border-radius:9px;background:#2a2a2e;color:#a5b4fc;padding:8px 11px;white-space:nowrap;cursor:pointer}.meta{color:#9fa0a0;font-size:14px}
+    </style>
+</head>
+<body>
+<main class="wrap">
+    <h1>💬 Вопросы спикеру</h1>
+    <p class="meta">Анонимно. После модерации вопрос увидит аудитория.</p>
+    <section class="card" id="join">
+        <input id="code" maxlength="6" placeholder="КОД" autocomplete="off">
+        <button class="btn" id="join-btn">Войти</button><p class="meta" id="join-status"></p>
+    </section>
+    <section class="card hidden" id="submit-card">
+        <label for="text">Ваш вопрос</label>
+        <textarea id="text" maxlength="200" placeholder="До 200 символов"></textarea>
+        <div class="meta"><span id="counter">0</span>/200</div>
+        <button class="btn" id="submit">Отправить на модерацию</button><p class="meta" id="status"></p>
+    </section>
+    <section id="questions" class="hidden"><h2>Вопросы зала</h2><div id="list"></div></section>
+    <p><a href="/">← Викторина</a></p>
+</main>
+<script>
+let ws,qaId=sessionStorage.getItem('qa_player_id'),playerToken=sessionStorage.getItem('qa_player_token');
+const $=id=>document.getElementById(id);
+function send(data){if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(data))}
+function join(){if(qaId)send({type:'qa_join',qa_id:qaId,player_token:playerToken||undefined})}
+function render(data){
+    $('list').replaceChildren();
+    (data.questions||[]).forEach(q=>{const box=document.createElement('article');box.className='question'+(q.highlighted?' highlight':'');const row=document.createElement('div');row.className='row';const text=document.createElement('div');text.textContent=q.text;const vote=document.createElement('button');vote.className='vote';vote.textContent=`▲ ${q.votes}`;vote.onclick=()=>send({type:'qa_upvote',qa_id:qaId,question_id:q.id});row.append(text,vote);box.append(row);$('list').append(box)});
+    $('questions').classList.remove('hidden');
+}
+function connect(){
+    ws=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}`);
+    ws.onopen=join;
+    ws.onmessage=event=>{const d=JSON.parse(event.data);
+        if(d.type==='qa_joined'){qaId=d.qa_id;playerToken=d.player_token;sessionStorage.setItem('qa_player_id',qaId);sessionStorage.setItem('qa_player_token',playerToken);$('join').classList.add('hidden');$('submit-card').classList.toggle('hidden',!!d.closed)}
+        if(d.type==='qa_state'){render(d);if(d.closed)$('submit-card').classList.add('hidden')}
+        if(d.type==='qa_submit_ack'){$('text').value='';$('counter').textContent='0';$('status').textContent='Вопрос отправлен ведущему'}
+        if(d.type==='qa_upvote_ack'&&d.already_voted)$('status').textContent='Вы уже поддержали этот вопрос';
+        if(d.type==='qa_closed'){$('submit-card').classList.add('hidden');$('status').textContent='Сессия завершена';sessionStorage.removeItem('qa_player_id')}
+        if(d.type==='error'){const target=d.code==='qa_not_found'?'join-status':'status';$(target).textContent=d.message;if(d.code==='qa_not_found'){$('join').classList.remove('hidden');sessionStorage.removeItem('qa_player_id');qaId=null}}
+    };
+    ws.onclose=()=>setTimeout(connect,2000);
+}
+$('join-btn').onclick=()=>{const value=$('code').value.trim().toUpperCase();if(value!==qaId){playerToken=null;sessionStorage.removeItem('qa_player_token')}qaId=value;join()};
+$('text').oninput=event=>$('counter').textContent=event.target.value.length;
+$('submit').onclick=()=>{const text=$('text').value.trim();if(text)send({type:'qa_submit',qa_id:qaId,text})};
+if(qaId)$('code').value=qaId;connect();
+</script>
+</body>
+</html>

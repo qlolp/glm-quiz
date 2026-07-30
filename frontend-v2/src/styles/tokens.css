@@ -1,0 +1,180 @@
+/*
+ * GLM Quiz V2 — design tokens.
+ * Posture: neutral-led, restrained accent, shallow bounded elevation.
+ * Contrast targets verified against --c-surface for WCAG 2.2 AA (4.5:1 body,
+ * 3:1 large text and non-text indicators).
+ */
+
+:root {
+    color-scheme: light;
+
+    /* Surfaces: warm neutral paper, cool navy ink. */
+    --c-canvas: #f4f3ef;
+    --c-canvas-edge: #eae8e1;
+    --c-surface: #fdfcfa;
+    --c-surface-sunken: #efede6;
+    --c-surface-raised: #ffffff;
+    --c-well: #f0efe9;
+
+    /* Ink. All ratios below are against --c-surface. */
+    --c-ink: #1a2230;          /* 15.7:1 */
+    --c-ink-2: #33404f;        /* 10.2:1 */
+    --c-muted: #56616f;        /* 6.1:1  */
+    --c-subtle: #68727f;       /* 4.8:1  */
+
+    /* Hairlines. Non-text contrast only. */
+    --c-line: #ddd9cf;
+    --c-line-strong: #c6c1b4;
+    --c-line-ink: rgb(26 34 48 / 12%);
+
+    /* Primary: deep institutional navy. 8.6:1 against white text. */
+    --c-primary: #1f4d78;
+    --c-primary-hover: #1a4267;
+    --c-primary-active: #163856;
+    --c-primary-on: #ffffff;
+    --c-primary-tint: #e9eef4;
+    --c-primary-tint-strong: #d7e2ec;
+
+    /* Accent: restrained clay. Editorial marks and eyebrows only. 5.5:1. */
+    --c-accent: #9c5236;
+    --c-accent-tint: #f4ebe6;
+
+    /* Semantic, muted rather than saturated. */
+    --c-ok: #1c6b47;           /* 6.3:1 */
+    --c-ok-tint: #e8f1ec;
+    --c-ok-line: #a9cbba;
+    --c-warn: #8a5a11;         /* 5.8:1 */
+    --c-warn-tint: #f8f0e1;
+    --c-warn-line: #d9c08a;
+    --c-err: #9b2c2c;          /* 7.3:1 */
+    --c-err-tint: #f7ecec;
+    --c-err-line: #d9adad;
+
+    /* Focus. 3px navy at 3px offset reads 7.8:1 against the canvas. */
+    --c-focus: #1f4d78;
+    --focus-ring: 3px solid var(--c-focus);
+    --focus-offset: 3px;
+
+    /* Typography. Serif display for editorial authority, system sans for UI.
+       Both stacks are network-free and cover Cyrillic on every target OS. */
+    --font-display: "PT Serif", Georgia, "Times New Roman", serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-num: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+    /* Type scale. Never below 15px; small sizes never shrink on mobile. */
+    --fs-100: 0.9375rem;
+    --fs-200: 1rem;
+    --fs-300: 1.0625rem;
+    --fs-400: 1.1875rem;
+    --fs-500: clamp(1.3125rem, 1.19rem + 0.63vw, 1.5rem);
+    --fs-600: clamp(1.5rem, 1.29rem + 1.06vw, 2rem);
+    --fs-700: clamp(1.875rem, 1.55rem + 1.6vw, 2.75rem);
+
+    --lh-tight: 1.18;
+    --lh-snug: 1.32;
+    --lh-body: 1.6;
+    --lh-relaxed: 1.7;
+    --tracking-eyebrow: 0.09em;
+    --tracking-display: -0.015em;
+
+    /* Weights kept moderate: authority comes from scale, not heaviness. */
+    --fw-body: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-display: 600;
+
+    /* Spacing, 4px base. */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.25rem;
+    --sp-6: 1.5rem;
+    --sp-7: 2rem;
+    --sp-8: 2.5rem;
+    --sp-9: 3rem;
+    --sp-10: 4rem;
+
+    /* Radius: moderate, calm modernity without softness drift. */
+    --r-xs: 0.25rem;
+    --r-sm: 0.5rem;
+    --r-md: 0.75rem;
+    --r-lg: 1rem;
+    --r-xl: 1.25rem;
+    --r-pill: 999px;
+
+    /* Elevation: three bounded strata over a flat baseline. */
+    --e-0: none;
+    --e-1: 0 1px 2px rgb(26 34 48 / 5%);
+    --e-2: 0 2px 6px rgb(26 34 48 / 6%), 0 1px 2px rgb(26 34 48 / 4%);
+    --e-3: 0 16px 40px rgb(26 34 48 / 12%), 0 2px 8px rgb(26 34 48 / 6%);
+
+    /* Motion. */
+    --t-fast: 140ms;
+    --t-base: 200ms;
+    --t-slow: 280ms;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Layout. */
+    --tap-min: 2.75rem;
+    --content: 44rem;
+    --content-wide: 60rem;
+    --topbar-h: 3.5rem;
+    --navbar-h: 4rem;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+
+    --z-sticky: 20;
+    --z-nav: 30;
+    --z-overlay: 200;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+
+        --c-canvas: #14181f;
+        --c-canvas-edge: #1c2230;
+        --c-surface: #1b212b;
+        --c-surface-sunken: #151a22;
+        --c-surface-raised: #212936;
+        --c-well: #232b38;
+
+        --c-ink: #eef0f3;
+        --c-ink-2: #d3d8e0;
+        --c-muted: #a8b1bf;
+        --c-subtle: #939dac;
+
+        --c-line: #2f3846;
+        --c-line-strong: #3d4757;
+        --c-line-ink: rgb(238 240 243 / 14%);
+
+        /* Lightened so text on tinted surfaces keeps AA in dark mode. */
+        --c-primary: #8fb6dc;
+        --c-primary-hover: #a5c6e6;
+        --c-primary-active: #b8d2ec;
+        --c-primary-on: #10202f;
+        --c-primary-tint: #223143;
+        --c-primary-tint-strong: #2b3d52;
+
+        --c-accent: #d99a7c;
+        --c-accent-tint: #33261f;
+
+        --c-ok: #7fc9a3;
+        --c-ok-tint: #1c2d26;
+        --c-ok-line: #35604c;
+        --c-warn: #dfb173;
+        --c-warn-tint: #2e2618;
+        --c-warn-line: #5d4b2a;
+        --c-err: #e79b9b;
+        --c-err-tint: #2f2022;
+        --c-err-line: #613a3c;
+
+        --c-focus: #a5c6e6;
+
+        --e-1: 0 1px 2px rgb(0 0 0 / 30%);
+        --e-2: 0 2px 6px rgb(0 0 0 / 34%), 0 1px 2px rgb(0 0 0 / 24%);
+        --e-3: 0 16px 40px rgb(0 0 0 / 48%), 0 2px 8px rgb(0 0 0 / 30%);
+    }
+}

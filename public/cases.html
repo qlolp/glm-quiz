@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кейсы — Викторина</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 { font-size: 24px; }
+        .back-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .case-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .case-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .case-icon { font-size: 36px; margin-bottom: 12px; }
+        .case-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .case-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px; }
+        .case-meta { display: flex; gap: 8px; }
+        .case-tag {
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .case-tag.difficulty-hard { background: rgba(244, 67, 54, 0.15); color: #ef9a9a; }
+        .case-tag.difficulty-medium { background: rgba(255, 152, 0, 0.15); color: #ffcc80; }
+        .case-tag.difficulty-easy { background: rgba(76, 175, 80, 0.15); color: #a5d6a7; }
+        .case-view { display: none; }
+        .case-view.active { display: block; }
+        .scenario {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            margin-bottom: 24px;
+            line-height: 1.7;
+            border-radius: 0 12px 12px 0;
+            font-size: 15px;
+        }
+        .progress-bar { display: flex; gap: 6px; margin-bottom: 24px; }
+        .progress-dot {
+            flex: 1; height: 4px; border-radius: 2px;
+            background: var(--bg-tertiary); transition: background 0.3s;
+        }
+        .progress-dot.done { background: var(--success); }
+        .progress-dot.active { background: var(--accent); }
+        .step-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .step-number {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; background: var(--accent); border-radius: 50%;
+            font-weight: 700; font-size: 16px; flex-shrink: 0;
+        }
+        .step-label { font-size: 14px; color: var(--text-secondary); }
+        .step-question { font-size: 17px; font-weight: 500; line-height: 1.5; margin-bottom: 20px; }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .option {
+            padding: 14px 18px; background: var(--bg-tertiary);
+            border: 2px solid var(--border); border-radius: 12px;
+            cursor: pointer; transition: all 0.15s; font-size: 15px; line-height: 1.4;
+        }
+        .option:hover:not(.disabled) { border-color: var(--accent); background: rgba(99, 102, 241, 0.08); }
+        .option.disabled { cursor: default; }
+        .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.12); }
+        .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.12); }
+        .explanation {
+            margin-top: 20px; padding: 16px; border-radius: 12px;
+            font-size: 14px; line-height: 1.6; display: none;
+        }
+        .explanation.show { display: block; }
+        .explanation.correct-bg { background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); }
+        .explanation.wrong-bg { background: rgba(244, 67, 54, 0.1); border: 1px solid rgba(244, 67, 54, 0.3); }
+        .explanation-title { font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+        .explanation-text { color: var(--text-secondary); }
+        .next-btn {
+            display: none; width: 100%; padding: 14px; background: var(--accent);
+            border: none; border-radius: 12px; color: white; font-size: 16px;
+            font-weight: 600; cursor: pointer; margin-top: 20px;
+        }
+        .final-screen { text-align: center; padding: 60px 20px; }
+        .final-icon { font-size: 64px; margin-bottom: 16px; }
+        .final-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+        .final-score { font-size: 48px; font-weight: 800; color: var(--accent); margin: 20px 0; }
+        .final-text { font-size: 16px; color: var(--text-secondary); margin-bottom: 32px; line-height: 1.5; }
+        .final-btn {
+            padding: 14px 32px; background: var(--accent); border: none;
+            border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer;
+        }
+        .loading { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        .bottom-nav {
+            display: flex; justify-content: space-around; align-items: center;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--bg-secondary); border-top: 1px solid var(--border);
+            padding: 8px 0 max(8px, env(safe-area-inset-bottom)); z-index: 100;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            text-decoration: none; color: var(--text-secondary);
+            padding: 8px 16px; border-radius: 12px;
+        }
+        .nav-item:hover, .nav-item.active { color: var(--text-primary); background: var(--bg-tertiary); }
+        .nav-icon { font-size: 24px; line-height: 1; }
+        .nav-label { font-size: 11px; margin-top: 4px; }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+    <script src="/js/user.js"></script>
+    <script src="/js/event-delegation.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🔍 Кейсы</h1>
+            <a href="/" class="back-btn">← Викторина</a>
+        </header>
+        <div id="cases-list"></div>
+        <div id="case-view" class="case-view">
+            <button class="back-btn" data-action="backToList" style="margin-bottom: 16px;">← К списку кейсов</button>
+            <h2 id="case-title" style="font-size: 22px; margin-bottom: 8px;"></h2>
+            <p id="case-desc" style="color: var(--text-secondary); margin-bottom: 16px; font-size: 14px;"></p>
+            <div class="scenario" id="case-scenario"></div>
+            <div class="progress-bar" id="progress-bar"></div>
+            <div id="steps-container"></div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item"><span class="nav-icon">📝</span><span class="nav-label">Викторина</span></a>
+        <a href="/guide/user" class="nav-item"><span class="nav-icon">📘</span><span class="nav-label">Инструкция</span></a>
+        <a href="/cases.html" class="nav-item active"><span class="nav-icon">🔍</span><span class="nav-label">Кейсы</span></a>
+        <a href="/gamification.html" class="nav-item"><span class="nav-icon">🏆</span><span class="nav-label">Достижения</span></a>
+        <a href="/my-certificates.html" class="nav-item"><span class="nav-icon">🎓</span><span class="nav-label">Сертификаты</span></a>
+    </nav>
+
+    <script>
+        const API_BASE = '/api';
+        let caseData = null;
+        let steps = [];
+        let stepsByNumber = {};
+        let currentStepNumber = 1;
+        let correctCount = 0;
+        let answeredSteps = 0;
+        let pendingNextStep = null;
+        let isFinished = false;
+
+        const icons = { ethical: '⚖️', conflict: '💬', safety: '🛡️', emergency: '🚨', quality: '⭐', general: '📋' };
+        const diffLabels = { easy: 'Легко', medium: 'Средне', hard: 'Сложно' };
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        async function ensureCaseUser() {
+            if (typeof ensureUserExists === 'function') {
+                await ensureUserExists();
+            } else if (typeof getAuthToken === 'function' && !getAuthToken()) {
+                await authFetch(`${API_BASE}/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'guest_' + Date.now() })
+                });
+            }
+        }
+
+        async function loadCases() {
+            const el = document.getElementById('cases-list');
+            el.innerHTML = '<div class="loading">Загрузка...</div>';
+            try {
+                const res = await fetch(`${API_BASE}/cases`);
+                const data = await res.json();
+                const cases = data.cases || [];
+                if (cases.length === 0) {
+                    el.innerHTML = '<div class="loading">Кейсов пока нет</div>';
+                    return;
+                }
+                el.innerHTML = cases.map(c => `
+                    <div class="case-card" data-action="openCase" data-arg="${c.id}">
+                        <div class="case-icon">${icons[c.category] || '📋'}</div>
+                        <div class="case-title">${escapeHtml(c.title)}</div>
+                        <div class="case-desc">${escapeHtml(c.description)}</div>
+                        <div class="case-meta">
+                            <span class="case-tag difficulty-${escapeHtml(c.difficulty)}">${escapeHtml(diffLabels[c.difficulty] || c.difficulty)}</span>
+                            <span class="case-tag">${escapeHtml(c.steps_count)} шагов</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                el.innerHTML = '<div class="loading">Ошибка загрузки кейсов</div>';
+            }
+        }
+
+        async function openCase(id) {
+            try {
+                const res = await fetch(`${API_BASE}/cases/${id}`);
+                const data = await res.json();
+                caseData = data.case;
+                steps = data.steps || [];
+                stepsByNumber = {};
+                steps.forEach(s => { stepsByNumber[s.step_number] = s; });
+                currentStepNumber = steps[0]?.step_number || 1;
+                correctCount = 0;
+                answeredSteps = 0;
+                pendingNextStep = null;
+                isFinished = false;
+
+                document.getElementById('cases-list').style.display = 'none';
+                document.getElementById('case-view').classList.add('active');
+                document.getElementById('case-title').textContent = caseData.title;
+                document.getElementById('case-desc').textContent = caseData.description;
+                document.getElementById('case-scenario').textContent = caseData.scenario;
+
+                renderProgress();
+                renderStep();
+            } catch (error) {
+                console.error('Error loading case:', error);
+            }
+        }
+
+        function renderProgress() {
+            const bar = document.getElementById('progress-bar');
+            bar.innerHTML = steps.map((s) => {
+                let cls = 'progress-dot';
+                if (s.step_number < currentStepNumber || isFinished) cls += ' done';
+                else if (s.step_number === currentStepNumber) cls += ' active';
+                return `<div class="${cls}"></div>`;
+            }).join('');
+        }
+
+        function renderStep() {
+            const container = document.getElementById('steps-container');
+            if (isFinished) {
+                const total = Math.max(answeredSteps, steps.length);
+                const pct = Math.round((correctCount / total) * 100);
+                const msg = pct === 100 ? 'Идеальный результат!' : pct >= 50 ? 'Хороший разбор ситуации' : 'Есть над чем поработать';
+                container.innerHTML = `
+                    <div class="final-screen">
+                        <div class="final-icon">🎉</div>
+                        <div class="final-title">Кейс завершён!</div>
+                        <div class="final-score">${correctCount}/${total}</div>
+                        <div class="final-text">${msg}</div>
+                        <button class="final-btn" data-action="backToList">К списку кейсов</button>
+                    </div>
+                `;
+                saveProgress();
+                return;
+            }
+
+            const step = stepsByNumber[currentStepNumber];
+            if (!step) {
+                isFinished = true;
+                renderStep();
+                return;
+            }
+            const letters = ['А', 'Б', 'В', 'Г'];
+            container.innerHTML = `
+                <div class="step-card">
+                    <div class="step-header">
+                        <span class="step-number">${currentStepNumber}</span>
+                        <span class="step-label">Шаг ${currentStepNumber} из ${steps.length}</span>
+                    </div>
+                    <div class="step-question">${escapeHtml(step.question)}</div>
+                    <div class="options">
+                        ${step.options.map((opt, i) => `
+                            <div class="option" data-action="selectAnswer" data-arg="${i}" data-index="${i}">
+                                <strong>${letters[i]}.</strong> ${escapeHtml(opt)}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation"></div>
+                    <button class="next-btn" id="next-btn" data-action="nextStep">Далее →</button>
+                </div>
+            `;
+        }
+
+        async function selectAnswer(index) {
+            if (!caseData) return;
+            await ensureCaseUser();
+            try {
+                const res = await authFetch(`${API_BASE}/cases/${caseData.id}/check-step`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    redirectOnUnauthorized: false,
+                    body: JSON.stringify({ step_number: currentStepNumber, answer: index })
+                });
+                if (!res.ok) throw new Error('check failed');
+                const result = await res.json();
+                answeredSteps++;
+                if (result.correct) correctCount++;
+
+                document.querySelectorAll('.option').forEach((opt, i) => {
+                    opt.classList.add('disabled');
+                    opt.removeAttribute('data-action');
+                    if (i === result.correctIndex) opt.classList.add('correct');
+                    else if (i === index && !result.correct) opt.classList.add('wrong');
+                });
+
+                const exp = document.getElementById('explanation');
+                exp.className = 'explanation show ' + (result.correct ? 'correct-bg' : 'wrong-bg');
+                exp.innerHTML = `
+                    <div class="explanation-title">${result.correct ? '✅ Правильно!' : '❌ Неверно'}</div>
+                    <div class="explanation-text">${escapeHtml(result.explanation || '')}</div>
+                `;
+
+                pendingNextStep = result.finished ? null : result.next_step;
+                isFinished = !!result.finished;
+                const nextBtn = document.getElementById('next-btn');
+                nextBtn.style.display = 'block';
+                nextBtn.textContent = isFinished ? 'Завершить кейс' : 'Следующий шаг →';
+                renderProgress();
+            } catch (e) {
+                alert('Не удалось проверить ответ. Проверьте соединение и войдите как гость.');
+            }
+        }
+
+        function nextStep() {
+            if (isFinished || pendingNextStep === null) {
+                isFinished = true;
+                renderProgress();
+                renderStep();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+            currentStepNumber = pendingNextStep;
+            pendingNextStep = null;
+            renderProgress();
+            renderStep();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function saveProgress() {
+            try {
+                if (typeof isLoggedIn === 'function' && !isLoggedIn()) return;
+                authFetch(`${API_BASE}/cases/${caseData.id}/progress`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    redirectOnUnauthorized: false,
+                    body: JSON.stringify({ score: correctCount, completed: true })
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        function backToList() {
+            document.getElementById('case-view').classList.remove('active');
+            document.getElementById('cases-list').style.display = '';
+            document.getElementById('steps-container').innerHTML = '';
+            caseData = null;
+            steps = [];
+            currentStepNumber = 1;
+            correctCount = 0;
+            loadCases();
+        }
+
+        loadCases();
+    </script>
+</body>
+</html>

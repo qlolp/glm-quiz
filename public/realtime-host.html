@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kahoot-режим — Хост</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .header h1 { font-size: 28px; }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .game-code {
+            font-size: 64px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 8px;
+            margin: 32px 0;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .players-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .player {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        .player-score { font-size: 24px; font-weight: 600; color: var(--accent); }
+        .question-screen { display: none; }
+        .question-screen.active { display: block; }
+        .question-text {
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin: 32px 0;
+        }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .option {
+            padding: 24px;
+            background: var(--bg-tertiary);
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.1); }
+        .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.1); }
+        .timer {
+            font-size: 48px;
+            font-weight: 700;
+            text-align: center;
+            margin: 24px 0;
+        }
+        .answer-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .answer-stat {
+            text-align: center;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        .answer-stat-label { font-size: 12px; color: var(--text-secondary); }
+        .answer-stat-value { font-size: 32px; font-weight: 600; }
+        .leaderboard { display: none; }
+        .leaderboard.active { display: block; }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .leaderboard-item.winner { background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 193, 7, 0.1)); border: 2px solid gold; }
+        .btn {
+            padding: 16px 48px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .hidden { display: none !important; }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Kahoot-режим</h1>
+            <a href="/" class="btn btn-secondary">← Выход</a>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div class="card" id="lobby-screen">
+            <h2 style="text-align: center; margin-bottom: 16px;">Ожидание игроков</h2>
+            <div style="max-width:460px;margin:0 auto 16px;padding:14px;background:var(--bg-tertiary);border-radius:10px;">
+                <label for="scoring-mode" style="display:block;font-weight:600;margin-bottom:8px;">Режим начисления очков</label>
+                <select id="scoring-mode" style="width:100%;padding:10px;border-radius:8px;background:var(--bg-secondary);color:#fff;border:1px solid var(--border);">
+                    <option value="classic">Классический — скорость + точность</option>
+                    <option value="accuracy">Точность — 1000 за верный ответ</option>
+                </select>
+                <div id="mode-label" style="margin-top:8px;color:var(--text-secondary);font-size:14px;">Режим: классический</div>
+                <button class="btn btn-primary" id="create-room-btn" style="width:100%;margin-top:12px;padding:12px;">Создать комнату</button>
+            </div>
+            <div class="game-code" id="game-code">...</div>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 14px;">
+                Игроки могут присоединиться по этому коду
+            </p>
+            <div class="players-list" id="players-list"></div>
+            <div style="text-align: center; margin-top: 32px;">
+                <button class="btn btn-primary" id="start-game-btn" onclick="startGame()" disabled>▶️ Начать игру</button>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div class="question-screen" id="question-screen">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                <div style="font-size: 18px; color: var(--text-secondary);">
+                    Вопрос <span id="question-number">1</span> из <span id="total-questions">10</span>
+                </div>
+                <div class="timer" id="timer" style="font-size: 32px; margin: 0;">30</div>
+            </div>
+            <div class="question-text" id="question-text">Вопрос</div>
+            <div class="options" id="options"></div>
+            <div class="answer-stats hidden" id="answer-stats"></div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div class="card leaderboard" id="leaderboard-screen">
+            <h2 style="text-align: center; margin-bottom: 24px;">🏆 Текущий рейтинг</h2>
+            <div id="team-leaderboard" style="margin-bottom: 20px;"></div>
+            <div id="leaderboard-list"></div>
+            <div id="hard-questions" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- Final Results -->
+        <div class="card hidden" id="results-screen">
+            <h2 style="text-align: center; margin-bottom: 24px;">🎉 Итоговые результаты</h2>
+            <div id="final-team-results" style="margin-bottom: 20px;"></div>
+            <div id="final-results"></div>
+            <div id="final-hard-questions" style="margin-top: 20px;"></div>
+            <div style="text-align: center; margin-top: 32px;">
+                <button class="btn btn-primary" onclick="location.reload()">Новая игра</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let gameId = null;
+        let players = [];
+        let reconnectAttempts = 0;
+        let isReconnecting = false;
+        let timerInterval = null;
+
+        function getHostId() {
+            let hostId = localStorage.getItem('glm_host_id');
+            if (!hostId) {
+                hostId = 'host_' + Date.now();
+                localStorage.setItem('glm_host_id', hostId);
+            }
+            return hostId;
+        }
+
+        function connect() {
+            if (ws) {
+                try { ws.close(); } catch (e) {}
+            }
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+            ws.onopen = () => {
+                reconnectAttempts = 0;
+                isReconnecting = false;
+                hideReconnecting();
+                const savedGameId = localStorage.getItem('glm_host_game_id');
+
+                if (savedGameId) {
+                    // Пытаемся восстановить подключение к существующей игре
+                    ws.send(JSON.stringify({
+                        type: 'reconnect_host',
+                        game_id: savedGameId,
+                        host_id: getHostId(),
+                        reconnect_token: localStorage.getItem('glm_host_reconnect_token')
+                    }));
+                } else {
+                    document.getElementById('game-code').textContent = 'ГОТОВО';
+                }
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {}
+            };
+
+            ws.onerror = (e) => {
+                console.error('WebSocket error:', e);
+                if (!isReconnecting) handleDisconnect();
+            };
+
+            ws.onclose = () => {
+                if (!isReconnecting) handleDisconnect();
+            };
+        }
+
+        function handleDisconnect() {
+            if (isReconnecting) return;
+            if (!document.getElementById('results-screen').classList.contains('hidden')) {
+                return;
+            }
+            if (reconnectAttempts >= 5) {
+                localStorage.removeItem('glm_host_game_id');
+                showBanner('Потеряно соединение. Перезагрузите страницу.', 'error');
+                return;
+            }
+            isReconnecting = true;
+            reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            showReconnecting();
+            setTimeout(() => {
+                isReconnecting = false;
+                connect();
+            }, delay);
+        }
+
+        function showReconnecting() {
+            let indicator = document.getElementById('reconnect-indicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'reconnect-indicator';
+                indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(255,152,0,0.9);color:white;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:600;z-index:1000;';
+                document.body.appendChild(indicator);
+            }
+            indicator.textContent = `🔄 Переподключение хоста... (${reconnectAttempts}/5)`;
+        }
+
+        function hideReconnecting() {
+            const indicator = document.getElementById('reconnect-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        function showBanner(message, type = 'info') {
+            const banner = document.createElement('div');
+            const bg = type === 'error' ? 'rgba(244,67,54,0.95)' : 'rgba(33,150,243,0.95)';
+            banner.style.cssText = `position:fixed;top:60px;left:50%;transform:translateX(-50%);background:${bg};color:white;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.3);`;
+            banner.textContent = message;
+            document.body.appendChild(banner);
+            setTimeout(() => {
+                banner.style.opacity = '0';
+                banner.style.transition = 'opacity 0.3s';
+                setTimeout(() => banner.remove(), 300);
+            }, 4000);
+        }
+
+        function createGame() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({
+                type: 'create_game',
+                host_id: getHostId(),
+                scoring: document.getElementById('scoring-mode').value
+            }));
+        }
+
+        function handleMessage(data) {
+            switch (data.type) {
+                case 'game_created':
+                    gameId = data.game_id;
+                    localStorage.setItem('glm_host_game_id', gameId);
+                    localStorage.setItem('glm_host_reconnect_token', data.reconnect_token);
+                    document.getElementById('game-code').textContent = gameId;
+                    setScoringMode(data.scoring);
+                    document.getElementById('create-room-btn').classList.add('hidden');
+                    document.getElementById('start-game-btn').disabled = false;
+                    hideReconnecting();
+                    break;
+
+                case 'host_reconnected':
+                    gameId = data.game_id;
+                    document.getElementById('game-code').textContent = gameId;
+                    setScoringMode(data.scoring);
+                    document.getElementById('create-room-btn').classList.add('hidden');
+                    document.getElementById('start-game-btn').disabled = false;
+
+                    // Убираем индикатор reconnect
+                    const indicator = document.getElementById('reconnect-indicator');
+                    if (indicator) indicator.remove();
+
+                    // Восстанавливаем состояние
+                    restoreHostState(data);
+                    break;
+
+                case 'player_joined':
+                    // Avoid duplicates if reconnect updates the list
+                    if (!players.find(p => p.name === data.player.name)) {
+                        players.push(data.player);
+                    }
+                    updatePlayersList();
+                    break;
+
+                case 'player_left':
+                    // Keep players visible but update count; optionally mark disconnected
+                    updatePlayersList();
+                    break;
+
+                case 'game_starting':
+                    document.getElementById('lobby-screen').classList.add('hidden');
+                    document.getElementById('question-screen').classList.add('active');
+                    document.getElementById('total-questions').textContent = data.question_count;
+                    break;
+
+                case 'new_question':
+                    showQuestion(data);
+                    break;
+
+                case 'answer_reveal':
+                    showAnswerReveal(data);
+                    break;
+
+                case 'game_ended':
+                    showFinalResults(data);
+                    localStorage.removeItem('glm_host_game_id'); // Очищаем при окончании
+                    localStorage.removeItem('glm_host_reconnect_token');
+                    break;
+
+                case 'error':
+                    showBanner(data.message, 'error');
+                    if (data.message.includes('not found') || data.message.includes('expired')) {
+                        localStorage.removeItem('glm_host_game_id');
+                    }
+                    break;
+            }
+        }
+
+        function restoreHostState(data) {
+            // Восстанавливаем экран в зависимости от состояния игры
+            if (data.state === 'waiting') {
+                document.getElementById('lobby-screen').classList.remove('hidden');
+                document.getElementById('question-screen').classList.remove('active');
+                document.getElementById('leaderboard-screen').classList.remove('active');
+                document.getElementById('results-screen').classList.add('hidden');
+            } else if (data.state === 'active') {
+                document.getElementById('lobby-screen').classList.add('hidden');
+                document.getElementById('question-screen').classList.add('active');
+            } else if (data.state === 'finished') {
+                document.getElementById('lobby-screen').classList.add('hidden');
+                document.getElementById('question-screen').classList.remove('active');
+                document.getElementById('leaderboard-screen').classList.remove('active');
+                document.getElementById('results-screen').classList.remove('hidden');
+            }
+
+            // Восстанавливаем список игроков
+            if (data.players) {
+                players = data.players;
+                updatePlayersList();
+            }
+        }
+
+        function setScoringMode(mode) {
+            const scoring = mode === 'accuracy' ? 'accuracy' : 'classic';
+            const select = document.getElementById('scoring-mode');
+            select.value = scoring;
+            select.disabled = !!gameId;
+            document.getElementById('mode-label').textContent = scoring === 'accuracy'
+                ? 'Режим: точность (без бонуса за скорость)'
+                : 'Режим: классический (с бонусом за скорость)';
+        }
+
+        function updatePlayersList() {
+            const list = document.getElementById('players-list');
+            list.innerHTML = players.map(p => `
+                <div class="player">
+                    <span>${p.name}</span>
+                    <span class="player-score" style="font-size: 16px;">👤</span>
+                </div>
+            `).join('');
+        }
+
+        function startGame() {
+            if (players.length === 0) {
+                showBanner('Подождите подключения игроков!', 'error');
+                return;
+            }
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                showBanner('Нет соединения с сервером', 'error');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'start_game',
+                game_id: gameId
+            }));
+        }
+
+        function showQuestion(data) {
+            document.getElementById('leaderboard-screen').classList.remove('active');
+            document.getElementById('question-screen').classList.add('active');
+            document.getElementById('question-number').textContent = data.question_number;
+            document.getElementById('question-text').textContent = data.question.text;
+
+            const letters = ['А', 'Б', 'В', 'Г'];
+            document.getElementById('options').innerHTML = data.question.options.map((opt, i) => `
+                <div class="option" id="option-${i}">
+                    <div style="font-size: 24px; margin-bottom: 8px;">${letters[i]}</div>
+                    <div>${opt}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('answer-stats').classList.add('hidden');
+
+            // Timer
+            if (timerInterval) clearInterval(timerInterval);
+            let timeLeft = data.time_limit;
+            document.getElementById('timer').textContent = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                if (timeLeft <= 0) clearInterval(timerInterval);
+            }, 1000);
+        }
+
+        function showAnswerReveal(data) {
+            const correctOption = document.getElementById(`option-${data.correct_answer}`);
+            if (correctOption) correctOption.classList.add('correct');
+
+            document.getElementById('leaderboard-screen').classList.add('active');
+
+            const teams = data.team_leaderboard || [];
+            document.getElementById('team-leaderboard').innerHTML = teams.length ? `
+                <h3 style="margin-bottom:12px;">Команды</h3>
+                ${teams.map((t, i) => `
+                    <div class="leaderboard-item ${i === 0 ? 'winner' : ''}">
+                        <span style="font-weight:600;">${t.name}</span>
+                        <span style="font-size:22px;font-weight:600;color:var(--accent);">${t.score}</span>
+                    </div>
+                `).join('')}
+                <h3 style="margin:16px 0 12px;">Игроки</h3>
+            ` : '';
+
+            document.getElementById('leaderboard-list').innerHTML = (data.leaderboard || []).map((player, i) => `
+                <div class="leaderboard-item ${i === 0 ? 'winner' : ''}">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎖'}</span>
+                        <span style="font-weight: 600;">${player.name}${player.team_name ? ' · ' + player.team_name : ''}</span>
+                    </div>
+                    <span style="font-size: 24px; font-weight: 600; color: var(--accent);">${player.score}</span>
+                </div>
+            `).join('');
+
+            const hard = data.hard_questions || [];
+            document.getElementById('hard-questions').innerHTML = hard.length ? `
+                <h3 style="margin-bottom:8px;">Сложные в этой сессии</h3>
+                ${hard.map(q => `<div style="font-size:13px;color:var(--text-secondary);margin:6px 0;">${q.accuracy}% · ${(q.text || '').slice(0, 80)}…</div>`).join('')}
+            ` : '';
+        }
+
+        function showFinalResults(data) {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('question-screen').classList.remove('active');
+            document.getElementById('leaderboard-screen').classList.remove('active');
+            document.getElementById('results-screen').classList.remove('hidden');
+
+            const teams = data.team_leaderboard || [];
+            document.getElementById('final-team-results').innerHTML = teams.length ? `
+                <h3 style="margin-bottom:12px;">Командный рейтинг</h3>
+                ${teams.map((t, i) => `
+                    <div class="leaderboard-item ${i === 0 ? 'winner' : ''}">
+                        <span style="font-weight:600;font-size:18px;">${t.name}</span>
+                        <span style="font-size:28px;font-weight:700;color:var(--accent);">${t.score}</span>
+                    </div>
+                `).join('')}
+                <h3 style="margin:20px 0 12px;">Личный рейтинг</h3>
+            ` : '';
+
+            document.getElementById('final-results').innerHTML = data.leaderboard.map((player, i) => `
+                <div class="leaderboard-item ${i === 0 ? 'winner' : ''}">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 32px;">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🎖'}</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 18px;">${player.name}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                ${player.team_name || ''} ${i === 0 ? '🏆 Победитель!' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <span style="font-size: 32px; font-weight: 700; color: var(--accent);">${player.score}</span>
+                </div>
+            `).join('');
+
+            const hard = data.hard_questions || [];
+            document.getElementById('final-hard-questions').innerHTML = hard.length ? `
+                <h3 style="margin-bottom:8px;">Самые сложные вопросы сессии</h3>
+                ${hard.map(q => `<div style="font-size:14px;color:var(--text-secondary);margin:8px 0;"><strong>${q.accuracy}%</strong> — ${(q.text || '').slice(0, 100)}</div>`).join('')}
+            ` : '';
+        }
+
+        document.getElementById('scoring-mode').addEventListener('change', (event) => {
+            setScoringMode(event.target.value);
+        });
+        document.getElementById('create-room-btn').addEventListener('click', createGame);
+        connect();
+    </script>
+</body>
+</html>

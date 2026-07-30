@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Верификация сертификата — GLM Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
+        /* Verification Form */
+        .verify-card {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .verify-input-group {
+            display: flex;
+            gap: 12px;
+            max-width: 500px;
+            margin: 24px auto;
+        }
+
+        .verify-input {
+            flex: 1;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        .verify-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Certificate Display */
+        .certificate-display {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid var(--success);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .certificate-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 70%);
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .certificate-header {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 16px;
+        }
+
+        .certificate-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #9fa0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .certificate-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .certificate-name {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .certificate-org {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .certificate-score {
+            display: inline-block;
+            padding: 12px 32px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid var(--success);
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 24px;
+        }
+
+        .certificate-meta {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        #qr-code {
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .verify-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Invalid State */
+        .invalid-certificate {
+            background: rgba(244, 67, 54, 0.1);
+            border: 2px solid var(--error);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .invalid-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .invalid-title {
+            font-size: 24px;
+            color: var(--error);
+            margin-bottom: 8px;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Certificate Templates */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .template-card {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+
+        .template-preview {
+            height: 120px;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .template-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .template-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .success-check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: var(--success);
+            border-radius: 50%;
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Вернуться</a>
+
+        <div class="header">
+            <h1>🎓 Верификация сертификата</h1>
+            <p>Проверьте подлинность сертификата о прохождении аттестации</p>
+        </div>
+
+        <!-- Verification Form -->
+        <div class="verify-card" id="verify-form">
+            <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+            <h2>Введите код верификации</h2>
+            <p style="color: var(--text-secondary); margin-top: 8px;">
+                Код указан на сертификате в формате QR-кода или текстом
+            </p>
+
+            <div class="verify-input-group">
+                <input
+                    type="text"
+                    id="verify-code"
+                    class="verify-input"
+                    placeholder="XXXXXXXXXXXXXXXX"
+                    maxlength="32"
+                    pattern="[A-Z0-9]+"
+                >
+                <button class="btn btn-primary" onclick="verifyCertificate()">Проверить</button>
+            </div>
+
+            <p style="font-size: 12px; color: var(--text-secondary);">
+                Код верификации состоит из 16 символов (буквы и цифры)
+            </p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading hidden" id="loading-state">
+            <div class="spinner"></div>
+            <p>Проверка сертификата...</p>
+        </div>
+
+        <!-- Certificate Display -->
+        <div class="certificate-display hidden" id="certificate-display">
+            <div class="success-check">✓</div>
+            <div class="verify-badge">Подлинный сертификат</div>
+
+            <div style="margin-top: 32px;">
+                <div class="certificate-header">СЕРТИФИКАТ</div>
+                <div class="certificate-title">О ПОДТВЕРЖДЕНИИ</div>
+                <div class="certificate-subtitle">Квалификации по социальному обслуживанию</div>
+
+                <div class="certificate-name" id="cert-name">-</div>
+                <div class="certificate-org" id="cert-org">-</div>
+
+                <div class="certificate-score" id="cert-score">-</div>
+
+                <div class="certificate-meta">
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Дата выдачи</div>
+                        <div id="cert-date">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Номер</div>
+                        <div id="cert-id">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="qr-section">
+                <canvas id="qr-code"></canvas>
+                <div style="font-size: 12px; color: var(--text-secondary);">
+                    Отсканируйте для повторной проверки
+                </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button class="btn btn-primary" onclick="downloadCertificatePDF()">
+                    💾 Скачать PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Invalid Certificate -->
+        <div class="invalid-certificate hidden" id="invalid-cert">
+            <div class="invalid-icon">❌</div>
+            <div class="invalid-title">Сертификат не найден</div>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                Сертификат с указанным кодом верификации не существует в базе данных.
+            </p>
+            <button class="btn btn-secondary" onclick="resetForm()">Попробовать снова</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentCertificate = null;
+
+        // Auto-fill from URL
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            if (code) {
+                document.getElementById('verify-code').value = code;
+                verifyCertificate();
+            }
+        });
+
+        // Verify certificate
+        async function verifyCertificate() {
+            const code = document.getElementById('verify-code').value.trim().toUpperCase();
+
+            if (!code || code.length < 8) {
+                alert('Введите код верификации (минимум 8 символов)');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('verify-form').classList.add('hidden');
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('certificate-display').classList.add('hidden');
+            document.getElementById('invalid-cert').classList.add('hidden');
+
+            try {
+                // Try to find certificate by code or ID
+                const response = await fetch(`${API_BASE}/certificates/search?code=${code}`);
+
+                if (!response.ok) {
+                    throw new Error('Certificate not found');
+                }
+
+                const data = await response.json();
+
+                if (!data.certificate) {
+                    // Try by ID
+                    const idResponse = await fetch(`${API_BASE}/certificates/${code}/verify`);
+                    if (idResponse.ok) {
+                        const idData = await idResponse.json();
+                        if (idData.valid) {
+                            showCertificate(idData.certificate);
+                            return;
+                        }
+                    }
+
+                    throw new Error('Certificate not found');
+                }
+
+                showCertificate(data.certificate);
+
+            } catch (error) {
+                console.error('Verification error:', error);
+                showInvalid();
+            }
+        }
+
+        function showCertificate(cert) {
+            currentCertificate = cert;
+
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('certificate-display').classList.remove('hidden');
+
+            document.getElementById('cert-name').textContent = cert.holder_name || cert.display_name || 'Не указано';
+            document.getElementById('cert-org').textContent = cert.organization || '-';
+            document.getElementById('cert-score').textContent = cert.score || `${(cert.percentage ?? 0).toFixed(1)}%`;
+            document.getElementById('cert-date').textContent = new Date(cert.issue_date).toLocaleDateString('ru-RU');
+            document.getElementById('cert-id').textContent = cert.verification_code || cert.id;
+
+            // Generate QR code
+            generateQR(cert.verification_code || cert.id);
+        }
+
+        function showInvalid() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('invalid-cert').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('invalid-cert').classList.add('hidden');
+            document.getElementById('verify-form').classList.remove('hidden');
+            document.getElementById('verify-code').value = '';
+        }
+
+        function generateQR(code) {
+            const canvas = document.getElementById('qr-code');
+
+            QRCode.toCanvas(canvas, code, {
+                width: 150,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            });
+        }
+
+        async function downloadCertificatePDF() {
+            if (!currentCertificate) {
+                alert('Нет данных сертификата');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+
+            // Certificate dimensions (A4 landscape = 297 x 210 mm)
+            const width = 297;
+            const height = 210;
+
+            // Background
+            doc.setFillColor(12, 12, 14);
+            doc.rect(0, 0, width, height, 'F');
+
+            // Border
+            doc.setDrawColor(76, 175, 80);
+            doc.setLineWidth(2);
+            doc.rect(10, 10, width - 20, height - 20);
+
+            doc.setDrawColor(99, 102, 241);
+            doc.setLineWidth(1);
+            doc.rect(15, 15, width - 30, height - 30);
+
+            // Header
+            doc.setFontSize(10);
+            doc.setTextColor(153, 153, 153);
+            doc.text('СЕРТИФИКАТ', width / 2, 30, { align: 'center' });
+
+            // Title
+            doc.setFontSize(32);
+            doc.setTextColor(255, 255, 255);
+            doc.text('О ПОДТВЕРЖДЕНИИ', width / 2, 45, { align: 'center' });
+
+            doc.setFontSize(16);
+            doc.setTextColor(153, 153, 153);
+            doc.text('Квалификации по социальному обслуживанию населения', width / 2, 55, { align: 'center' });
+
+            // Line
+            doc.setDrawColor(99, 102, 241);
+            doc.setLineWidth(0.5);
+            doc.line(50, 65, width - 50, 65);
+
+            // Content
+            doc.setFontSize(14);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Настоящим подтверждается, что', width / 2, 80, { align: 'center' });
+
+            // Name
+            doc.setFontSize(28);
+            doc.setTextColor(76, 175, 80);
+            doc.text(currentCertificate.holder_name || currentCertificate.display_name || '__________________', width / 2, 95, { align: 'center' });
+
+            // Organization
+            doc.setFontSize(12);
+            doc.setTextColor(153, 153, 153);
+            doc.text(currentCertificate.organization || '', width / 2, 105, { align: 'center' });
+
+            // Score
+            doc.setFontSize(20);
+            doc.setTextColor(76, 175, 80);
+            const scoreText = currentCertificate.score || `${(currentCertificate.percentage ?? 0).toFixed(1)}%`;
+            doc.text(`Результат: ${scoreText}`, width / 2, 120, { align: 'center' });
+
+            // Meta info
+            doc.setFontSize(11);
+            doc.setTextColor(153, 153, 153);
+            const dateStr = new Date(currentCertificate.issue_date).toLocaleDateString('ru-RU');
+            doc.text(`Дата выдачи: ${dateStr}`, 50, 140);
+            doc.text(`Номер: ${currentCertificate.verification_code || currentCertificate.id}`, width - 50, 140, { align: 'right' });
+
+            // Verification code
+            doc.setFontSize(9);
+            doc.setTextColor(128, 128, 128);
+            doc.text(`Код верификации: ${currentCertificate.verification_code || currentCertificate.id}`, width / 2, height - 30, { align: 'center' });
+            doc.text(`Проверить подлинность: ${window.location.origin}/verify-certificate.html`, width / 2, height - 25, { align: 'center' });
+
+            // Footer
+            doc.setFontSize(8);
+            doc.text('Санкт-Петербург, 2026 | Социальное обслуживание населения', width / 2, height - 15, { align: 'center' });
+
+            // Save
+            const fileName = `certificate_${currentCertificate.verification_code || currentCertificate.id}.pdf`;
+            doc.save(fileName);
+        }
+
+        // Enter key support
+        document.getElementById('verify-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifyCertificate();
+            }
+        });
+    </script>
+</body>
+</html>

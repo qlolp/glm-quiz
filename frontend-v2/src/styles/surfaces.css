@@ -1,0 +1,246 @@
+/* Containers: cards, panels, callouts, meters and placeholder states. */
+
+.panel,
+.card {
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--e-1);
+}
+
+.card {
+    display: grid;
+    gap: var(--sp-2);
+    width: 100%;
+    padding: var(--sp-5);
+    color: var(--c-ink);
+    text-align: left;
+}
+
+.panel {
+    padding: var(--sp-5);
+}
+
+/* Actionable cards get the affordance; static cards must not fake one. */
+a.card,
+button.card {
+    cursor: pointer;
+}
+
+/* Cards built from anchors must not underline their whole body copy. */
+a.card,
+a.card:hover {
+    text-decoration: none;
+}
+
+a.card:hover,
+button.card:hover {
+    border-color: var(--c-primary);
+    box-shadow: var(--e-2);
+    transform: translateY(-1px);
+}
+
+a.card:active,
+button.card:active {
+    transform: translateY(0);
+}
+
+.card-icon {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--r-md);
+    background: var(--c-primary-tint);
+    color: var(--c-primary);
+}
+
+.card-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.card-title {
+    color: var(--c-ink);
+    font-family: var(--font-display);
+    font-size: var(--fs-400);
+    font-weight: var(--fw-display);
+    letter-spacing: var(--tracking-display);
+}
+
+.card-body {
+    color: var(--c-ink-2);
+    font-size: var(--fs-200);
+}
+
+.card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-top: var(--sp-1);
+    color: var(--c-subtle);
+    font-size: var(--fs-100);
+}
+
+/* Card whose leading icon sits beside the text block. */
+.card-lead {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: var(--sp-3);
+}
+
+/* ─── Callout ─────────────────────────────────────────────────────── */
+
+.callout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--c-line);
+    border-left: 3px solid var(--c-accent);
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    background: var(--c-surface);
+    color: var(--c-ink-2);
+    font-size: var(--fs-200);
+}
+
+.callout svg {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.15rem;
+    color: var(--c-accent);
+}
+
+.callout.info {
+    border-left-color: var(--c-primary);
+}
+
+.callout.info svg {
+    color: var(--c-primary);
+}
+
+.callout.ok {
+    border-left-color: var(--c-ok);
+    background: var(--c-ok-tint);
+}
+
+.callout.ok svg {
+    color: var(--c-ok);
+}
+
+.callout.err {
+    border-left-color: var(--c-err);
+    background: var(--c-err-tint);
+    color: var(--c-err);
+}
+
+.callout.err svg {
+    color: var(--c-err);
+}
+
+/* ─── Meter ───────────────────────────────────────────────────────── */
+
+/* A div-based meter instead of <progress>: native progress bars ignore the
+   accent colour inconsistently across engines and rendered green here. */
+.meter-wrap {
+    display: grid;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-5);
+}
+
+.meter-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    color: var(--c-muted);
+    font-size: var(--fs-100);
+    font-weight: var(--fw-medium);
+}
+
+.meter-step {
+    color: var(--c-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.meter {
+    height: 0.375rem;
+    overflow: hidden;
+    border-radius: var(--r-pill);
+    background: var(--c-surface-sunken);
+}
+
+.meter-fill {
+    height: 100%;
+    border-radius: var(--r-pill);
+    background: var(--c-primary);
+}
+
+/* ─── Placeholder states ──────────────────────────────────────────── */
+
+.state-card {
+    display: grid;
+    justify-items: start;
+    gap: var(--sp-3);
+    padding: var(--sp-6) var(--sp-5);
+    border: 1px solid var(--c-line);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--e-1);
+}
+
+.state-icon {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--r-md);
+    background: var(--c-well);
+    color: var(--c-muted);
+}
+
+.state-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.state-icon.err {
+    background: var(--c-err-tint);
+    color: var(--c-err);
+}
+
+.skeleton {
+    position: relative;
+    height: 5rem;
+    overflow: hidden;
+    border-radius: var(--r-md);
+    background: var(--c-surface-sunken);
+}
+
+.skeleton::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        100deg,
+        transparent 20%,
+        color-mix(in srgb, var(--c-surface) 70%, transparent) 50%,
+        transparent 80%
+    );
+    background-size: 200% 100%;
+    content: "";
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .skeleton::after {
+        animation: shimmer 1.4s linear infinite;
+    }
+}
+
+@keyframes shimmer {
+    to {
+        background-position-x: -200%;
+    }
+}

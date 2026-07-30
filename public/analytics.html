@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика — Викторина</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 28px; }
+        .nav-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .stat-value { font-size: 32px; font-weight: 600; }
+        .stat-label { color: var(--text-secondary); font-size: 14px; margin-top: 4px; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .card-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .heat-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .heat-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .heat-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .heat-fill.low { background: var(--success); }
+        .heat-fill.medium { background: var(--warning); }
+        .heat-fill.high { background: var(--error); }
+        .heat-value { font-weight: 600; min-width: 50px; text-align: right; }
+        .question-preview { font-size: 14px; color: var(--text-secondary); }
+        .category-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+        .export-btn {
+            padding: 10px 20px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 Аналитика</h1>
+            <a href="/admin.html" class="nav-btn">← Назад в админку</a>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-quizzes">0</div>
+                <div class="stat-label">Викторин пройдено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-avg">0</div>
+                <div class="stat-label">Средний балл</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-difficult">0</div>
+                <div class="stat-label">Сложных вопросов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-perfect">0</div>
+                <div class="stat-label">Идеальных результатов</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="card-title">🔥 Тепловая карта знаний</div>
+                    <button class="export-btn" onclick="exportReport()">Экспорт отчёта</button>
+                </div>
+                <div id="heat-map"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📁 По категориям</div>
+                <div id="category-stats"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">📜 Последние результаты</div>
+            <div id="recent-results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        async function loadAnalytics() {
+            try {
+                const [analyticsRes, resultsRes] = await Promise.all([
+                    fetch(`${API_BASE}/analytics`),
+                    fetch(`${API_BASE}/results`)
+                ]);
+
+                const analytics = await analyticsRes.json();
+                const results = await resultsRes.json();
+
+                renderStats(analytics, results);
+                renderHeatMap(analytics.question_stats);
+                renderCategories(analytics.category_breakdown);
+                renderRecentResults(analytics.recent_activity);
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        function renderStats(analytics, results) {
+            const difficult = analytics.question_stats.filter(q => q.times_answered > 5 && q.accuracy_percent < 50).length;
+            const perfect = results.scores.filter(s => s.score === 50).length;
+
+            document.getElementById('stat-quizzes').textContent = results.total_users || 0;
+            document.getElementById('stat-avg').textContent = (results.average_score || 0).toFixed(1);
+            document.getElementById('stat-difficult').textContent = difficult;
+            document.getElementById('stat-perfect').textContent = perfect;
+        }
+
+        function renderHeatMap(questions) {
+            const container = document.getElementById('heat-map');
+            const sorted = questions.filter(q => q.times_answered > 0).sort((a, b) => a.accuracy_percent - b.accuracy_percent);
+
+            container.innerHTML = sorted.slice(0, 15).map(q => {
+                const accuracy = q.accuracy_percent;
+                const level = accuracy < 40 ? 'low' : accuracy < 70 ? 'medium' : 'high';
+                const color = accuracy < 40 ? '#4caf50' : accuracy < 70 ? '#ff9800' : '#f44336';
+
+                return `
+                    <div class="heat-row">
+                        <div style="flex: 1;">
+                            <span class="category-tag">${q.category || 'general'}</span>
+                            <div class="question-preview">${escapeHtml(q.question_text?.substring(0, 60))}...</div>
+                        </div>
+                        <div class="heat-bar">
+                            <div class="heat-fill ${level}" style="width: ${accuracy}%"></div>
+                        </div>
+                        <div class="heat-value">${accuracy}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCategories(categories) {
+            const container = document.getElementById('category-stats');
+
+            container.innerHTML = categories.map(c => `
+                <div style="padding: 12px 0; border-bottom: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>${c.category || 'general'}</span>
+                        <span>${c.question_count} вопросов</span>
+                    </div>
+                    <div class="heat-bar">
+                        <div class="heat-fill" style="width: ${c.avg_accuracy || 0}%; background: var(--accent);"></div>
+                    </div>
+                    <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                        ${(c.avg_accuracy || 0).toFixed(1)}% правильных
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRecentResults(results) {
+            const container = document.getElementById('recent-results');
+
+            container.innerHTML = results.slice(0, 10).map(r => `
+                <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                    <div>
+                        <div>${r.username || 'Аноним'}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${new Date(r.created_at).toLocaleString('ru')}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-weight: 600; color: ${r.score >= 40 ? 'var(--success)' : r.score >= 30 ? 'var(--warning)' : 'var(--error)'};">
+                            ${r.score}/50
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${Math.round(r.score / 50 * 100)}%</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportReport() {
+            const rows = document.querySelectorAll('#heat-map .heat-row');
+            let report = 'АНАЛИТИЧЕСКИЙ ОТЧЁТ\n';
+            report += '==================\n\n';
+            report += `Дата: ${new Date().toLocaleString('ru')}\n\n`;
+            report += 'ТЕПЛОВАЯ КАРТА ЗНАНИЙ\n';
+            report += '------------------------\n';
+
+            rows.forEach(row => {
+                const question = row.querySelector('.question-preview')?.textContent || '';
+                const accuracy = row.querySelector('.heat-value')?.textContent || '0%';
+                report += `• ${question.trim()} → ${accuracy}\n`;
+            });
+
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analytics-report-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadAnalytics();
+        const analyticsInterval = setInterval(loadAnalytics, 60000); // Update every minute
+        window.addEventListener('beforeunload', () => clearInterval(analyticsInterval));
+    </script>
+</body>
+</html>

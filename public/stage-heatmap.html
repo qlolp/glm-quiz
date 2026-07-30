@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тепловая карта категорий — сцена</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            background: #0a0a0c;
+            color: #fff;
+            font-family: Georgia, 'Times New Roman', serif;
+            padding: 32px;
+        }
+        h1 { font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px; font-weight: 700; }
+        .sub { color: #9fa0a0; font-family: system-ui, sans-serif; margin-bottom: 28px; font-size: 16px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .cell {
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .pct { font-size: clamp(42px, 8vw, 72px); font-weight: 800; line-height: 1; font-family: system-ui, sans-serif; }
+        .name { margin-top: 12px; font-size: 18px; opacity: 0.95; }
+        .meta { margin-top: 8px; font-size: 13px; color: rgba(255,255,255,0.65); font-family: system-ui, sans-serif; }
+        .login { max-width: 360px; margin: 80px auto; text-align: center; }
+        input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #333; background: #141618; color: #fff; margin: 12px 0; }
+        button { padding: 12px 20px; border: none; border-radius: 10px; background: #6366f1; color: #fff; font-weight: 600; cursor: pointer; }
+        a { color: #a5b4fc; font-family: system-ui, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="login" class="login">
+        <h1>Stage Heatmap</h1>
+        <p class="sub">Требуется пароль администратора</p>
+        <input type="password" id="pwd" placeholder="Пароль">
+        <button id="go">Открыть</button>
+        <p id="err" style="color:#f44336;margin-top:12px;"></p>
+    </div>
+    <div id="stage" style="display:none;">
+        <h1>Категории × точность</h1>
+        <p class="sub">Без персональных данных · <a href="/admin.html">Админка</a> · <span id="updated"></span></p>
+        <div class="grid" id="grid"></div>
+    </div>
+    <script>
+        const names = {
+            ethics: 'Этика', rights: 'Права', care_standards: 'Уход', emergency: 'ЧС',
+            safety: 'Безопасность', service_types: 'Виды услуг', communication: 'Коммуникация',
+            documentation: 'Документы', forms_of_service: 'Формы', quality: 'Качество',
+            accessibility: 'Доступность', mobility: 'Мобильность', mission: 'Миссия',
+            spb_specific: 'СПб', general: 'Общее'
+        };
+
+        function color(pct) {
+            if (pct >= 80) return 'linear-gradient(145deg,#14532d,#166534)';
+            if (pct >= 60) return 'linear-gradient(145deg,#3f6212,#4d7c0f)';
+            if (pct >= 40) return 'linear-gradient(145deg,#854d0e,#a16207)';
+            return 'linear-gradient(145deg,#7f1d1d,#991b1b)';
+        }
+
+        async function load(token) {
+            const res = await fetch('/api/analytics/categories', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('auth');
+            const data = await res.json();
+            const grid = document.getElementById('grid');
+            grid.innerHTML = (data.categories || []).map(c => `
+                <div class="cell" style="background:${color(c.accuracy_percent)}">
+                    <div class="pct">${c.accuracy_percent}%</div>
+                    <div class="name">${names[c.category] || c.category}</div>
+                    <div class="meta">${c.times_answered} ответов · ${c.question_count} вопр.</div>
+                </div>
+            `).join('');
+            document.getElementById('updated').textContent = 'обновлено ' + new Date().toLocaleTimeString('ru-RU');
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('stage').style.display = 'block';
+        }
+
+        document.getElementById('go').onclick = async () => {
+            try {
+                const auth = await fetch('/api/auth/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: document.getElementById('pwd').value })
+                });
+                const body = await auth.json();
+                if (!auth.ok || !body.token) throw new Error('bad');
+                localStorage.setItem('adminToken', body.token);
+                await load(body.token);
+                setInterval(() => load(body.token).catch(() => {}), 30000);
+            } catch (e) {
+                document.getElementById('err').textContent = 'Неверный пароль или ошибка API';
+            }
+        };
+
+        const saved = localStorage.getItem('adminToken');
+        if (saved) {
+            load(saved).catch(() => localStorage.removeItem('adminToken'));
+        }
+    </script>
+</body>
+</html>

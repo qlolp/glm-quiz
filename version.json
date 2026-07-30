@@ -1,0 +1,203 @@
+{
+  "version": "2026.07.30.1",
+  "last_updated": "2026-07-30T20:10:00+03:00",
+  "total_questions": 84,
+  "categories": [
+    "ethics",
+    "rights",
+    "care_standards",
+    "emergency",
+    "safety",
+    "service_types",
+    "communication",
+    "documentation",
+    "forms_of_service",
+    "quality",
+    "accessibility",
+    "mobility",
+    "mission",
+    "spb_specific"
+  ],
+  "changes": {
+    "current": {
+      "version": "2026.07.30.1",
+      "date": "2026-07-30",
+      "changes": [
+        "V2 design system rebuilt: warm neutral paper surfaces, deep navy primary and restrained clay accent",
+        "Serif display headings with a system sans UI stack, no webfont download required",
+        "WCAG 2.2 AA contrast across text, states and focus indicators, plus a dark theme",
+        "Quiz question category now shows its Russian label instead of the raw key",
+        "Category labels cover all bank topics including mobility, accessibility and Spb-specific",
+        "Progress replaced with a themed meter that renders consistently across browsers",
+        "Quiz answers now mark the correct option and the wrong choice after grading",
+        "Opaque bottom navigation with icons, safe-area insets and landscape layout",
+        "Meaningful iconography, score dials, stat tiles and step rails across all V2 screens"
+      ]
+    },
+    "history": [
+      {
+        "version": "2026.07.17.6",
+        "date": "2026-07-29",
+        "changes": [
+          "Kahoot scoring modes, Pulse scale questions, moderated Live Q&A, seminar digest and backend decomposition"
+        ]
+      },
+      {
+        "version": "2026.07.17.4",
+        "date": "2026-07-29",
+        "changes": [
+          "Kahoot scoring modes, Pulse scale questions, moderated Live Q&A and seminar digest"
+        ]
+      },
+      {
+        "version": "2026.07.17.3",
+        "date": "2026-07-17",
+        "changes": [
+          "Fixes for service-worker cache, pre/post IDs, shuffled mistake review, pulse reconnect and server-side scoring"
+        ]
+      },
+      {
+        "version": "2026.07.17.2",
+        "date": "2026-07-17",
+        "changes": [
+          "Full upgrade on alternative VPS: micro/prepost modes, confidence, hints, action plans, wrong_explanations, branching cases, pulse mode, team Kahoot, weak-questions, stage-heatmap"
+        ]
+      },
+      {
+        "version": "2026.07.17.1",
+        "date": "2026-07-17",
+        "changes": [
+          "Dual-server setup: alternative banner on fallback VPS (147.45.174.206), deploy-old.sh, SERVER_ROLE in /api/status"
+        ]
+      },
+      {
+        "version": "2026.07.13.1",
+        "date": "2026-07-13",
+        "changes": [
+          "Harden VPS deployment defaults; SSH key access; fix ALLOW_DEMO_MASTER_IN_PRODUCTION"
+        ]
+      },
+      {
+        "version": "2026.07.09.4",
+        "date": "2026-07-08",
+        "changes": [
+          "Fix: graceful shutdown now clears heartbeat interval, closes WebSocket server first, then DB, then HTTP server; eliminates SEGV on systemd restart"
+        ]
+      },
+      {
+        "version": "2026.07.08.2",
+        "date": "2026-07-08",
+        "changes": [
+          "Config: HSTS controlled by ENABLE_HSTS env var; default OFF for HTTP-only seminar, set ENABLE_HSTS=1 for HTTPS",
+          "Deploy: deploy.sh now loads DEMO_MASTER_CODE from local .env or remote VPS .env for API smoke tests"
+        ]
+      },
+      {
+        "version": "2026.07.08.1",
+        "date": "2026-07-08",
+        "changes": [
+          "Config: HSTS disabled in Helmet because seminar runs on local HTTP without TLS; prevents browsers from pinning to HTTPS and breaking IP/.local access"
+        ]
+      },
+      {
+        "version": "2026.07.07.12",
+        "date": "2026-07-08",
+        "changes": [
+          "Fix: /api/competency/update ignores out-of-range answers (answer < 0 or > 3) to prevent DB pollution"
+        ]
+      },
+      {
+        "version": "2026.07.07.11",
+        "date": "2026-07-07",
+        "changes": [
+          "CRITICAL: DEMO_MASTER_CODE disabled in production unless ALLOW_DEMO_MASTER_IN_PRODUCTION=true and code length >= 16",
+          "SECURITY: /api/quiz/complete prevents replay of identical submissions within 5 minutes (standard) and per-session (adaptive)",
+          "SECURITY: /api/competency/update no longer trusts client is_correct; server verifies answers against default_questions",
+          "Tests: api-e2e updated for duplicate quiz submission rejection, adaptive replay rejection, and competency server-side verification"
+        ]
+      },
+      {
+        "version": "2026.07.07.10",
+        "date": "2026-07-07",
+        "changes": [
+          "SECURITY: WebSocket answer_reveal no longer broadcasts correct_answer to players; correct answer is sent to host only",
+          "SECURITY: /api/cases/:id no longer exposes correct_answer/explanation to unauthenticated users",
+          "SECURITY: /api/competency/department/:dept_name now requires admin token",
+          "SECURITY: /api/feedback now requires user token and uses req.userId instead of trusting body user_id",
+          "SECURITY: /api/quiz/check-answer adaptive session answers now verified against session owner (user_id)",
+          "SECURITY: /api/quiz/complete rejects legacy client-trusted adaptive is_correct entries; only session_id-based adaptive is accepted",
+          "SECURITY: admin password comparison now uses crypto.timingSafeEqual",
+          "SECURITY: verification code increased from 4 to 6 digits; master code gated by DEMO_MASTER_CODE env var",
+          "SECURITY: trust proxy restricted to loopback to prevent X-Forwarded-For IP spoofing and rate-limit bypass",
+          "SECURITY: CSV export strips formula-injection prefixes from usernames",
+          "Fix: race condition in /api/cases/:id/progress counter wrapped in db.transaction",
+          "Tests: api-e2e updated for case detail leak check, feedback auth, competency auth"
+        ]
+      },
+      {
+        "version": "2026.07.07.9",
+        "date": "2026-07-07",
+        "changes": [
+          "SECURITY: WebSocket answer_reveal no longer broadcasts correct_answer to players; correct answer is sent to host only"
+        ]
+      },
+      {
+        "version": "2026.07.07.8",
+        "date": "2026-07-07",
+        "changes": [
+          "SECURITY (P0): /api/quiz/check-answer now requires Bearer token (requireUser) — prevents anonymous scraping of all 84 correct answers via reveal=true",
+          "Fix: adaptive UI was broken — loadAdaptiveQuiz and loadNextAdaptiveQuestion used fetch() without Authorization header, returned 401 after adaptive endpoints got requireUser",
+          "Fix: finishAdaptiveQuiz now sends session_id instead of client-trusted is_correct booleans (server-side anti-cheat actually wired)",
+          "Fix: adaptive selectAnswer now calls /api/quiz/check-answer with session_id to get correct flag from server instead of comparing to undefined q.correct",
+          "Fix: removed dead correct_answer/explanation fields from adaptive question object (they were always undefined; server returns them via /api/quiz/check-answer)",
+          "Tests: api-e2e updated to send token to check-answer in Adaptive session anti-cheat flow"
+        ]
+      },
+      {
+        "version": "2026.07.07.7",
+        "date": "2026-07-07",
+        "changes": [
+          "Security hardening: remove verification code leakage, close PII endpoints behind admin auth",
+          "Protect all progress endpoints with bearer user tokens and use req.userId server-side",
+          "Server-side answer verification in /api/quiz/complete against default_questions",
+          "Eliminate race conditions in question_stats and competency_matrix with upserts",
+          "Fix batch-register to upsert users by email and use real user_id",
+          "Timing-safe HMAC comparison, no token from query string, production secret enforcement",
+          "WebSocket hardening: origin check, maxPayload, player_name sanitization, no correct_answer leak",
+          "Fix adaptive mode startup order so user is created before loading questions",
+          "Frontend XSS fixes: escapeHtml in realtime, cases, index, admin pages",
+          "Fix Service Worker accept header null crash"
+        ]
+      },
+      {
+        "version": "2026.07.07.6",
+        "date": "2026-07-07",
+        "changes": [
+          "Fix /qr.html: self-hosted QR generation (CSP blocked external api.qrserver.com)",
+          "Hide correct answers from public API; server-side check-answer endpoint",
+          "Adaptive anti-cheat: session-tracked answers in DB",
+          "Rate limit on feedback and check-answer; DB backup cron + scripts/backup-db.sh",
+          "QR slide page /qr.html for seminar; load-test.js updated",
+          "Post-audit sync: CSP scriptSrcAttr restored for inline onclick, adaptive + spaced-repetition use authFetch",
+          "API e2e tests updated for server-verified quiz answers and protected endpoints",
+          "Fix /api/users POST to return auth token via generateUserToken so guest flow works end-to-end",
+          "Fix adaptive mode bug 'не удалось загрузить вопросы' (root cause: client sent category='general' which does not exist in DB); backend now accepts categories[] array, frontend maps selectedRole to roleCategories[selectedRole]"
+        ]
+      },
+      {
+        "version": "2026.07.06.18",
+        "date": "2026-07-06",
+        "changes": [
+          "VPS audit fixes, admin bearer tokens, certificate/QR fixes"
+        ]
+      },
+      {
+        "version": "2026.07.06.8",
+        "date": "2026-07-06",
+        "changes": [
+          "CSP HTTP fix, loading screen UX"
+        ]
+      }
+    ]
+  }
+}

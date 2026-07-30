@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-код — Викторина</title>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <style>
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .qr-card {
+            max-width: 520px; width: 100%;
+            background: #fff; border-radius: 24px; padding: 40px 32px;
+            text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        }
+        .qr-card h1 { font-size: 28px; margin-bottom: 8px; }
+        .qr-card p { color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+        .qr-wrap {
+            width: 280px; height: 280px; margin: 0 auto 24px;
+            border: 8px solid #f1f5f9; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            background: #fff;
+        }
+        #qr-canvas { display: block; max-width: 100%; max-height: 100%; }
+        .url-box {
+            font-size: 22px; font-weight: 700; color: #5c6df2;
+            word-break: break-all; margin-bottom: 16px;
+        }
+        .hint { font-size: 14px; color: #94a3b8; }
+        .actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+        .btn-link {
+            padding: 12px 20px; border-radius: 12px; text-decoration: none;
+            background: #5c6df2; color: #fff; font-weight: 600; border: none; cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-link.secondary { background: #f1f5f9; color: #334155; }
+        .qr-error { color: #dc2626; font-size: 14px; display: none; }
+        @media print {
+            body { background: #fff; }
+            .actions, .hint { display: none; }
+            .qr-card { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-card">
+        <h1>📱 Викторина GLM</h1>
+        <p>Семинар директоров соцорганизаций · 25–27 августа 2026</p>
+        <div class="qr-wrap">
+            <canvas id="qr-canvas" width="264" height="264" aria-label="QR-код викторины"></canvas>
+        </div>
+        <p class="qr-error" id="qr-error">Не удалось сгенерировать QR-код</p>
+        <div class="url-box" id="site-url">загрузка…</div>
+        <p class="hint">Отсканируйте камерой телефона или введите адрес в браузере.<br>Для регистрации код подтверждения выдаёт организатор семинара.</p>
+        <div class="actions">
+            <a href="/" class="btn-link">Открыть викторину</a>
+            <a href="/register.html" class="btn-link secondary">Регистрация</a>
+            <a href="/qa-player.html" class="btn-link secondary">Вопрос спикеру</a>
+            <button class="btn-link secondary" type="button" onclick="window.print()">🖨️ Печать слайда</button>
+        </div>
+    </div>
+    <script src="/js/qrcode.min.js"></script>
+    <script>
+        const siteUrl = (window.location.origin + '/').replace(/\/$/, '');
+        document.getElementById('site-url').textContent = siteUrl;
+
+        function drawQR(text) {
+            const qr = qrcode(0, 'M');
+            qr.addData(text);
+            qr.make();
+
+            const canvas = document.getElementById('qr-canvas');
+            const ctx = canvas.getContext('2d');
+            const cells = qr.getModuleCount();
+            const size = 264;
+            const cellSize = Math.floor(size / cells);
+            const offset = Math.floor((size - cellSize * cells) / 2);
+
+            canvas.width = size;
+            canvas.height = size;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = '#111827';
+
+            for (let row = 0; row < cells; row++) {
+                for (let col = 0; col < cells; col++) {
+                    if (qr.isDark(row, col)) {
+                        ctx.fillRect(
+                            offset + col * cellSize,
+                            offset + row * cellSize,
+                            cellSize,
+                            cellSize
+                        );
+                    }
+                }
+            }
+        }
+
+        try {
+            if (typeof qrcode !== 'function') throw new Error('QR library missing');
+            drawQR(siteUrl);
+        } catch (e) {
+            console.error('QR render error:', e);
+            document.getElementById('qr-error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

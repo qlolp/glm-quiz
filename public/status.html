@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статус — GLM Quiz</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .wrap { max-width: 720px; margin: 0 auto; padding: 24px 0; }
+        h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin-bottom: 8px; }
+        .sub { margin-bottom: 24px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat b { display: block; font-size: 20px; margin-top: 4px; }
+        .stat span { font-size: 12px; }
+        .actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        pre { font-size: 12px; overflow: auto; margin-top: 8px; padding: 12px; }
+        @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/app-update.js"></script>
+</head>
+<body>
+    <div class="wrap">
+        <h1>📊 Статус системы</h1>
+        <p class="sub">Диагностика для организаторов семинара</p>
+        <div id="status-card" class="card">Загрузка...</div>
+        <div class="actions">
+            <button type="button" class="btn btn-primary" onclick="location.reload()">Обновить</button>
+            <button type="button" class="btn btn-secondary" onclick="hardRefreshApp && hardRefreshApp()">Сбросить кэш</button>
+            <a href="/" class="btn btn-secondary" style="text-decoration:none;">← На главную</a>
+        </div>
+    </div>
+    <script>
+        async function loadStatus() {
+            const el = document.getElementById('status-card');
+            try {
+                const [statusRes, healthRes] = await Promise.all([
+                    fetch('/api/status', { cache: 'no-store' }),
+                    fetch('/api/health', { cache: 'no-store' })
+                ]);
+                const status = await statusRes.json();
+                const health = await healthRes.json();
+                const ok = statusRes.ok && health.status === 'healthy';
+
+                const roleLabel = status.server_role === 'alternative'
+                    ? 'Альтернативный (резервный)'
+                    : 'Основной';
+                const primaryHint = status.server_role === 'alternative' && status.primary_server_url
+                    ? `<p style="margin-top:12px;font-size:13px">Основной сервер: <a href="${status.primary_server_url}">${status.primary_server_url}</a></p>`
+                    : '';
+
+                el.innerHTML = `
+                    <p class="${ok ? 'ok' : 'err'}">${ok ? '● Система работает' : '● Есть проблемы'}</p>
+                    <p style="margin-top:8px;font-size:13px" class="sub">Роль сервера: <b>${roleLabel}</b></p>
+                    ${primaryHint}
+                    <div class="grid" style="margin-top:16px">
+                        <div class="stat"><span>Версия</span><b>${status.version || '—'}</b></div>
+                        <div class="stat"><span>Uptime</span><b>${status.uptime_seconds || 0} с</b></div>
+                        <div class="stat"><span>Вопросов</span><b>${status.counts?.questions ?? '—'}</b></div>
+                        <div class="stat"><span>Пользователей</span><b>${status.counts?.users ?? '—'}</b></div>
+                        <div class="stat"><span>WebSocket</span><b>${status.websocket_sessions ?? 0}</b></div>
+                        <div class="stat"><span>Память RSS</span><b>${status.memory_mb?.rss ?? '—'} MB</b></div>
+                    </div>
+                    <p style="margin-top:16px;font-size:13px" class="sub">
+                        Обновлено: ${status.timestamp || '—'}<br>
+                        Запуск сервера: ${status.server_started_at || '—'}
+                    </p>
+                    ${status.recent_errors?.length ? `<pre>${JSON.stringify(status.recent_errors, null, 2)}</pre>` : ''}
+                `;
+            } catch (e) {
+                el.innerHTML = `<p class="err">Не удалось загрузить статус: ${e.message}</p>`;
+            }
+        }
+        loadStatus();
+        setInterval(loadStatus, 30000);
+    </script>
+</body>
+</html>

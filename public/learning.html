@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обучение — Викторина</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --error: #f44336;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .mode-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .mode-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .question { font-size: 20px; margin-bottom: 20px; line-height: 1.5; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option {
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .option:hover { border-color: var(--accent); }
+        .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.1); }
+        .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.1); }
+        .option-letter {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--accent);
+            border-radius: 50%;
+            font-weight: 600;
+        }
+        .option.correct .option-letter { background: var(--success); }
+        .option.wrong .option-letter { background: var(--error); }
+        .explanation {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            display: none;
+        }
+        .explanation.show { display: block; }
+        .explanation-title { font-weight: 600; margin-bottom: 8px; color: var(--accent); }
+        .explanation-text { line-height: 1.6; color: var(--text-secondary); }
+        .reference-link {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: var(--accent);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 16px;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-next { display: none; }
+        .btn-next.show { display: inline-block; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+    <script src="/js/user.js"></script>
+    <script src="/js/event-delegation.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📚 Режим обучения</h1>
+            <div style="display: flex; gap: 12px;">
+                <div class="mode-toggle">
+                    <button class="mode-btn active" data-action="switchMode" data-arg="study">Изучение</button>
+                    <button class="mode-btn" data-action="switchMode" data-arg="practice">Практика</button>
+                </div>
+                <a href="/" class="nav-btn">← Викторина</a>
+            </div>
+        </header>
+
+        <div class="progress">
+            <span id="progress-text">Вопрос 1 из 50</span>
+            <span>Правильных: <span id="correct-count">0</span></span>
+        </div>
+
+        <div class="card" id="question-card">
+            <div class="question" id="question-text"></div>
+            <div class="options" id="options-container"></div>
+            <div class="explanation" id="explanation">
+                <div class="explanation-title">💡 Объяснение</div>
+                <div class="explanation-text" id="explanation-text"></div>
+                <a class="reference-link" id="reference-link" href="#" target="_blank">📖 Подробнее</a>
+            </div>
+            <button class="btn btn-primary btn-next" id="next-btn" data-action="nextQuestion">Следующий вопрос →</button>
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <h2>🎉 Обучение завершено!</h2>
+            <p style="margin-top: 16px;">Вы изучили все вопросы.</p>
+            <a href="/" class="btn btn-primary" style="display: inline-block; text-decoration: none; margin-top: 16px;">Перейти к викторине</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #6366f1;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        let questions = [];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let mode = 'study'; // 'study' or 'practice'
+        let answered = false;
+
+        // Delegated keyboard support for dynamically created option buttons
+        document.getElementById('options-container').addEventListener('keydown', (e) => {
+            const option = e.target.closest('.option');
+            if (!option) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                option.click();
+            }
+        });
+
+        async function loadQuestions() {
+            try {
+                const res = await fetch(`${API_BASE}/questions?learning=true`);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: Failed to load questions`);
+                }
+
+                const data = await res.json();
+
+                // Transform server response to expected format
+                questions = (data.questions || []).map(q => ({
+                    ...q,
+                    options: [q.option_a || q.options?.[0], q.option_b || q.options?.[1],
+                             q.option_c || q.options?.[2], q.option_d || q.options?.[3]].filter(Boolean)
+                }));
+
+                if (questions.length === 0) {
+                    document.getElementById('question-card').innerHTML =
+                        '<p style="text-align:center;padding:40px;">Не удалось загрузить вопросы. Проверьте соединение с сервером.</p>';
+                    return;
+                }
+
+                showQuestion();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                document.getElementById('question-card').innerHTML =
+                    '<p style="text-align:center;padding:40px;color:var(--error);">Ошибка загрузки вопросов. Перезагрузите страницу.</p>';
+            }
+        }
+
+        let completionReported = false;
+
+        async function reportLearningComplete() {
+            if (completionReported) return;
+            completionReported = true;
+
+            try {
+                if (!getUserToken()) return;
+
+                const res = await authFetch(`${API_BASE}/learning/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    redirectOnUnauthorized: false,
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (data.new_achievements && data.new_achievements.length > 0) {
+                    showToast(`🏆 Новое достижение: ${data.new_achievements.join(', ')}`);
+                }
+            } catch (error) {
+                console.error('Error reporting learning completion:', error);
+            }
+        }
+
+        function showQuestion() {
+            if (currentIndex >= questions.length) {
+                document.getElementById('question-card').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'block';
+                reportLearningComplete();
+                return;
+            }
+
+            const q = questions[currentIndex];
+            answered = false;
+
+            document.getElementById('question-text').textContent = q.question;
+            document.getElementById('progress-text').textContent = `Вопрос ${currentIndex + 1} из ${questions.length}`;
+            document.getElementById('explanation').classList.remove('show');
+            document.getElementById('next-btn').classList.remove('show');
+
+            const letters = ['А', 'Б', 'В', 'Г'];
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, i) => {
+                const optDiv = document.createElement('div');
+                optDiv.className = 'option';
+                optDiv.dataset.index = i;
+                optDiv.setAttribute('role', 'button');
+                optDiv.setAttribute('tabindex', '0');
+
+                const letterSpan = document.createElement('span');
+                letterSpan.className = 'option-letter';
+                letterSpan.textContent = letters[i];
+
+                const textSpan = document.createElement('span');
+                textSpan.textContent = opt;
+
+                optDiv.appendChild(letterSpan);
+                optDiv.appendChild(textSpan);
+
+                optDiv.dataset.action = 'selectAnswer';
+                optDiv.dataset.arg = i;
+
+                container.appendChild(optDiv);
+            });
+        }
+
+        async function selectAnswer(index) {
+            if (answered) return;
+            answered = true;
+
+            const q = questions[currentIndex];
+            const options = document.querySelectorAll('.option');
+
+            let result;
+            try {
+                result = await checkAnswer(q.id, index);
+            } catch (e) {
+                console.error('Check answer failed:', e);
+                answered = false;
+                return;
+            }
+
+            const isCorrect = result.correct;
+            const correctIndex = result.correctIndex;
+
+            options.forEach((opt, i) => {
+                opt.removeAttribute('data-action');
+                if (i === correctIndex) {
+                    opt.classList.add('correct');
+                } else if (i === index && !isCorrect) {
+                    opt.classList.add('wrong');
+                }
+            });
+
+            if (isCorrect) {
+                correctCount++;
+                document.getElementById('correct-count').textContent = correctCount;
+            }
+
+            if (mode === 'study') {
+                document.getElementById('explanation-text').textContent = result.explanation || 'Объяснение недоступно для этого вопроса.';
+                const refLink = document.getElementById('reference-link');
+                if (result.reference_link) {
+                    refLink.href = result.reference_link;
+                    refLink.style.display = 'inline-block';
+                } else {
+                    refLink.style.display = 'none';
+                }
+                document.getElementById('explanation').classList.add('show');
+            }
+
+            document.getElementById('next-btn').classList.add('show');
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            showQuestion();
+        }
+
+        function switchMode(newMode, event) {
+            mode = newMode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const activeBtn = document.querySelector(`.mode-btn[data-arg="${newMode}"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            // Reset progress
+            currentIndex = 0;
+            correctCount = 0;
+            document.getElementById('correct-count').textContent = '0';
+            showQuestion();
+        }
+
+        loadQuestions();
+    </script>
+</body>
+</html>

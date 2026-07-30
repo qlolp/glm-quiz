@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дайджест дня — GLM Quiz</title>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <style>
+        body{margin:0;background:#f4f6fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:1000px;margin:auto;padding:28px}.toolbar,.card{background:#fff;border:1px solid #dfe3ec;border-radius:16px;padding:18px;margin-bottom:16px}.toolbar{display:flex;align-items:end;gap:12px;flex-wrap:wrap}.toolbar label{font-size:13px;color:#64748b}.toolbar input{display:block;margin-top:5px;padding:9px;border:1px solid #cbd5e1;border-radius:8px}.btn{padding:10px 15px;border:0;border-radius:9px;background:#5c6df2;color:#fff;font-weight:650;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.metric{font-size:32px;font-weight:800}.muted{color:#64748b}.bar{height:9px;background:#e9ecf5;border-radius:9px;overflow:hidden;margin-top:6px}.bar span{display:block;height:100%;background:#5c6df2}.participant{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #edf0f5}@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}@media print{.toolbar{display:none}.wrap{padding:0}.card{break-inside:avoid;box-shadow:none}body{background:#fff}}
+    </style>
+</head>
+<body>
+<main class="wrap">
+    <h1>Дайджест семинарного дня</h1>
+    <div class="toolbar">
+        <label>С даты<input type="date" id="from"></label><label>По дату<input type="date" id="to"></label>
+        <button class="btn" id="load">Обновить</button><button class="btn" onclick="window.print()">Печать / PDF</button>
+        <a href="/admin.html">Админка</a>
+    </div>
+    <p id="status" class="muted"></p>
+    <section class="grid">
+        <div class="card"><div class="muted">Завершено квизов</div><div class="metric" id="completed">—</div></div>
+        <div class="card"><div class="muted">Средний результат</div><div class="metric" id="average">—</div></div>
+        <div class="card"><div class="muted">Pre → Post</div><div class="metric" id="delta">—</div><div class="muted" id="paired"></div></div>
+        <div class="card"><div class="muted">Q&A</div><div class="metric" id="qa">—</div><div class="muted" id="qa-meta"></div></div>
+    </section>
+    <section class="card"><h2>Слабые категории</h2><div id="weak"></div></section>
+    <section class="card"><h2>Результаты участников</h2><p class="muted">Только отображаемое имя, без email и других персональных данных.</p><div id="participants"></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id),today=new Date().toISOString().slice(0,10);$('from').value=today;$('to').value=today;
+async function load(){
+    const token=localStorage.getItem('adminToken');if(!token){$('status').textContent='Войдите в админку, затем вернитесь на эту страницу.';return}
+    $('status').textContent='Загрузка…';
+    const res=await fetch(`/api/seminar/digest?from=${encodeURIComponent($('from').value)}&to=${encodeURIComponent($('to').value)}`,{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok){$('status').textContent=res.status===401?'Сессия администратора истекла. Войдите снова.':'Не удалось построить дайджест.';return}
+    const d=await res.json();$('status').textContent='';
+    $('completed').textContent=d.completed_quizzes;$('average').textContent=d.average_percent==null?'—':d.average_percent+'%';
+    $('delta').textContent=d.prepost.average_delta==null?'—':(d.prepost.average_delta>=0?'+':'')+d.prepost.average_delta+' п.п.';$('paired').textContent=`пар: ${d.prepost.paired_participants}`;
+    $('qa').textContent=d.qa.submitted;$('qa-meta').textContent=`одобрено ${d.qa.approved} · сессий ${d.qa.sessions}`;
+    $('weak').replaceChildren();d.weak_categories.forEach(c=>{const box=document.createElement('div');const label=document.createElement('div');label.textContent=`${c.category}: ${c.accuracy_percent}% (${c.answered})`;const bar=document.createElement('div');bar.className='bar';const fill=document.createElement('span');fill.style.width=c.accuracy_percent+'%';bar.append(fill);box.append(label,bar);$('weak').append(box)});if(!d.weak_categories.length)$('weak').textContent='Нет данных за период';
+    $('participants').replaceChildren();d.participants.forEach(p=>{const row=document.createElement('div');row.className='participant';const name=document.createElement('span');name.textContent=p.display_name;const score=document.createElement('strong');score.textContent=p.percentage+'%';row.append(name,score);$('participants').append(row)});if(!d.participants.length)$('participants').textContent='Нет завершённых квизов';
+}
+$('load').onclick=load;load();
+</script>
+</body>
+</html>

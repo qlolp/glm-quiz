@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Q&A — ведущий</title>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <style>
+        body{margin:0;background:#0c0c0e;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:980px;margin:auto;padding:24px}.card{background:#141618;border:1px solid #ffffff1a;border-radius:16px;padding:20px;margin:16px 0}.code{font-size:52px;letter-spacing:7px;font-weight:800;color:#818cf8}.meta{color:#9fa0a0}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}.question{background:#1c1c1e;border:1px solid #ffffff1a;border-radius:12px;padding:14px;margin:10px 0}.question.highlight{border-color:#f59e0b;box-shadow:0 0 0 1px #f59e0b}.row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.btn{border:0;border-radius:9px;padding:9px 13px;background:#6366f1;color:#fff;font-weight:600;cursor:pointer}.btn.secondary{background:#2a2a2e}.btn.danger{background:#b91c1c}.votes{white-space:nowrap;color:#a5b4fc;font-weight:700}@media(max-width:720px){.cols{grid-template-columns:1fr}.code{font-size:40px}}@media print{.actions,.nav{display:none}.card{break-inside:avoid}}
+    </style>
+</head>
+<body>
+<main class="wrap">
+    <div class="nav"><a href="/">← Викторина</a> · <a href="/qa-player.html">Страница участника</a></div>
+    <h1>💬 Live Q&A</h1>
+    <p class="meta">Вопросы появляются у аудитории только после одобрения ведущим.</p>
+    <section class="card">
+        <div class="meta">Код сессии · участников: <span id="players">0</span></div>
+        <div class="code" id="code">······</div>
+        <div class="actions">
+            <button class="btn secondary" id="export">Экспорт CSV</button>
+            <button class="btn secondary" onclick="window.print()">Печать</button>
+            <button class="btn danger" id="close">Завершить</button>
+        </div>
+        <p class="meta" id="status"></p>
+    </section>
+    <div class="cols">
+        <section class="card"><h2>На модерации</h2><div id="pending"></div></section>
+        <section class="card"><h2>Опубликовано</h2><div id="approved"></div></section>
+    </div>
+</main>
+<script>
+let ws, qaId=sessionStorage.getItem('qa_host_id'), hostToken=sessionStorage.getItem('qa_host_token');
+const $=id=>document.getElementById(id);
+function send(data){if(ws?.readyState===WebSocket.OPEN)ws.send(JSON.stringify(data))}
+function button(label,cls,onClick){const b=document.createElement('button');b.className='btn '+(cls||'');b.textContent=label;b.onclick=onClick;return b}
+function renderQuestion(q,pending){
+    const box=document.createElement('article');box.className='question'+(q.highlighted?' highlight':'');
+    const row=document.createElement('div');row.className='row';
+    const text=document.createElement('div');text.textContent=q.text;
+    const votes=document.createElement('div');votes.className='votes';votes.textContent=`▲ ${q.votes}`;
+    row.append(text,votes);box.append(row);
+    const actions=document.createElement('div');actions.className='actions';
+    if(pending) actions.append(button('Одобрить','',()=>send({type:'qa_approve',qa_id:qaId,question_id:q.id})));
+    else {
+        actions.append(button(q.highlighted?'Снять выделение':'На экран','secondary',()=>send({type:'qa_highlight',qa_id:qaId,question_id:q.highlighted?null:q.id})));
+        actions.append(button('Скрыть','secondary',()=>send({type:'qa_approve',qa_id:qaId,question_id:q.id,approved:false})));
+    }
+    box.append(actions);return box;
+}
+function render(data){
+    $('players').textContent=data.player_count??0;
+    ['pending','approved'].forEach(kind=>{const target=$(kind);target.replaceChildren();const items=(data.questions||[]).filter(q=>kind==='pending'?q.status==='pending':q.status==='approved');items.forEach(q=>target.append(renderQuestion(q,kind==='pending')));if(!items.length){const p=document.createElement('p');p.className='meta';p.textContent='Пока нет вопросов';target.append(p)}});
+}
+function connect(){
+    ws=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}`);
+    ws.onopen=()=>qaId&&hostToken?send({type:'qa_reconnect_host',qa_id:qaId,host_token:hostToken}):send({type:'qa_create'});
+    ws.onmessage=event=>{const d=JSON.parse(event.data);
+        if(d.type==='qa_created'){qaId=d.qa_id;hostToken=d.host_token;sessionStorage.setItem('qa_host_id',qaId);sessionStorage.setItem('qa_host_token',hostToken);$('code').textContent=qaId}
+        if(d.type==='qa_host_reconnected'){$('code').textContent=d.qa_id}
+        if(d.type==='qa_host_state')render(d);
+        if(d.type==='qa_closed'){$('status').textContent='Сессия завершена';sessionStorage.removeItem('qa_host_id');sessionStorage.removeItem('qa_host_token')}
+        if(d.type==='error'){if(d.code==='qa_not_found'||d.code==='qa_forbidden'){qaId=hostToken=null;sessionStorage.removeItem('qa_host_id');sessionStorage.removeItem('qa_host_token');send({type:'qa_create'})}else $('status').textContent=d.message}
+    };
+    ws.onclose=()=>setTimeout(connect,2000);
+}
+$('close').onclick=()=>{if(confirm('Завершить Q&A?'))send({type:'qa_close',qa_id:qaId})};
+$('export').onclick=async()=>{const token=localStorage.getItem('adminToken');if(!token)return alert('Сначала войдите в админку');const res=await fetch(`/api/qa/export.csv?session_id=${encodeURIComponent(qaId)}`,{headers:{Authorization:'Bearer '+token}});if(!res.ok)return alert('Экспорт недоступен');const a=document.createElement('a');a.href=URL.createObjectURL(await res.blob());a.download=`qa-${qaId}.csv`;a.click();URL.revokeObjectURL(a.href)};
+if(qaId)$('code').textContent=qaId;connect();
+</script>
+</body>
+</html>

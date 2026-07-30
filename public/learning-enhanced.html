@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обучение — Викторина по социальному обслуживанию</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --text-tertiary: #6b6b6b;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --info: #2196f3;
+            --accent: #6366f1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Knowledge Map */
+        .knowledge-map {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .category-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .category-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .category-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .category-score {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .category-score.mastered {
+            color: var(--success);
+        }
+
+        .category-score.learning {
+            color: var(--warning);
+        }
+
+        .category-score.struggling {
+            color: var(--error);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-fill.high {
+            background: var(--success);
+        }
+
+        .progress-fill.medium {
+            background: var(--warning);
+        }
+
+        .progress-fill.low {
+            background: var(--error);
+        }
+
+        .category-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Recommended Topics */
+        .recommendations {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--warning);
+        }
+
+        .recommendation-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .recommendation-icon {
+            font-size: 24px;
+        }
+
+        .recommendation-content {
+            flex: 1;
+        }
+
+        .recommendation-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .recommendation-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .recommendation-btn {
+            padding: 8px 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Spaced Repetition */
+        .spaced-repetition {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .due-topics {
+            display: grid;
+            gap: 12px;
+        }
+
+        .due-topic {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .due-topic-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .due-topic-icon {
+            font-size: 20px;
+        }
+
+        .due-topic-name {
+            font-size: 14px;
+        }
+
+        .due-topic-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .due-topic-action {
+            padding: 6px 12px;
+            background: var(--accent);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .action-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-card:hover {
+            border-color: var(--accent);
+        }
+
+        .action-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .action-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .action-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Карта знаний</h1>
+            <a href="/" class="back-btn">← Назад к викторине</a>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recommendations" id="recommendations" style="display: none;">
+            <div class="section-title">💡 Рекомендуется изучить</div>
+            <div id="recommendations-list"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <div class="action-card" onclick="startWeakTopicsQuiz()">
+                <div class="action-icon">🎯</div>
+                <div class="action-title">Тренировка слабых тем</div>
+                <div class="action-desc">Тест только по темам, где вы ошибались</div>
+            </div>
+            <div class="action-card" onclick="startSpacedRepetition()">
+                <div class="action-icon">🔄</div>
+                <div class="action-title">Интервальное повторение</div>
+                <div class="action-desc">Повторение вопросов через интервалы</div>
+            </div>
+            <div class="action-card" onclick="startAdaptiveQuiz()">
+                <div class="action-icon">📈</div>
+                <div class="action-title">Адаптивное тестирование</div>
+                <div class="action-desc">Сложность подстраивается под вас</div>
+            </div>
+        </div>
+
+        <!-- Knowledge Map -->
+        <div class="knowledge-map">
+            <div class="section-title">📊 Ваша карта знаний</div>
+            <div class="categories-grid" id="categories-grid">
+                <div class="empty-state">
+                    <div class="empty-icon">⏳</div>
+                    <div>Загрузка данных...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spaced Repetition -->
+        <div class="spaced-repetition" style="display: none;" id="spaced-repetition">
+            <div class="section-title">📅 Запланировано повторение</div>
+            <div class="due-topics" id="due-topics"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const CATEGORY_NAMES = {
+            'ethics': 'Этика и коммуникация',
+            'forms_of_service': 'Формы обслуживания',
+            'safety': 'Безопасность',
+            'spb_specific': 'СПб специфика',
+            'documentation': 'Документация',
+            'rights': 'Права получателей',
+            'service_types': 'Виды услуг',
+            'emergency': 'Чрезвычайные ситуации',
+            'care_standards': 'Стандарты ухода',
+            'mobility': 'Мобильность',
+            'accessibility': 'Доступная среда'
+        };
+
+        let categoryStats = {};
+        let spacedRepetitionData = {};
+
+        // Load data
+        async function loadData() {
+            try {
+                // Load history
+                const history = JSON.parse(localStorage.getItem('glm_quiz_history') || '[]');
+
+                // Calculate category stats from history
+                categoryStats = calculateCategoryStats(history);
+
+                // Load spaced repetition data
+                spacedRepetitionData = JSON.parse(localStorage.getItem('glm_quiz_spaced_repetition') || '{}');
+
+                renderKnowledgeMap();
+                renderRecommendations();
+                renderSpacedRepetition();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function calculateCategoryStats(history) {
+            const stats = {};
+            const categoryAnswers = {};
+
+            // Initialize categories
+            Object.keys(CATEGORY_NAMES).forEach(cat => {
+                stats[cat] = { correct: 0, total: 0, answers: [] };
+            });
+
+            // Process each quiz attempt
+            history.forEach(attempt => {
+                if (attempt.mode === 'exam' && attempt.answers) {
+                    attempt.answers.forEach(answer => {
+                        if (answer.category && answer.hasOwnProperty('correct')) {
+                            if (!categoryAnswers[answer.category]) {
+                                categoryAnswers[answer.category] = [];
+                            }
+                            categoryAnswers[answer.category].push(answer.correct);
+                        }
+                    });
+                }
+            });
+
+            // Calculate stats
+            Object.keys(CATEGORY_NAMES).forEach(cat => {
+                const answers = categoryAnswers[cat] || [];
+                stats[cat] = {
+                    correct: answers.filter(a => a).length,
+                    total: answers.length,
+                    answers: answers,
+                    average: answers.length > 0 ? answers.filter(a => a).length / answers.length : 0
+                };
+            });
+
+            return stats;
+        }
+
+        function renderKnowledgeMap() {
+            const grid = document.getElementById('categories-grid');
+            const categories = Object.keys(categoryStats);
+
+            if (categories.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <div>Пройдите викторину, чтобы увидеть карту знаний</div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = categories.map(cat => {
+                const stats = categoryStats[cat];
+                const percentage = stats.total > 0 ? Math.round(stats.average * 100) : 0;
+                const progressClass = percentage >= 70 ? 'high' : percentage >= 50 ? 'medium' : 'low';
+                const scoreClass = percentage >= 70 ? 'mastered' : percentage >= 50 ? 'learning' : 'struggling';
+
+                let statusText = 'Нет данных';
+                if (stats.total > 0) {
+                    if (percentage >= 70) statusText = 'Освоено';
+                    else if (percentage >= 50) statusText = 'В процессе';
+                    else statusText = 'Требует внимания';
+                }
+
+                return `
+                    <div class="category-card" onclick="practiceCategory('${cat}')">
+                        <div class="category-header">
+                            <div class="category-name">${CATEGORY_NAMES[cat]}</div>
+                            <div class="category-score ${scoreClass}">${percentage}%</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${progressClass}" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="category-status">
+                            ${stats.total} вопросов • ${statusText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderRecommendations() {
+            const container = document.getElementById('recommendations');
+            const list = document.getElementById('recommendations-list');
+
+            // Find weak categories (less than 50% and at least 3 questions answered)
+            const weakCategories = Object.keys(categoryStats)
+                .filter(cat => categoryStats[cat].total >= 3 && categoryStats[cat].average < 0.5)
+                .sort((a, b) => categoryStats[a].average - categoryStats[b].average);
+
+            if (weakCategories.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = weakCategories.slice(0, 3).map(cat => {
+                const stats = categoryStats[cat];
+                const percentage = Math.round(stats.average * 100);
+
+                return `
+                    <div class="recommendation-item">
+                        <div class="recommendation-icon">⚠️</div>
+                        <div class="recommendation-content">
+                            <div class="recommendation-title">${CATEGORY_NAMES[cat]}</div>
+                            <div class="recommendation-text">
+                                Правильность: ${percentage}% • ${stats.total} вопросов
+                            </div>
+                        </div>
+                        <button class="recommendation-btn" onclick="practiceCategory('${cat}')">
+                            Тренировать
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSpacedRepetition() {
+            const container = document.getElementById('spaced-repetition');
+            const list = document.getElementById('due-topics');
+
+            const now = Date.now();
+            const dueTopics = Object.keys(spacedRepetitionData)
+                .filter(cat => {
+                    const data = spacedRepetitionData[cat];
+                    return data.nextReview && data.nextReview <= now;
+                })
+                .sort((a, b) => spacedRepetitionData[a].nextReview - spacedRepetitionData[b].nextReview);
+
+            if (dueTopics.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = dueTopics.map(cat => {
+                const data = spacedRepetitionData[cat];
+                const date = new Date(data.nextReview);
+                const isOverdue = data.nextReview < now - 86400000; // More than 1 day overdue
+
+                return `
+                    <div class="due-topic" style="${isOverdue ? 'border-color: var(--error);' : ''}">
+                        <div class="due-topic-info">
+                            <div class="due-topic-icon">${isOverdue ? '🔴' : '🟡'}</div>
+                            <div>
+                                <div class="due-topic-name">${CATEGORY_NAMES[cat]}</div>
+                                <div class="due-topic-date">
+                                    ${isOverdue ? 'Просрочено:' : 'Повторить:'} ${date.toLocaleDateString('ru-RU')}
+                                </div>
+                            </div>
+                        </div>
+                        <button class="due-topic-action" onclick="reviewCategory('${cat}')">
+                            Начать
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Practice actions
+        function practiceCategory(category) {
+            // Save category to practice
+            localStorage.setItem('glm_quiz_practice_category', category);
+            localStorage.setItem('glm_quiz_practice_mode', 'category');
+
+            // Navigate to quiz
+            window.location.href = '/';
+        }
+
+        function startWeakTopicsQuiz() {
+            const weakCategories = Object.keys(categoryStats)
+                .filter(cat => categoryStats[cat].total >= 3 && categoryStats[cat].average < 0.5)
+                .map(cat => cat);
+
+            if (weakCategories.length === 0) {
+                alert('Нет слабых тем. Пройдите викторину сначала!');
+                return;
+            }
+
+            localStorage.setItem('glm_quiz_practice_categories', JSON.stringify(weakCategories));
+            localStorage.setItem('glm_quiz_practice_mode', 'weak_topics');
+
+            window.location.href = '/';
+        }
+
+        function startSpacedRepetition() {
+            const dueTopics = Object.keys(spacedRepetitionData)
+                .filter(cat => {
+                    const data = spacedRepetitionData[cat];
+                    const now = Date.now();
+                    return data.nextReview && data.nextReview <= now;
+                });
+
+            if (dueTopics.length === 0) {
+                alert('Нет тем для повторения. Все темы запланированы на будущее!');
+                return;
+            }
+
+            localStorage.setItem('glm_quiz_practice_categories', JSON.stringify(dueTopics));
+            localStorage.setItem('glm_quiz_practice_mode', 'spaced_repetition');
+
+            window.location.href = '/';
+        }
+
+        function startAdaptiveQuiz() {
+            localStorage.setItem('glm_quiz_practice_mode', 'adaptive');
+            window.location.href = '/';
+        }
+
+        function reviewCategory(category) {
+            practiceCategory(category);
+        }
+
+        // Load on page load
+        loadData();
+    </script>
+</body>
+</html>

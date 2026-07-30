@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "scripts": {
+    "dev:v2": "vite --config vite.config.js",
+    "build": "vite build --config vite.config.js",
+    "preview:v2": "vite preview --config vite.config.js",
+    "test:v2": "node --test tests/v2/*.test.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.6.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.3"
+  }
+}

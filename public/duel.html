@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дуэль — GLM Quiz</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0c0c0e;
+            --bg-secondary: #141618;
+            --bg-tertiary: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #9fa0a0;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #4caf50;
+            --error: #f44336;
+            --accent: #6366f1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .arena {
+            display: grid;
+            grid-template-columns: 1fr 100px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        .player-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .player-panel.winner { border-color: gold; box-shadow: 0 0 30px rgba(255, 215, 0, 0.3); }
+        .player-panel.active { border-color: var(--accent); }
+        .player-name { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .player-score { font-size: 48px; font-weight: 700; color: var(--accent); }
+        .player-stats { margin-top: 16px; font-size: 14px; color: var(--text-secondary); }
+        .vs-panel {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f44336, #ff9800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .question { font-size: 24px; margin-bottom: 24px; text-align: center; }
+        .options { display: grid; gap: 12px; }
+        .option {
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .option:hover { border-color: var(--accent); }
+        .option.correct { border-color: var(--success); background: rgba(76, 175, 80, 0.1); }
+        .option.wrong { border-color: var(--error); background: rgba(244, 67, 54, 0.1); }
+        .option.answered-a { border-color: #e74c3c; background: rgba(231, 76, 60, 0.1); }
+        .option.answered-b { border-color: #3498db; background: rgba(52, 152, 219, 0.1); }
+        .option.answered-c { border-color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
+        .option.answered-d { border-color: #9b59b6; background: rgba(155, 89, 182, 0.1); }
+        .timer { font-size: 64px; font-weight: 700; text-align: center; margin: 24px 0; }
+        .result-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .result-overlay.active { display: flex; }
+        .result-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 48px;
+            text-align: center;
+        }
+        .winner-trophy { font-size: 128px; margin-bottom: 16px; }
+        .winner-name { font-size: 36px; font-weight: 700; margin-bottom: 8px; }
+        .winner-score { font-size: 64px; font-weight: 700; color: var(--accent); }
+        .btn {
+            padding: 16px 48px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 24px;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .hidden { display: none !important; }
+        .lobby { text-align: center; }
+        .input-group { margin: 16px 0; }
+        .input {
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 18px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .arena { grid-template-columns: 1fr; }
+            .vs-panel { display: none; }
+        }
+    </style>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <script src="/js/suppress-logs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ Режим дуэли</h1>
+            <a href="/" class="btn btn-secondary">← Выход</a>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div class="card lobby" id="lobby">
+            <h2 style="margin-bottom: 24px;">Создать дуэль</h2>
+            <div class="input-group">
+                <input type="text" class="input" id="player1-name" placeholder="Ваше имя" style="width: 300px;">
+            </div>
+            <div class="input-group">
+                <input type="text" class="input" id="player2-name" placeholder="Имя соперника (или оставьте пустым для случайного соперника)" style="width: 350px;">
+            </div>
+            <div class="input-group">
+                <select class="input" id="category-select" style="width: 350px;">
+                    <option value="">Все категории</option>
+                    <option value="ethics">Этика и коммуникация</option>
+                    <option value="forms_of_service">Формы обслуживания</option>
+                    <option value="safety">Безопасность</option>
+                    <option value="spb_specific">СПб специфика</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="startDuel()">⚔️ Начать дуэль</button>
+        </div>
+
+        <!-- Duel Arena -->
+        <div id="arena" class="hidden">
+            <div class="arena">
+                <!-- Player 1 -->
+                <div class="player-panel" id="player1-panel">
+                    <div class="player-name" id="player1-name-display">Игрок 1</div>
+                    <div class="player-score" id="player1-score">0</div>
+                    <div class="player-stats">
+                        Правильных: <span id="player1-correct">0</span>/<span id="player1-total">0</span>
+                    </div>
+                </div>
+
+                <!-- VS -->
+                <div class="vs-panel">VS</div>
+
+                <!-- Player 2 -->
+                <div class="player-panel" id="player2-panel">
+                    <div class="player-name" id="player2-name-display">Игрок 2</div>
+                    <div class="player-score" id="player2-score">0</div>
+                    <div class="player-stats">
+                        Правильных: <span id="player2-correct">0</span>/<span id="player2-total">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="card" id="question-card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                    <div>Вопрос <span id="question-number">1</span> из <span id="total-questions">10</span></div>
+                    <div class="timer" id="timer" style="font-size: 32px; margin: 0;">15</div>
+                </div>
+                <div class="question" id="question-text">Загрузка...</div>
+                <div class="options" id="options"></div>
+            </div>
+        </div>
+
+        <!-- Result Overlay -->
+        <div class="result-overlay" id="result-overlay">
+            <div class="result-card">
+                <div class="winner-trophy">🏆</div>
+                <div class="winner-name" id="winner-name">Победитель</div>
+                <div class="winner-score" id="winner-score">0</div>
+                <div style="font-size: 18px; color: var(--text-secondary); margin: 16px 0;">
+                    со счётом <span id="winner-ratio">0/0</span>
+                </div>
+                <button class="btn btn-primary" onclick="location.reload()">Реванш</button>
+                <button class="btn btn-secondary" onclick="window.location.href='/'">В меню</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let player1 = { name: '', score: 0, correct: 0, total: 0 };
+        let player2 = { name: '', score: 0, correct: 0, total: 0 };
+        let questions = [];
+        let currentQuestion = 0;
+        let player1Answered = false;
+        let player2Answered = false;
+        let timerInterval = null;
+
+        async function startDuel() {
+            player1.name = document.getElementById('player1-name').value.trim() || 'Игрок 1';
+            player2.name = document.getElementById('player2-name').value.trim() || 'Компьютер';
+            const category = document.getElementById('category-select').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/questions?learning=true`);
+                const data = await res.json();
+                let allQuestions = data.questions || [];
+
+                if (category) {
+                    allQuestions = allQuestions.filter(q => q.category === category);
+                }
+
+                if (allQuestions.length < 5) {
+                    alert('Недостаточно вопросов! Нужно минимум 5.');
+                    return;
+                }
+
+                questions = shuffleArray(allQuestions).slice(0, 10);
+
+                document.getElementById('lobby').classList.add('hidden');
+                document.getElementById('arena').classList.remove('hidden');
+
+                updatePlayerDisplay();
+                showQuestion();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+            }
+        }
+
+        function updatePlayerDisplay() {
+            document.getElementById('player1-name-display').textContent = player1.name;
+            document.getElementById('player2-name-display').textContent = player2.name;
+            document.getElementById('player1-score').textContent = player1.score;
+            document.getElementById('player2-score').textContent = player2.score;
+            document.getElementById('player1-correct').textContent = player1.correct;
+            document.getElementById('player2-correct').textContent = player2.correct;
+            document.getElementById('player1-total').textContent = player1.total;
+            document.getElementById('player2-total').textContent = player2.total;
+
+            const panel1 = document.getElementById('player1-panel');
+            const panel2 = document.getElementById('player2-panel');
+            panel1.classList.remove('winner', 'active');
+            panel2.classList.remove('winner', 'active');
+
+            if (currentQuestion % 2 === 0) {
+                panel1.classList.add('active');
+            } else {
+                panel2.classList.add('active');
+            }
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions.length) {
+                endDuel();
+                return;
+            }
+
+            const q = questions[currentQuestion];
+            player1Answered = false;
+            player2Answered = false;
+
+            document.getElementById('question-number').textContent = currentQuestion + 1;
+            document.getElementById('total-questions').textContent = questions.length;
+            document.getElementById('question-text').textContent = q.question;
+
+            const letters = ['А', 'Б', 'В', 'Г'];
+            document.getElementById('options').innerHTML = q.options.map((opt, i) => `
+                <div class="option" id="option-${i}" onclick="selectAnswer(${i}, ${q.correct})">
+                    <span style="font-weight: 600; margin-right: 8px;">${letters[i]}.</span>${opt}
+                </div>
+            `).join('');
+
+            updatePlayerDisplay();
+
+            // Timer - 15 seconds per question
+            let timeLeft = 15;
+            document.getElementById('timer').textContent = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (!player1Answered) processAnswer(1, -1, q.correct);
+                    if (!player2Answered && player2.name !== 'Компьютер') processAnswer(2, -1, q.correct);
+                }
+            }, 1000);
+
+            // Computer answers after random delay
+            if (player2.name === 'Компьютер') {
+                setTimeout(() => {
+                    if (!player2Answered) {
+                        const computerAnswer = simulateComputerAnswer(q);
+                        processAnswer(2, computerAnswer, q.correct);
+                    }
+                }, Math.random() * 5000 + 2000);
+            }
+        }
+
+        function selectAnswer(answer, correct) {
+            const isPlayer1Turn = currentQuestion % 2 === 0;
+            const player = isPlayer1Turn ? 1 : 2;
+            const otherPlayer = isPlayer1Turn ? 2 : 1;
+
+            if (isPlayer1Turn && player1Answered) return;
+            if (!isPlayer1Turn && player2Answered) return;
+
+            // Mark option
+            const option = document.getElementById(`option-${answer}`);
+            const colorClass = isPlayer1Turn ? 'answered-a' : 'answered-b';
+            option.classList.add(colorClass);
+
+            processAnswer(player, answer, correct);
+        }
+
+        function processAnswer(playerNum, answer, correct) {
+            const isPlayer1 = playerNum === 1;
+            const player = isPlayer1 ? player1 : player2;
+            const otherPlayer = isPlayer1 ? player2 : player1;
+
+            player.total++;
+            player.correct += (answer === correct) ? 1 : 0;
+
+            const basePoints = 100;
+            const isCorrect = answer === correct;
+            let points = isCorrect ? basePoints : 0;
+
+            player.score += points;
+
+            if (isPlayer1) {
+                player1Answered = true;
+            } else {
+                player2Answered = true;
+            }
+
+            updatePlayerDisplay();
+
+            // Show correct answer
+            const correctOption = document.getElementById(`option-${correct}`);
+            if (correctOption) correctOption.classList.add('correct');
+
+            // Check if both answered
+            if ((player1Answered || player2.name === 'Компьютер') && player2Answered) {
+                clearInterval(timerInterval);
+                setTimeout(() => {
+                    currentQuestion++;
+                    showQuestion();
+                }, 2000);
+            }
+        }
+
+        function simulateComputerAnswer(q) {
+            // Computer answers correctly 70% of the time
+            return Math.random() < 0.7 ? q.correct : Math.floor(Math.random() * 4);
+        }
+
+        function endDuel() {
+            const winner = player1.score > player2.score ? player1 : player2.score > player1.score ? player2 : null;
+
+            document.getElementById('winner-name').textContent = winner ? winner.name : 'Ничья!';
+            document.getElementById('winner-score').textContent = winner ? winner.score : player1.score;
+
+            if (winner) {
+                document.getElementById('winner-ratio').textContent = `${winner.correct}/${winner.total}`;
+                document.getElementById('winner-trophy').textContent = '🏆';
+            } else {
+                document.getElementById('winner-trophy').textContent = '🤝';
+                document.getElementById('winner-ratio').textContent = 'Ничья!';
+            }
+
+            document.getElementById('result-overlay').classList.add('active');
+
+            // Highlight winner panel
+            if (player1.score > player2.score) {
+                document.getElementById('player1-panel').classList.add('winner');
+            } else if (player2.score > player1.score) {
+                document.getElementById('player2-panel').classList.add('winner');
+            }
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+    </script>
+</body>
+</html>
