@@ -1,6 +1,6 @@
 /*
  * GLM Quiz V2 — design tokens.
- * Posture: neutral-led, restrained accent, shallow bounded elevation.
+ * Style: claude.ai — warm ivory paper, coral accent, serif display.
  * Contrast targets verified against --c-surface for WCAG 2.2 AA (4.5:1 body,
  * 3:1 large text and non-text indicators).
  */
@@ -8,36 +8,36 @@
 :root {
     color-scheme: light;
 
-    /* Surfaces: warm neutral paper, cool navy ink. */
-    --c-canvas: #f4f3ef;
-    --c-canvas-edge: #eae8e1;
-    --c-surface: #fdfcfa;
-    --c-surface-sunken: #efede6;
-    --c-surface-raised: #ffffff;
-    --c-well: #f0efe9;
+    /* Surfaces: warm ivory paper, near-black ink. */
+    --c-canvas: #F9F9F7;
+    --c-canvas-edge: #F1EDE3;
+    --c-surface: #FFFFFF;
+    --c-surface-sunken: #F1EDE3;
+    --c-surface-raised: #FFFFFF;
+    --c-well: #F2EFE6;
 
     /* Ink. All ratios below are against --c-surface. */
-    --c-ink: #1a2230;          /* 15.7:1 */
-    --c-ink-2: #33404f;        /* 10.2:1 */
-    --c-muted: #56616f;        /* 6.1:1  */
-    --c-subtle: #68727f;       /* 4.8:1  */
+    --c-ink: #141413;          /* 17.9:1 */
+    --c-ink-2: #4A463C;        /* 9.3:1  */
+    --c-muted: #6E6A5E;        /* 5.6:1  */
+    --c-subtle: #8A8578;       /* 3.9:1, secondary labels only */
 
     /* Hairlines. Non-text contrast only. */
-    --c-line: #ddd9cf;
-    --c-line-strong: #c6c1b4;
-    --c-line-ink: rgb(26 34 48 / 12%);
+    --c-line: #E5E2D8;
+    --c-line-strong: #D6D1C4;
+    --c-line-ink: rgb(20 20 19 / 12%);
 
-    /* Primary: deep institutional navy. 8.6:1 against white text. */
-    --c-primary: #1f4d78;
-    --c-primary-hover: #1a4267;
-    --c-primary-active: #163856;
-    --c-primary-on: #ffffff;
-    --c-primary-tint: #e9eef4;
-    --c-primary-tint-strong: #d7e2ec;
+    /* Primary: claude coral. 4.9:1 against white text. */
+    --c-primary: #B85C3D;
+    --c-primary-hover: #A84F32;
+    --c-primary-active: #96452C;
+    --c-primary-on: #FFFFFF;
+    --c-primary-tint: #F7E5DC;
+    --c-primary-tint-strong: #F2D4C4;
 
-    /* Accent: restrained clay. Editorial marks and eyebrows only. 5.5:1. */
-    --c-accent: #9c5236;
-    --c-accent-tint: #f4ebe6;
+    /* Accent: bright coral. Editorial marks, spark and eyebrows. */
+    --c-accent: #D97757;
+    --c-accent-tint: #F2EFE6;
 
     /* Semantic, muted rather than saturated. */
     --c-ok: #1c6b47;           /* 6.3:1 */
@@ -50,15 +50,15 @@
     --c-err-tint: #f7ecec;
     --c-err-line: #d9adad;
 
-    /* Focus. 3px navy at 3px offset reads 7.8:1 against the canvas. */
-    --c-focus: #1f4d78;
+    /* Focus. 3px coral at 3px offset reads well against the canvas. */
+    --c-focus: #B85C3D;
     --focus-ring: 3px solid var(--c-focus);
     --focus-offset: 3px;
 
-    /* Typography. Serif display for editorial authority, system sans for UI.
-       Both stacks are network-free and cover Cyrillic on every target OS. */
+    /* Typography. PT Serif display (as in the seminar reports),
+       Noto Sans for UI, with network-free fallbacks covering Cyrillic. */
     --font-display: "PT Serif", Georgia, "Times New Roman", serif;
-    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-num: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
     /* Type scale. Never below 15px; small sizes never shrink on mobile. */
@@ -81,7 +81,7 @@
     --fw-body: 400;
     --fw-medium: 500;
     --fw-semibold: 600;
-    --fw-display: 600;
+    --fw-display: 700;
 
     /* Spacing, 4px base. */
     --sp-1: 0.25rem;
@@ -105,9 +105,9 @@
 
     /* Elevation: three bounded strata over a flat baseline. */
     --e-0: none;
-    --e-1: 0 1px 2px rgb(26 34 48 / 5%);
-    --e-2: 0 2px 6px rgb(26 34 48 / 6%), 0 1px 2px rgb(26 34 48 / 4%);
-    --e-3: 0 16px 40px rgb(26 34 48 / 12%), 0 2px 8px rgb(26 34 48 / 6%);
+    --e-1: 0 1px 2px rgb(20 20 19 / 5%);
+    --e-2: 0 2px 6px rgb(20 20 19 / 6%), 0 1px 2px rgb(20 20 19 / 4%);
+    --e-3: 0 16px 40px rgb(20 20 19 / 12%), 0 2px 8px rgb(20 20 19 / 6%);
 
     /* Motion. */
     --t-fast: 140ms;
@@ -134,32 +134,32 @@
     :root {
         color-scheme: dark;
 
-        --c-canvas: #14181f;
-        --c-canvas-edge: #1c2230;
-        --c-surface: #1b212b;
-        --c-surface-sunken: #151a22;
-        --c-surface-raised: #212936;
-        --c-well: #232b38;
+        --c-canvas: #161511;
+        --c-canvas-edge: #1F1E19;
+        --c-surface: #1D1C17;
+        --c-surface-sunken: #161511;
+        --c-surface-raised: #26241E;
+        --c-well: #28261F;
 
-        --c-ink: #eef0f3;
-        --c-ink-2: #d3d8e0;
-        --c-muted: #a8b1bf;
-        --c-subtle: #939dac;
+        --c-ink: #F2F1EC;
+        --c-ink-2: #D8D5CB;
+        --c-muted: #A8A294;
+        --c-subtle: #8A8578;
 
-        --c-line: #2f3846;
-        --c-line-strong: #3d4757;
-        --c-line-ink: rgb(238 240 243 / 14%);
+        --c-line: #36332B;
+        --c-line-strong: #46423A;
+        --c-line-ink: rgb(242 241 236 / 14%);
 
-        /* Lightened so text on tinted surfaces keeps AA in dark mode. */
-        --c-primary: #8fb6dc;
-        --c-primary-hover: #a5c6e6;
-        --c-primary-active: #b8d2ec;
-        --c-primary-on: #10202f;
-        --c-primary-tint: #223143;
-        --c-primary-tint-strong: #2b3d52;
+        /* Lightened coral so text on tinted surfaces keeps AA in dark mode. */
+        --c-primary: #E09A7F;
+        --c-primary-hover: #E8AB92;
+        --c-primary-active: #F0BCA6;
+        --c-primary-on: #2A1710;
+        --c-primary-tint: #3A2721;
+        --c-primary-tint-strong: #4A3028;
 
-        --c-accent: #d99a7c;
-        --c-accent-tint: #33261f;
+        --c-accent: #E8AB92;
+        --c-accent-tint: #33261F;
 
         --c-ok: #7fc9a3;
         --c-ok-tint: #1c2d26;
@@ -171,7 +171,7 @@
         --c-err-tint: #2f2022;
         --c-err-line: #613a3c;
 
-        --c-focus: #a5c6e6;
+        --c-focus: #E8AB92;
 
         --e-1: 0 1px 2px rgb(0 0 0 / 30%);
         --e-2: 0 2px 6px rgb(0 0 0 / 34%), 0 1px 2px rgb(0 0 0 / 24%);

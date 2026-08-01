@@ -4,8 +4,8 @@
   "description": "Обучающая викторина для работников социальных учреждений",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0c0c0e",
-  "theme_color": "#6366f1",
+  "background_color": "#F9F9F7",
+  "theme_color": "#B85C3D",
   "orientation": "portrait",
   "icons": [
     {
