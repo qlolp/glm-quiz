@@ -133,8 +133,8 @@
 }
 
 .link-list a:hover {
-    background: var(--c-primary-tint);
-    color: var(--c-primary);
+    background: var(--c-accent-tint);
+    color: var(--c-accent);
 }
 
 .link-list svg {
@@ -145,7 +145,7 @@
 }
 
 .link-list a:hover svg {
-    color: var(--c-primary);
+    color: var(--c-accent);
 }
 
 .link-list .link-arrow {
@@ -212,7 +212,7 @@
 }
 
 .step-rail li.is-current {
-    background: var(--c-primary);
+    background: var(--c-accent-soft);
 }
 
 /* ─── Quality rating row ──────────────────────────────────────────── */

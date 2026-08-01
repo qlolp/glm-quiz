@@ -43,10 +43,11 @@
 
 .brand-mark {
     flex-shrink: 0;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: var(--r-pill);
-    background: var(--c-accent);
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: var(--r-xs);
+    background: var(--c-accent-soft);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--c-accent-tint) 80%, transparent);
 }
 
 .brand-sub {
@@ -103,7 +104,7 @@
 .page-head {
     display: grid;
     gap: var(--sp-3);
-    margin-bottom: var(--sp-6);
+    margin-bottom: var(--sp-7);
 }
 
 .eyebrow {
@@ -123,7 +124,7 @@
     flex-shrink: 0;
     width: 1.25rem;
     height: 2px;
-    background: currentcolor;
+    background: var(--c-accent-soft);
     content: "";
 }
 
@@ -131,7 +132,7 @@
     max-width: 36rem;
     color: var(--c-muted);
     font-size: var(--fs-400);
-    line-height: var(--lh-body);
+    line-height: var(--lh-relaxed);
 }
 
 .muted {
@@ -175,7 +176,7 @@
        labels, which was the worst legibility problem on small screens. */
     border-top: 1px solid var(--c-line);
     background: var(--c-surface);
-    box-shadow: 0 -1px 12px rgb(26 34 48 / 6%);
+    box-shadow: 0 -1px 0 rgb(20 20 19 / 4%);
     padding-bottom: var(--safe-b);
 }
 
@@ -214,9 +215,9 @@
 }
 
 .nav-item[aria-current="page"] {
-    border-top-color: var(--c-primary);
-    background: var(--c-primary-tint);
-    color: var(--c-primary);
+    border-top-color: var(--c-accent-soft);
+    background: var(--c-accent-tint);
+    color: var(--c-accent);
     font-weight: var(--fw-semibold);
 }
 
@@ -249,9 +250,9 @@
 }
 
 .session-banner {
-    border-bottom: 1px solid var(--c-primary-tint-strong);
-    background: var(--c-primary-tint);
-    color: var(--c-primary);
+    border-bottom: 1px solid var(--c-line-strong);
+    background: var(--c-accent-tint);
+    color: var(--c-accent);
     font-weight: var(--fw-medium);
 }
 

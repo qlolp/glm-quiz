@@ -1,6 +1,6 @@
 {
-  "version": "2026.07.30.1",
-  "last_updated": "2026-07-30T20:10:00+03:00",
+  "version": "2026.08.01.1",
+  "last_updated": "2026-08-01T14:30:00+03:00",
   "total_questions": 84,
   "categories": [
     "ethics",
@@ -20,21 +20,32 @@
   ],
   "changes": {
     "current": {
-      "version": "2026.07.30.1",
-      "date": "2026-07-30",
+      "version": "2026.08.01.1",
+      "date": "2026-08-01",
       "changes": [
-        "V2 design system rebuilt: warm neutral paper surfaces, deep navy primary and restrained clay accent",
-        "Serif display headings with a system sans UI stack, no webfont download required",
-        "WCAG 2.2 AA contrast across text, states and focus indicators, plus a dark theme",
-        "Quiz question category now shows its Russian label instead of the raw key",
-        "Category labels cover all bank topics including mobility, accessibility and Spb-specific",
-        "Progress replaced with a themed meter that renders consistently across browsers",
-        "Quiz answers now mark the correct option and the wrong choice after grading",
-        "Opaque bottom navigation with icons, safe-area insets and landscape layout",
-        "Meaningful iconography, score dials, stat tiles and step rails across all V2 screens"
+        "V2 restyled to Claude.ai / Anthropic visual language: ivory canvas, warm slate ink, clay terracotta accent",
+        "Primary CTAs use slate (AA), clay reserved for brand marks, meters, selection and nav emphasis",
+        "Soft ring elevation, restrained motion, secondary outline buttons matching Anthropic patterns",
+        "Landing copy lightly framed around seminar «Не просто накормить» without narrowing the question bank",
+        "Dark theme flipped to warm near-black slate with ivory CTAs"
       ]
     },
     "history": [
+      {
+        "version": "2026.07.30.1",
+        "date": "2026-07-30",
+        "changes": [
+          "V2 design system rebuilt: warm neutral paper surfaces, deep navy primary and restrained clay accent",
+          "Serif display headings with a system sans UI stack, no webfont download required",
+          "WCAG 2.2 AA contrast across text, states and focus indicators, plus a dark theme",
+          "Quiz question category now shows its Russian label instead of the raw key",
+          "Category labels cover all bank topics including mobility, accessibility and Spb-specific",
+          "Progress replaced with a themed meter that renders consistently across browsers",
+          "Quiz answers now mark the correct option and the wrong choice after grading",
+          "Opaque bottom navigation with icons, safe-area insets and landscape layout",
+          "Meaningful iconography, score dials, stat tiles and step rails across all V2 screens"
+        ]
+      },
       {
         "version": "2026.07.17.6",
         "date": "2026-07-29",
@@ -42,6 +53,7 @@
           "Kahoot scoring modes, Pulse scale questions, moderated Live Q&A, seminar digest and backend decomposition"
         ]
       },
+
       {
         "version": "2026.07.17.4",
         "date": "2026-07-29",

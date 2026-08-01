@@ -45,13 +45,13 @@ svg {
 }
 
 a {
-    color: var(--c-primary);
+    color: var(--c-ink);
     text-decoration-thickness: 1px;
     text-underline-offset: 0.18em;
 }
 
 a:hover {
-    color: var(--c-primary-hover);
+    color: var(--c-muted);
 }
 
 :focus-visible {

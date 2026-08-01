@@ -8,6 +8,17 @@
     box-shadow: var(--e-1);
 }
 
+/* Soft clay wash on interactive lead cards — Claude-like warmth without neon. */
+button.card-lead,
+a.card-lead {
+    background:
+        linear-gradient(
+            165deg,
+            var(--c-surface) 0%,
+            color-mix(in srgb, var(--c-accent-tint) 55%, var(--c-surface)) 100%
+        );
+}
+
 .card {
     display: grid;
     gap: var(--sp-2);
@@ -35,7 +46,7 @@ a.card:hover {
 
 a.card:hover,
 button.card:hover {
-    border-color: var(--c-primary);
+    border-color: var(--c-line-strong);
     box-shadow: var(--e-2);
     transform: translateY(-1px);
 }
@@ -51,8 +62,8 @@ button.card:active {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: var(--r-md);
-    background: var(--c-primary-tint);
-    color: var(--c-primary);
+    background: var(--c-accent-tint);
+    color: var(--c-accent);
 }
 
 .card-icon svg {
@@ -99,9 +110,9 @@ button.card:active {
     gap: var(--sp-3);
     padding: var(--sp-4);
     border: 1px solid var(--c-line);
-    border-left: 3px solid var(--c-accent);
+    border-left: 3px solid var(--c-accent-soft);
     border-radius: 0 var(--r-md) var(--r-md) 0;
-    background: var(--c-surface);
+    background: var(--c-accent-tint);
     color: var(--c-ink-2);
     font-size: var(--fs-200);
 }
@@ -115,11 +126,12 @@ button.card:active {
 }
 
 .callout.info {
-    border-left-color: var(--c-primary);
+    border-left-color: var(--c-accent);
+    background: var(--c-accent-tint);
 }
 
 .callout.info svg {
-    color: var(--c-primary);
+    color: var(--c-accent);
 }
 
 .callout.ok {
@@ -176,7 +188,7 @@ button.card:active {
 .meter-fill {
     height: 100%;
     border-radius: var(--r-pill);
-    background: var(--c-primary);
+    background: var(--c-accent-soft);
 }
 
 /* ─── Placeholder states ──────────────────────────────────────────── */
