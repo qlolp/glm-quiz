@@ -200,6 +200,12 @@ app.post('/api/users', (req, res) => {
         // Check if exists
         let user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
+        if (user && user.email) {
+            // Registered account: issuing a token here would let anyone sign in
+            // as this user by username alone. Require email verification instead.
+            return res.status(409).json({ error: 'Account requires email verification', requires_verification: true });
+        }
+
         if (!user) {
             const userId = crypto.randomBytes(16).toString('hex');
             user = {
