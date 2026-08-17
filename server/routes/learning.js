@@ -1,5 +1,7 @@
 function register(context) {
     with (context) {
+const { inMemoryAskedTracker } = require('./_shared');
+
 // ========== SPACED REPETITION (SM-2 Algorithm) ==========
 
 /**
@@ -293,6 +295,14 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
             categories = [req.body.category];
         }
 
+        // BUG-13 fix: get already-asked question IDs from this session to avoid duplicates
+        // First check in-memory session tracker, then DB
+        const askedQuestionIds = session_id && inMemoryAskedTracker.has(session_id)
+            ? [...inMemoryAskedTracker.get(session_id)]
+            : (session_id
+                ? db.prepare('SELECT question_id FROM adaptive_session_answers WHERE session_id = ?').all(session_id).map(r => r.question_id)
+                : []);
+
         // Calculate recent performance
         const recentCorrect = recent_answers ? recent_answers.filter(a => a).length : 0;
         const recentTotal = recent_answers ? recent_answers.length : 0;
@@ -304,7 +314,7 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
         else if (recentAccuracy >= 0.4) targetLevel = 'medium';
         else targetLevel = 'easy';
 
-        // Get questions for target level
+        // Get questions for target level, excluding already-asked questions
         let questionQuery = `
             SELECT dq.id, dq.question_text as question, dq.option_a, dq.option_b, dq.option_c, dq.option_d,
                    dq.correct_answer, dq.category, dq.explanation,
@@ -316,6 +326,13 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
 
         const params = [];
         const conditions = [];
+
+        // Exclude already-asked questions (BUG-13 fix)
+        if (askedQuestionIds.length > 0) {
+            const excludePlaceholders = askedQuestionIds.map(() => '?').join(',');
+            conditions.push(`dq.id NOT IN (${excludePlaceholders})`);
+            params.push(...askedQuestionIds);
+        }
 
         if (categories && categories.length > 0) {
             const placeholders = categories.map(() => '?').join(',');
@@ -356,6 +373,12 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
             fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
             const fallbackQuestion = db.prepare(fallbackQuery).get(...fallbackParams);
 
+            // Track fallback question BEFORE returning (was after return = dead code)
+            if (session_id && fallbackQuestion) {
+                if (!inMemoryAskedTracker.has(session_id)) inMemoryAskedTracker.set(session_id, new Set());
+                inMemoryAskedTracker.get(session_id).add(fallbackQuestion.id);
+            }
+
             return res.json({
                 question: formatPublicQuestionRow(fallbackQuestion),
                 current_level: targetLevel,
@@ -368,6 +391,11 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
             current_level: targetLevel,
             confidence: question.times_answered >= 5 ? Math.min(0.95, question.times_answered / 10) : 0.5
         });
+        // BUG-13: track in-memory so rapid /next calls dedup correctly
+        if (session_id) {
+            if (!inMemoryAskedTracker.has(session_id)) inMemoryAskedTracker.set(session_id, new Set());
+            inMemoryAskedTracker.get(session_id).add(question.id);
+        }
     } catch (error) {
         console.error('Error getting adaptive question:', error);
         res.status(500).json({ error: 'Failed to get adaptive question' });
@@ -565,7 +593,7 @@ app.post('/api/certificates/generate', requireUser, (req, res) => {
         const { score, total_questions } = req.body;
 
         if (typeof score !== 'number' || typeof total_questions !== 'number') {
-            return res.status(400).json({ error: 'Missing required fields' });
+            return res.status(400).json({ error: 'Fields "score" (number) and "total_questions" (number) are required' });
         }
 
         if (score < 0 || total_questions <= 0 || score > total_questions) {
@@ -585,11 +613,13 @@ app.post('/api/certificates/generate', requireUser, (req, res) => {
             return res.status(400).json({ error: 'Certificate requires 90%+ score' });
         }
 
-        // Anti-forgery: require a matching recent result and insert atomically
+        // Anti-forgery: require a matching recent EXAM result and insert atomically.
+        // BUG-09: certificates are official attestation — training/quick/micro results are not certifiable.
         const generateCert = db.transaction(() => {
             const recentResult = db.prepare(`
                 SELECT id FROM results
-                WHERE user_id = ? AND score = ? AND total_questions = ? AND created_at >= datetime('now', '-24 hours')
+                WHERE user_id = ? AND score = ? AND total_questions = ? AND mode = 'exam'
+                  AND created_at >= datetime('now', '-24 hours')
                 ORDER BY created_at DESC
                 LIMIT 1
             `).get(user_id, score, total_questions);

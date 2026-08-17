@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Статус — GLM Quiz</title>
+    <title>Статус — Викторина</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         .wrap { max-width: 720px; margin: 0 auto; padding: 24px 0; }
@@ -45,8 +45,10 @@
                 const roleLabel = status.server_role === 'alternative'
                     ? 'Альтернативный (резервный)'
                     : 'Основной';
-                const primaryHint = status.server_role === 'alternative' && status.primary_server_url
-                    ? `<p style="margin-top:12px;font-size:13px">Основной сервер: <a href="${status.primary_server_url}">${status.primary_server_url}</a></p>`
+                const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+                const safeUrl = u => /^https?:\/\//.test(String(u||'')) ? u : '';
+                const primaryHint = status.server_role === 'alternative' && safeUrl(status.primary_server_url)
+                    ? `<p style="margin-top:12px;font-size:13px">Основной сервер: <a href="${esc(safeUrl(status.primary_server_url))}">${esc(status.primary_server_url)}</a></p>`
                     : '';
 
                 el.innerHTML = `
@@ -68,7 +70,8 @@
                     ${status.recent_errors?.length ? `<pre>${JSON.stringify(status.recent_errors, null, 2)}</pre>` : ''}
                 `;
             } catch (e) {
-                el.innerHTML = `<p class="err">Не удалось загрузить статус: ${e.message}</p>`;
+                const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+                el.innerHTML = `<p class="err">Не удалось загрузить статус: ${esc(e.message)}</p>`;
             }
         }
         loadStatus();

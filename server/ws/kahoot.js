@@ -192,14 +192,18 @@ function startGame(ws, data) {
         return;
     }
 
-    // Load questions
+    // Load questions (BUG-11 fix: honour requested question_count, clamped 1-84)
+    const requestedCount = Number(data.question_count);
+    const questionCount = Number.isInteger(requestedCount) && requestedCount > 0
+        ? Math.min(requestedCount, 84)
+        : 10;
     const questions = db.prepare(`
         SELECT id, question_text as question, option_a, option_b, option_c, option_d,
                correct_answer, category
         FROM default_questions
         ORDER BY RANDOM()
-        LIMIT 10
-    `).all();
+        LIMIT ?
+    `).all(questionCount);
 
     session.questions = questions;
     session.currentQuestion = 0;

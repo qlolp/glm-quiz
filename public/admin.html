@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель — GLM Quiz</title>
+    <title>Админ-панель — Викторина</title>
     <style>
         * {
             margin: 0;
@@ -1734,7 +1734,7 @@
                                         <div class="question-meta">${escapeHtml(q.category || '')}</div>
                                     </td>
                                     <td>${q.accuracy_percent === null ? '—' : q.accuracy_percent + '%'} <span style="color:var(--text-tertiary)">(${q.times_correct}/${q.times_answered})</span></td>
-                                    <td>${(q.flags || []).map(f => flagLabels[f] || f).join(', ')}</td>
+                                    <td>${(q.flags || []).map(f => escapeHtml(flagLabels[f] || f)).join(', ')}</td>
                                 </tr>
                             `).join('')}
                         </tbody>

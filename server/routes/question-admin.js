@@ -143,6 +143,14 @@ app.post('/api/questions/submit', requireUser, (req, res) => {
         if (correct_answer === undefined || correct_answer < 0 || correct_answer > 3) {
             return res.status(400).json({ error: 'Invalid correct answer' });
         }
+        // Category must be a plain slug: latin/digits/underscore only.
+        // Prevents attribute injection (quotes/spaces) into admin HTML class="category-...".
+        const VALID_CATEGORIES = [
+            'ethics', 'rights', 'care_standards', 'emergency', 'safety', 'service_types',
+            'communication', 'documentation', 'forms_of_service', 'quality',
+            'accessibility', 'mobility', 'mission', 'spb_specific', 'general'
+        ];
+        const safeCategory = VALID_CATEGORIES.includes(category) ? category : 'general';
 
         const result = db.prepare(`
             INSERT INTO questions (question_text, option_a, option_b, option_c, option_d, correct_answer, category, explanation, reference_link, moderated)
@@ -151,7 +159,7 @@ app.post('/api/questions/submit', requireUser, (req, res) => {
             trimmedQuestion,
             trimmedOptions[0], trimmedOptions[1], trimmedOptions[2], trimmedOptions[3],
             correct_answer,
-            sanitizeString(category) || 'general',
+            safeCategory,
             sanitizeString(explanation, 2000),
             sanitizeString(reference_link, 500)
         );

@@ -44,7 +44,7 @@ app.get('/api/questions', (req, res) => {
  * GET /api/questions/user
  * Get user-submitted questions (admin)
  */
-app.get('/api/questions/user', (req, res) => {
+app.get('/api/questions/user', requireAdmin, (req, res) => {
     try {
         const questions = db.prepare(`
             SELECT

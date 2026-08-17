@@ -149,8 +149,10 @@ function escapeLike(str) {
 
 function sanitizeString(value, maxLength = 255) {
     if (value === null || value === undefined) return null;
-    const str = String(value).trim();
+    let str = String(value).trim();
     if (str === '') return null;
+    // Strip HTML tags to prevent stored XSS (display_name, username, etc.)
+    str = str.replace(/<[^>]*>/g, '');
     return str.slice(0, maxLength);
 }
 
@@ -159,7 +161,7 @@ const { db, PREPOST_QUESTION_IDS } = require('./db');
 
 // Rate limiting: sliding window counter per IP
 const rateLimiter = new Map();
-const RATE_LIMIT = 60;
+const RATE_LIMIT = 200;
 const RATE_WINDOW = 60 * 1000;
 
 function checkRateLimit(ip) {
@@ -196,7 +198,12 @@ function getClientIp(req) {
 function rateLimitMiddleware(req, res, next) {
     const ip = getClientIp(req);
     if (!checkRateLimit(ip)) {
-        return res.status(429).json({ error: 'Too many requests' });
+        const record = rateLimiter.get(ip);
+        const retryAfter = record ? Math.ceil((RATE_WINDOW - (Date.now() - record.windowStart)) / 1000) : 60;
+        res.setHeader('Retry-After', String(retryAfter));
+        res.setHeader('X-RateLimit-Limit', String(RATE_LIMIT));
+        res.setHeader('X-RateLimit-Remaining', '0');
+        return res.status(429).json({ error: 'Too many requests', retry_after: retryAfter });
     }
     next();
 }
@@ -231,7 +238,7 @@ function certRateLimitMiddleware(req, res, next) {
 
 // Rate limit for feedback and check-answer (spam protection)
 const feedbackRateLimiter = new Map();
-const FEEDBACK_RATE_LIMIT = 30;
+const FEEDBACK_RATE_LIMIT = 120;
 const FEEDBACK_RATE_WINDOW = 60 * 1000;
 
 function checkFeedbackRateLimit(ip) {
@@ -251,6 +258,86 @@ function feedbackRateLimitMiddleware(req, res, next) {
     const ip = getClientIp(req);
     if (!checkFeedbackRateLimit(ip)) {
         return res.status(429).json({ error: 'Too many requests' });
+    }
+    next();
+}
+
+// P0-3: Rate limit for user creation (anti-spam)
+// Raised from 5/hour to 60/hour: seminar participants share NAT addresses,
+// 5/hour blocked entire classes behind one IP (BUG-05).
+const userCreationLimiter = new Map();
+const USER_CREATION_LIMIT = 60;  // 60 registrations per IP per hour
+const USER_CREATION_WINDOW = 60 * 60 * 1000;
+
+function checkUserCreationRateLimit(ip) {
+    const now = Date.now();
+    const record = userCreationLimiter.get(ip) || { count: 0, windowStart: now };
+    if (now - record.windowStart >= USER_CREATION_WINDOW) {
+        record.count = 0;
+        record.windowStart = now;
+    }
+    if (record.count >= USER_CREATION_LIMIT) {
+        const retryAfter = Math.ceil((USER_CREATION_WINDOW - (now - record.windowStart)) / 1000);
+        return { allowed: false, retryAfter };
+    }
+    record.count++;
+    userCreationLimiter.set(ip, record);
+    return { allowed: true };
+}
+
+function userCreationRateLimitMiddleware(req, res, next) {
+    // P0-3: bypass for E2E tests to avoid rate-limit interference
+    if (process.env.DISABLE_USER_RATE_LIMIT === '1') {
+        return next();
+    }
+    const ip = getClientIp(req);
+    const result = checkUserCreationRateLimit(ip);
+    if (!result.allowed) {
+        res.setHeader('Retry-After', String(result.retryAfter));
+        res.setHeader('X-RateLimit-Limit', String(USER_CREATION_LIMIT));
+        res.setHeader('X-RateLimit-Remaining', '0');
+        return res.status(429).json({
+            error: 'Registration limit reached. Try again in ' + Math.ceil(result.retryAfter / 60) + ' minutes.',
+            retry_after: result.retryAfter
+        });
+    }
+    next();
+}
+
+// P1-4: Strict rate limit for admin auth (anti-brute-force)
+const adminAuthLimiter = new Map();
+const ADMIN_AUTH_LIMIT = 3;  // 3 attempts per IP per minute
+const ADMIN_AUTH_WINDOW = 60 * 1000;
+
+function checkAdminAuthRateLimit(ip) {
+    const now = Date.now();
+    const record = adminAuthLimiter.get(ip) || { count: 0, windowStart: now };
+    if (now - record.windowStart >= ADMIN_AUTH_WINDOW) {
+        record.count = 0;
+        record.windowStart = now;
+    }
+    if (record.count >= ADMIN_AUTH_LIMIT) {
+        const retryAfter = Math.ceil((ADMIN_AUTH_WINDOW - (now - record.windowStart)) / 1000);
+        return { allowed: false, retryAfter };
+    }
+    record.count++;
+    adminAuthLimiter.set(ip, record);
+    return { allowed: true };
+}
+
+function adminAuthRateLimitMiddleware(req, res, next) {
+    // P1-4: bypass for E2E tests
+    if (process.env.DISABLE_USER_RATE_LIMIT === '1') {
+        return next();
+    }
+    const ip = getClientIp(req);
+    const result = checkAdminAuthRateLimit(ip);
+    if (!result.allowed) {
+        res.setHeader('Retry-After', String(result.retryAfter));
+        return res.status(429).json({
+            error: 'Too many admin auth attempts. Try again in ' + result.retryAfter + ' seconds.',
+            retry_after: result.retryAfter
+        });
     }
     next();
 }
@@ -308,6 +395,7 @@ const routeContext = {
     cache, getCache, setCache, verificationCodes, storeVerificationCode, verifyCode,
     escapeHtml, escapeLike, sanitizeString,
     certRateLimitMiddleware, feedbackRateLimitMiddleware,
+    userCreationRateLimitMiddleware, adminAuthRateLimitMiddleware,
     formatPublicQuestionRow, formatSpacedRepCard,
     crypto, path, fs,
     wss: null

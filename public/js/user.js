@@ -64,21 +64,35 @@ function authFetch(url, options = {}) {
 
 /** Server-side answer verification (correct answers not in public question list) */
 async function checkAnswer(questionId, answer, sessionId) {
-    const res = await authFetch('/api/quiz/check-answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        redirectOnUnauthorized: false,
-        body: JSON.stringify({
-            questionId,
-            answer,
-            session_id: sessionId || null
-        })
-    });
-    if (!res.ok) {
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds, doubles each retry
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const res = await authFetch('/api/quiz/check-answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            redirectOnUnauthorized: false,
+            body: JSON.stringify({
+                questionId,
+                answer,
+                session_id: sessionId || null
+            })
+        });
+
+        if (res.ok) return res.json();
+
+        // On 429 (rate limited), retry with backoff — don't lose the answer
+        if (res.status === 429 && attempt < maxRetries) {
+            const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10);
+            const delay = retryAfter > 0 ? retryAfter * 1000 : baseDelay * Math.pow(2, attempt);
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+        }
+
+        // Non-429 error or retries exhausted — throw
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to check answer');
+        throw new Error(err.error || (res.status === 429 ? 'Слишком много запросов. Попробуйте через минуту.' : 'Failed to check answer'));
     }
-    return res.json();
 }
 
 /** Reveal correct answer for study/flashcard modes */
@@ -95,7 +109,14 @@ async function revealAnswer(questionId) {
 
 async function getAdminToken() {
     const existing = localStorage.getItem('adminToken');
-    if (existing) return existing;
+    const expiry = parseInt(localStorage.getItem('adminTokenExpiry') || '0', 10);
+    // Expire after 2 hours (server TTL is 24h, but client-side should be shorter for shared computers)
+    if (existing && Date.now() < expiry) return existing;
+    // Clear expired token
+    if (existing) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminTokenExpiry');
+    }
 
     const password = prompt('Введите пароль администратора:');
     if (!password) return null;
@@ -108,6 +129,7 @@ async function getAdminToken() {
     const data = await res.json();
     if (data.valid && data.token) {
         localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminTokenExpiry', String(Date.now() + 2 * 60 * 60 * 1000));
         return data.token;
     }
     alert('Неверный пароль администратора');

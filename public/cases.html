@@ -226,7 +226,7 @@
                     return;
                 }
                 el.innerHTML = cases.map(c => `
-                    <div class="case-card" data-action="openCase" data-arg="${c.id}">
+                    <div class="case-card" data-action="openCase" data-arg="${c.id}" onclick="openCase('${c.id}')">
                         <div class="case-icon">${icons[c.category] || '📋'}</div>
                         <div class="case-title">${escapeHtml(c.title)}</div>
                         <div class="case-desc">${escapeHtml(c.description)}</div>

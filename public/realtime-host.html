@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot-режим — Хост</title>
+    <title>Kahoot-режим — Викторина</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -153,6 +153,12 @@
             <p style="text-align: center; color: var(--text-secondary); font-size: 14px;">
                 Игроки могут присоединиться по этому коду
             </p>
+            <!-- BUG-11 fix: players had no entry point — show a direct join link -->
+            <div id="join-link-box" style="display:none;text-align:center;margin:12px 0;">
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 6px;">Ссылка для игроков:</p>
+                <a id="join-link" href="#" style="color: var(--info); font-size: 16px; word-break: break-all;"></a>
+                <button class="btn btn-secondary" id="copy-join-link" style="margin-top:8px;padding:8px 16px;font-size:13px;">📋 Скопировать</button>
+            </div>
             <div class="players-list" id="players-list"></div>
             <div style="text-align: center; margin-top: 32px;">
                 <button class="btn btn-primary" id="start-game-btn" onclick="startGame()" disabled>▶️ Начать игру</button>
@@ -317,6 +323,7 @@
                     localStorage.setItem('glm_host_game_id', gameId);
                     localStorage.setItem('glm_host_reconnect_token', data.reconnect_token);
                     document.getElementById('game-code').textContent = gameId;
+                    showJoinLink(gameId);
                     setScoringMode(data.scoring);
                     document.getElementById('create-room-btn').classList.add('hidden');
                     document.getElementById('start-game-btn').disabled = false;
@@ -326,6 +333,7 @@
                 case 'host_reconnected':
                     gameId = data.game_id;
                     document.getElementById('game-code').textContent = gameId;
+                    showJoinLink(gameId);
                     setScoringMode(data.scoring);
                     document.getElementById('create-room-btn').classList.add('hidden');
                     document.getElementById('start-game-btn').disabled = false;
@@ -422,6 +430,38 @@
                     <span class="player-score" style="font-size: 16px;">👤</span>
                 </div>
             `).join('');
+        }
+
+        function showJoinLink(gameId) {
+            const box = document.getElementById('join-link-box');
+            const link = document.getElementById('join-link');
+            if (!box || !link) return;
+            const url = `${window.location.origin}/realtime-player.html?game=${encodeURIComponent(gameId)}`;
+            link.href = url;
+            link.textContent = url;
+            box.style.display = 'block';
+
+            const copyBtn = document.getElementById('copy-join-link');
+            if (copyBtn && !copyBtn._wired) {
+                copyBtn._wired = true;
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        copyBtn.textContent = '✅ Скопировано';
+                        setTimeout(() => { copyBtn.textContent = '📋 Скопировать'; }, 1500);
+                    } catch (e) {
+                        // Fallback for non-secure contexts (http)
+                        const ta = document.createElement('textarea');
+                        ta.value = url;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        copyBtn.textContent = '✅ Скопировано';
+                        setTimeout(() => { copyBtn.textContent = '📋 Скопировать'; }, 1500);
+                    }
+                });
+            }
         }
 
         function startGame() {

@@ -226,24 +226,18 @@ app.get('/api/status', (req, res) => {
 
         res.json({
             status: 'healthy',
-            version: VERSION,
             timestamp: new Date().toISOString(),
-            server_started_at: SERVER_STARTED_AT,
-            server_role: SERVER_ROLE,
-            primary_server_url: SERVER_ROLE === 'alternative' ? PRIMARY_SERVER_URL : null,
             uptime_seconds: Math.round(process.uptime()),
-            counts,
-            websocket_sessions: wss ? wss.clients.size : 0,
-            memory_mb: {
-                rss: Math.round(memUsage.rss / 1024 / 1024),
-                heap_used: Math.round(memUsage.heapUsed / 1024 / 1024),
-                heap_total: Math.round(memUsage.heapTotal / 1024 / 1024)
+            counts: {
+                questions: counts.questions,
+                cases: counts.cases
             },
+            websocket_sessions: wss ? wss.clients.size : 0,
             recent_errors: []
         });
     } catch (error) {
         console.error('Error fetching status:', error);
-        res.status(500).json({ status: 'unhealthy', error: error.message });
+        res.status(500).json({ status: 'unhealthy' });
     }
 });
 

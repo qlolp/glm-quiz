@@ -455,11 +455,23 @@ app.post('/guide/speaker/logout', (req, res) => {
     res.redirect(302, '/guide/speaker');
 });
 
-// V2 client routes stay isolated from the legacy root application.
-app.get(['/v2', '/v2/*'], (req, res) => {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile(path.join(__dirname, '../../public/v2/index.html'));
-});
+// V2 sunset: redirect all /v2 routes to the main app
+app.get(['/v2', '/v2/*'], (req, res) => res.redirect(301, '/'));
+
+// Clean URL redirects for navigation (BUG-05/06: unify URL scheme)
+app.get('/instruction', (req, res) => res.redirect(302, '/guide/user'));
+app.get('/cases', (req, res) => res.redirect(302, '/cases.html'));
+app.get('/pulse', (req, res) => res.redirect(302, '/pulse-host.html'));
+app.get('/status', (req, res) => res.redirect(302, '/status.html'));
+
+// 301 redirects for old ghost URLs (BUG-06: old .html URLs that returned index.html)
+app.get('/pulse.html', (req, res) => res.redirect(301, '/pulse-host.html'));
+app.get('/kahoot.html', (req, res) => res.redirect(301, '/realtime-host.html'));
+app.get('/live-qa.html', (req, res) => res.redirect(301, '/qa-host.html'));
+app.get('/digest.html', (req, res) => res.redirect(301, '/seminar-digest.html'));
+app.get('/achievements.html', (req, res) => res.redirect(301, '/gamification.html'));
+app.get('/certificates.html', (req, res) => res.redirect(301, '/my-certificates.html'));
+app.get('/instruction.html', (req, res) => res.redirect(301, '/guide/user'));
 
 // SPA support for non-API routes; API 404s return JSON
 app.get('*', (req, res) => {

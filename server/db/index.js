@@ -332,6 +332,14 @@ try {
     // Column already exists
 }
 
+// Add mode column to results (BUG-09: certificates must be exam-only)
+try {
+    db.exec(`ALTER TABLE results ADD COLUMN mode TEXT DEFAULT NULL`);
+    console.log('Added mode column to results');
+} catch (e) {
+    // Column already exists
+}
+
 // Dedupe case_steps and enforce uniqueness
 try {
     const dupes = db.prepare(`

@@ -22,11 +22,11 @@ app.post('/api/results', requireUser, (req, res) => {
     }
 });
 
-function saveResult(user_id, username, score, total_questions, answers = null) {
+function saveResult(user_id, username, score, total_questions, answers = null, mode = null) {
     const result = db.prepare(`
-        INSERT INTO results (user_id, username, score, total_questions, answers_json)
-        VALUES (?, ?, ?, ?, ?)
-    `).run(user_id, username, score, total_questions, answers ? JSON.stringify(answers) : null);
+        INSERT INTO results (user_id, username, score, total_questions, answers_json, mode)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `).run(user_id, username, score, total_questions, answers ? JSON.stringify(answers) : null, mode);
 
     // Invalidate relevant caches
     cache.delete('results');
@@ -189,9 +189,10 @@ app.get('/api/users/:id', requireOwner, (req, res) => {
  * POST /api/users
  * Create or get user
  */
-app.post('/api/users', (req, res) => {
+app.post('/api/users', userCreationRateLimitMiddleware, (req, res) => {
     try {
-        const { username, display_name } = req.body;
+        const username = sanitizeString(req.body.username, 100);
+        const display_name = sanitizeString(req.body.display_name, 200);
 
         if (!username) {
             return res.status(400).json({ error: 'Username required' });
@@ -216,7 +217,8 @@ app.post('/api/users', (req, res) => {
 
         // Issue auth token so guest users can call protected endpoints
         const token = generateUserToken(user.id);
-        res.json({ user, token });
+        // Guest users are unverified — certificates require verified status (via /api/auth/verify)
+        res.json({ user: { ...user, verified: !!(user.email) }, token, verified: !!(user.email) });
     } catch (error) {
         console.error('Error creating user:', error);
         res.status(500).json({ error: 'Failed to create user' });
@@ -288,18 +290,33 @@ app.get('/api/achievements', (req, res) => {
 
 /**
  * GET /api/leaderboard
- * Get top users
+ * Get top users (PII-protected: requires auth, masks usernames)
  */
-app.get('/api/leaderboard', (req, res) => {
+app.get('/api/leaderboard', requireUser, (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
-        const leaderboard = db.prepare(`
+        const rows = db.prepare(`
             SELECT username, display_name, total_score, quizzes_completed
             FROM users
             WHERE total_score > 0
             ORDER BY total_score DESC
             LIMIT ?
         `).all(limit);
+
+        // PII protection: never expose real usernames/display names publicly.
+        // Show only first name from display_name (or 'Участник' fallback).
+        const leaderboard = rows.map((row, i) => {
+            const raw = row.display_name || row.username;
+            // Take only the first word and cap at 20 chars
+            const firstWord = raw.split(/\s+/)[0] || 'Участник';
+            const nickname = firstWord.slice(0, 20);
+            return {
+                rank: i + 1,
+                username: nickname,
+                total_score: row.total_score,
+                quizzes_completed: row.quizzes_completed
+            };
+        });
 
         res.json({ leaderboard });
     } catch (error) {

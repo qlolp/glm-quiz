@@ -11,7 +11,9 @@ function createApp({ allowedOrigins, hstsEnabled, isProductionVPS, trustProxy })
     function corsOriginCheck(origin, callback) {
         if (!isProductionVPS) return callback(null, true);
         if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-        callback(new Error('Not allowed by CORS'));
+        // Don't throw — return null origin so cors middleware sends no ACAO header.
+        // The browser then blocks the response gracefully (no 500 crash).
+        return callback(null, false);
     }
 
     app.use(helmet({

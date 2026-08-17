@@ -81,12 +81,18 @@ async function runTests() {
     assert(questions.status === 200 && Array.isArray(questions.body.questions) && questions.body.questions.length === 84, 'Questions: 84 items');
     assert(questions.body.questions.every(q => q.correct === undefined && q.explanation === undefined), 'Questions: no leaked answers');
 
+    const userQuestionsAnon = await request('/api/questions/user');
+    assert(userQuestionsAnon.status === 401 || userQuestionsAnon.status === 403, 'User-submitted questions require admin auth');
+
     const adminAuth = await request('/api/auth/admin', 'POST', { password: ADMIN_PASSWORD });
     assert(adminAuth.status === 200 && adminAuth.body.valid && adminAuth.body.token, 'Admin auth');
     const adminToken = adminAuth.body.token;
 
     const adminQuestions = await request('/api/default-questions', 'GET', null, adminToken);
     assert(adminQuestions.status === 200 && adminQuestions.body.questions.length >= 84, 'Admin default-questions');
+
+    const userQuestionsAdmin = await request('/api/questions/user', 'GET', null, adminToken);
+    assert(userQuestionsAdmin.status === 200 && Array.isArray(userQuestionsAdmin.body.questions), 'Admin can list user-submitted questions');
 
     // check-answer requires auth (anti-scraping of correct answers via reveal=true)
     const guestCheck = await request('/api/users', 'POST', { username: `guest_${Date.now()}` });
@@ -160,6 +166,7 @@ async function runTests() {
     const complete = await request('/api/quiz/complete', 'POST', {
         score: 18,
         total_questions: 20,
+        mode: 'exam',
         answers
     }, userToken);
     assert(complete.status === 200 && complete.body.success, 'Complete quiz with token (server-verified answers)');
@@ -241,7 +248,11 @@ async function runTests() {
     });
     assert(batchNoAuth.status === 401, 'Batch register without admin token rejected');
 
-    const leaderboard = await request('/api/leaderboard');
+    // Leaderboard now requires auth (PII protection)
+    const leaderboardNoAuth = await request('/api/leaderboard');
+    assert(leaderboardNoAuth.status === 401, 'Leaderboard without auth rejected');
+
+    const leaderboard = await request('/api/leaderboard', 'GET', null, guestToken);
     assert(leaderboard.status === 200 && Array.isArray(leaderboard.body.leaderboard), 'Leaderboard');
 
     const dashboardNoAuth = await request('/api/dashboard/manager?department=Org1');

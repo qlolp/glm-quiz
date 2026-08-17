@@ -69,16 +69,13 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-
-        /* user-select disabled globally was blocking learning UX;
-           text selection is now allowed except during exam via .quiz-active body */
-        body.quiz-active {
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
         }
+
+        /* Anti-cheat: Disable text selection and context menu */
         .no-select {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -472,84 +469,6 @@
             color: var(--text-tertiary);
         }
 
-        .server-alt-banner {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 16px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(181, 71, 8, 0.25);
-            background: rgba(255, 247, 237, 0.9);
-            color: #7a2e0a;
-            font-size: 14px;
-            line-height: 1.45;
-        }
-
-        .server-alt-banner strong {
-            font-weight: 700;
-        }
-
-        .confidence-bar {
-            display: none;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 12px 0;
-        }
-        .confidence-bar.visible { display: flex; }
-        .confidence-btn {
-            flex: 1;
-            min-width: 100px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .confidence-btn:hover { border-color: var(--info); }
-        .hint-btn {
-            margin-top: 8px;
-            padding: 8px 14px;
-            border-radius: 8px;
-            border: 1px dashed var(--border);
-            background: transparent;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .hint-box {
-            display: none;
-            margin-top: 10px;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(92, 109, 242, 0.08);
-            border: 1px solid rgba(92, 109, 242, 0.25);
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-        .micro-category-wrap { display: none; margin-top: 12px; }
-        .micro-category-wrap.visible { display: block; }
-        .action-plan-box {
-            margin: 16px 0;
-            padding: 16px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-        }
-        .action-plan-box textarea {
-            width: 100%;
-            min-height: 80px;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: inherit;
-        }
-
         .btn-danger {
             background: var(--error);
             color: white;
@@ -907,7 +826,6 @@
             font-size: 14px;
             font-weight: 600;
             flex-shrink: 0;
-            margin-right: 10px;
         }
 
         .option-btn.correct .option-letter {
@@ -2324,14 +2242,9 @@
                             После прохождения можно предложить свой вопрос для базы.
                         </p>
 
-                        <div id="server-alt-banner" class="server-alt-banner" hidden>
-                            <strong>Резервная площадка GLM Quiz</strong>
-                            <span>Вы на альтернативном сервере. Продолжайте работу здесь.</span>
-                        </div>
-
                         <div class="guest-notice">
                             <strong>Важно:</strong> для сертификата и рейтинга —
-                            <a href="/register.html">зарегистрируйтесь</a> (код подтверждения выдаёт организатор).
+                            <a href="/register.html">зарегистрируйтесь</a> (код подтверждения: 1234).
                             Без регистрации викторина тоже доступна.
                         </div>
 
@@ -2339,56 +2252,14 @@
                             <button class="btn btn-primary" data-action="startQuiz">
                                 Начать викторину
                             </button>
-                            <button class="btn btn-secondary" data-action="hardRefreshApp" title="Сбросить кэш" style="margin-left: 8px;">
-                                🔄 Обновить
-                            </button>
                         </div>
 
                         <div class="mode-pills" id="mode-pills">
                             <button class="mode-pill selected" data-mode="training" data-action="selectMode" data-arg="training">📚 Тренировка</button>
                             <button class="mode-pill" data-mode="quick" data-action="selectMode" data-arg="quick">⚡ Быстрый тест</button>
-                            <button class="mode-pill" data-mode="micro" data-action="selectMode" data-arg="micro">🎯 Микро-квиз</button>
                             <button class="mode-pill" data-mode="exam" data-action="selectMode" data-arg="exam">📝 Аттестация</button>
                             <button class="mode-pill" data-mode="adaptive" data-action="selectMode" data-arg="adaptive">🎯 Адаптивный</button>
-                            <button class="mode-pill" data-mode="prepost" data-action="selectMode" data-arg="prepost">📊 Pre/Post</button>
                         </div>
-
-                        <div class="micro-category-wrap" id="micro-category-wrap">
-                            <label for="micro-category" id="micro-category-label" style="font-size: 13px; color: var(--text-tertiary);">Категория микро-квиза</label>
-                            <select id="micro-category" class="form-input" style="width: 100%; margin-top: 6px;">
-                                <option value="ethics">Этика</option>
-                                <option value="rights">Права</option>
-                                <option value="care_standards">Стандарты ухода</option>
-                                <option value="emergency">ЧС</option>
-                                <option value="safety">Безопасность</option>
-                                <option value="service_types">Виды услуг</option>
-                                <option value="communication">Коммуникация</option>
-                                <option value="documentation">Документация</option>
-                                <option value="forms_of_service">Формы обслуживания</option>
-                                <option value="quality">Качество</option>
-                                <option value="accessibility">Доступность</option>
-                                <option value="mobility">Мобильность</option>
-                                <option value="mission">Миссия</option>
-                                <option value="spb_specific">СПб</option>
-                            </select>
-                        </div>
-
-                        <div id="prepost-phase-wrap" class="micro-category-wrap">
-                            <label style="font-size: 13px; color: var(--text-tertiary);">Фаза Pre/Post (7 фиксированных вопросов)</label>
-                            <div style="display: flex; gap: 8px; margin-top: 6px;">
-                                <button class="role-btn selected" data-action="selectPrepostPhase" data-arg="pre" id="prepost-pre-btn">Pre (до)</button>
-                                <button class="role-btn" data-action="selectPrepostPhase" data-arg="post" id="prepost-post-btn">Post (после)</button>
-                            </div>
-                        </div>
-
-                        <p style="font-size: 13px; color: var(--text-tertiary); margin-top: 12px;">
-                            Живой зал: <a href="/realtime-host.html">Kahoot</a> ·
-                            <a href="/pulse">Пульс зала</a> ·
-                            <a href="/qa-host.html">Live Q&amp;A</a> ·
-                            <a href="/seminar-digest.html">Дайджест</a> ·
-                            <a href="/status">Статус</a> ·
-                            <a href="/offline.html">Офлайн</a>
-                        </p>
 
                         <div class="role-selection" style="margin-bottom: 20px;">
                             <div style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 10px;">Ваша роль (влияет на категории вопросов)</div>
@@ -2413,7 +2284,7 @@
                             <li>стандарты ухода, безопасность и ЧС</li>
                             <li>документооборот и контроль качества</li>
                             <li>особенности соцобслуживания в Санкт-Петербурге</li>
-                            <li>6 практических кейсов и режим Kahoot</li>
+                            <li>3 практических кейса и режим Kahoot</li>
                         </ul>
                     </aside>
                 </div>
@@ -2423,8 +2294,8 @@
                     <a href="/register.html" class="nav-link" id="welcome-register-link">Регистрация</a>
                 </div>
 
-                <div class="welcome-footer" id="welcome-version-footer">
-                    Режим по умолчанию: Тренировка
+                <div class="welcome-footer">
+                    Версия 2026.07.06.9 · Режим по умолчанию: Тренировка
                 </div>
             </div>
         </div>
@@ -2468,20 +2339,13 @@
 
                 <!-- Media Container -->
                 <div class="question-media" id="question-media" style="display: none;">
-                    <img class="question-image" id="question-image" alt="Изображение к вопросу" style="display: none;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                    <img class="question-image" id="question-image" alt="Изображение к вопросу" style="display: none;">
                     <video class="question-video" id="question-video" controls style="display: none;">
                         Ваш браузер не поддерживает видео.
                     </video>
                 </div>
 
                 <div class="options" id="options-container"></div>
-                <div class="confidence-bar" id="confidence-bar">
-                    <button type="button" class="confidence-btn" data-action="confirmConfidence" data-arg="sure">Уверен</button>
-                    <button type="button" class="confidence-btn" data-action="confirmConfidence" data-arg="unsure">Сомневаюсь</button>
-                    <button type="button" class="confidence-btn" data-action="confirmConfidence" data-arg="guess">Угадываю</button>
-                </div>
-                <button type="button" class="hint-btn" id="hint-btn" data-action="showQuestionHint" style="display: none;">💡 Подсказка</button>
-                <div class="hint-box" id="hint-box"></div>
                 <button class="feedback-btn" id="feedback-btn" data-action="openFeedbackModal" style="display: none;">
                     💬 Пожаловаться на вопрос
                 </button>
@@ -2599,27 +2463,6 @@
                     <button class="btn btn-secondary" data-action="showReviewMistakes" style="width: 100%; margin-bottom: 12px;">
                         🔍 Разобрать ошибки
                     </button>
-                    <button class="btn btn-secondary" data-action="retryMistakes" style="width: 100%; margin-bottom: 12px;">
-                        🔁 Повторить ошибки
-                    </button>
-                </div>
-
-                <div id="confidence-insights" style="display: none; margin-bottom: 16px; padding: 14px; background: rgba(181,71,8,0.08); border-radius: 12px; border: 1px solid rgba(181,71,8,0.2);">
-                    <strong>Уверен, но ошибся</strong>
-                    <div id="confidence-insights-list" style="margin-top: 8px; font-size: 14px; color: var(--text-secondary);"></div>
-                </div>
-
-                <div id="prepost-delta" style="display: none; margin-bottom: 16px; padding: 14px; background: rgba(92,109,242,0.08); border-radius: 12px;">
-                    <strong>Динамика Pre → Post</strong>
-                    <div id="prepost-delta-text" style="margin-top: 6px;"></div>
-                </div>
-
-                <div class="action-plan-box" id="action-plan-box">
-                    <strong>План действия</strong>
-                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Что примените на практике после этого теста?</p>
-                    <textarea id="action-plan-text" placeholder="Например: провести инструктаж по эвакуации на следующей неделе…"></textarea>
-                    <button class="btn btn-secondary" data-action="saveActionPlan" style="width: 100%;">Сохранить план</button>
-                    <div id="action-plan-status" style="font-size: 13px; margin-top: 8px; color: var(--success); display: none;">Сохранено ✓</div>
                 </div>
 
                 <div class="export-buttons">
@@ -3032,17 +2875,6 @@ name,email,role,department
     </footer>
 
     <script>
-        // Shared XSS-safe escaping helper
-        function escapeHtml(text) {
-            if (text === null || text === undefined) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
         // App State
         let questions = [];
         let originalQuestions = [];
@@ -3092,21 +2924,8 @@ name,email,role,department
             'exam': 'Официальная аттестация',
             'training': 'Тренировка',
             'quick': 'Быстрый тест',
-            'micro': 'Микро-квиз',
-            'adaptive': 'Адаптивный тест',
-            'prepost': 'Pre/Post оценка'
+            'adaptive': 'Адаптивный тест'
         };
-
-        // Fixed 7-question set for pre/post mode (must match server PREPOST_QUESTION_IDS)
-        const PREPOST_QUESTION_IDS = [1, 5, 12, 15, 24, 36, 48];
-        const MICRO_QUIZ_SIZE = 7;
-        let categoryCounts = null;
-        let categoryCountsPromise = null;
-        let prepostPhase = localStorage.getItem('glm_prepost_phase') || 'pre';
-        let pendingAnswerIndex = null;
-        let hintUsedForQuestion = false;
-        let microCategory = 'ethics';
-        let isMistakeReviewRun = false;
 
         // API Base URL
         const API_BASE = '/api';
@@ -3132,7 +2951,7 @@ name,email,role,department
             bar.style.display = 'flex';
             if (isLoggedIn()) {
                 nameEl.textContent = user.displayName || user.username;
-                regLink.textContent = 'Мои сертификаты';
+                regLink.textContent = 'Профиль';
                 regLink.href = '/my-certificates.html';
             } else {
                 nameEl.textContent = user.displayName || 'Гость';
@@ -3143,22 +2962,18 @@ name,email,role,department
 
         // ========== ANTI-CHEAT ==========
 
-        function isExamStrictMode() {
-            return isQuizActive && !isPaused && quizMode === 'exam';
-        }
-
         function initAntiCheat() {
-            // Disable right-click (exam mode only — training/micro/prepost are for learning)
+            // Disable right-click
             document.addEventListener('contextmenu', (e) => {
-                if (isExamStrictMode()) {
+                if (isQuizActive && !isPaused) {
                     e.preventDefault();
                     showCheatWarning('contextmenu');
                 }
             });
 
-            // Disable keyboard shortcuts (exam mode only)
+            // Disable keyboard shortcuts
             document.addEventListener('keydown', (e) => {
-                if (isExamStrictMode()) {
+                if (isQuizActive && !isPaused) {
                     // Ctrl+C, Ctrl+V, Ctrl+A, Ctrl+S, Ctrl+P
                     if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 's', 'p'].includes(e.key.toLowerCase())) {
                         e.preventDefault();
@@ -3181,12 +2996,11 @@ name,email,role,department
                     }
                 }
 
-                // Enter for next question (BUG-14 fix: button has class .next-btn, not id)
+                // Enter for next question
                 if (e.key === 'Enter' && isAnswerSelected) {
                     e.preventDefault();
-                    const container = document.getElementById('next-btn-container');
-                    const nextBtn = container ? container.querySelector('.next-btn') : null;
-                    if (nextBtn && container && container.style.display !== 'none') {
+                    const nextBtn = document.getElementById('next-btn');
+                    if (nextBtn && nextBtn.style.display !== 'none') {
                         nextBtn.click();
                     }
                 }
@@ -3194,14 +3008,12 @@ name,email,role,department
                 // Escape to exit (with confirmation)
                 if (e.key === 'Escape') {
                     e.preventDefault();
-                    uiConfirm('Вы уверены, что хотите прервать викторину? Прогресс будет потерян.').then(ok => {
-                        if (ok) {
-                            isQuizActive = false;
-                            stopAutoSave();
-                            clearSavedProgress();
-                            showScreen('welcome-screen');
-                        }
-                    });
+                    if (confirm('Вы уверены, что хотите прервать викторину? Прогресс будет потерян.')) {
+                        isQuizActive = false;
+                        stopAutoSave();
+                        clearSavedProgress();
+                        showScreen('welcome-screen');
+                    }
                 }
             });
 
@@ -3267,8 +3079,8 @@ name,email,role,department
             }
 
             warningDiv.innerHTML = `
-                <div class="warning-title">${escapeHtml(title)}</div>
-                <div class="warning-text">${escapeHtml(text)}</div>
+                <div class="warning-title">${title}</div>
+                <div class="warning-text">${text}</div>
                 <div class="warning-count">Предупреждение ${cheatWarnings}/3. После 3 предупреждений тест будет провален.</div>
             `;
 
@@ -3330,9 +3142,9 @@ name,email,role,department
             );
 
             if (recentSuspicious.length >= 3) {
-                // Pattern detected (showCheatWarning already increments cheatWarnings —
-                // BUG-08 fix: removed the duplicate increment that skipped the "2 of 3" state)
+                // Pattern detected
                 showCheatWarning('pattern');
+                cheatWarnings++;
             }
 
             // Check for timing anomalies (too fast answers)
@@ -3364,10 +3176,10 @@ name,email,role,department
                 if (document.hidden) {
                     // Tab lost focus
                     tabFocusLostTime = Date.now();
-                    if (isExamStrictMode()) logBehaviour('tab_hidden', 'high');
+                    logBehaviour('tab_hidden', 'high');
                 } else {
                     // Tab regained focus
-                    if (tabFocusLostTime && isExamStrictMode()) {
+                    if (tabFocusLostTime) {
                         const timeAway = Date.now() - tabFocusLostTime;
 
                         // If away for more than 30 seconds, likely cheating
@@ -3377,8 +3189,6 @@ name,email,role,department
                         }
 
                         tabFocusLostTime = null;
-                    } else {
-                        tabFocusLostTime = null;
                     }
                 }
             });
@@ -3387,13 +3197,13 @@ name,email,role,department
         // Window focus/blur tracking
         function enhancedWindowTracking() {
             window.addEventListener('blur', () => {
-                if (isExamStrictMode()) {
+                if (isQuizActive && !isPaused) {
                     logBehaviour('window_blur', 'medium');
                 }
             });
 
             window.addEventListener('focus', () => {
-                if (isExamStrictMode()) {
+                if (isQuizActive && !isPaused) {
                     logBehaviour('window_focus', 'low');
                 }
             });
@@ -3451,10 +3261,8 @@ name,email,role,department
                 // Log answer timing
                 logBehaviour('answer_selected', 'low');
 
-                // Advisory only — server-side score verification in /api/quiz/complete
-                // is the authoritative anti-cheat mechanism.
-                // Threshold lowered from 2000ms: legit fast readers can answer in 2s.
-                if (timeTaken < 1000) {
+                // Suspicious if less than 2 seconds
+                if (timeTaken < 2000) {
                     logBehaviour('very_fast_answer', 'medium');
                 }
 
@@ -3501,44 +3309,23 @@ name,email,role,department
         }
 
         function finishQuizEarly() {
-            // Adaptive mode has its own completion protocol (session_id based);
-            // the standard showResults() path sends answers[] that adaptive
-            // sessions cannot validate -> 400 and the result is lost.
-            if (quizMode === 'adaptive') {
-                uiConfirm('Завершить адаптивную сессию и посмотреть результат?').then(ok => {
-                    if (ok) {
-                        isQuizActive = false;
-                        stopAutoSave();
-                        document.body.classList.remove('quiz-active');
-                        clearSavedProgress();
-                        finishAdaptiveQuiz();
-                    }
-                });
-                return;
-            }
-
             const unansweredCount = questions.length - userAnswers.length;
             const message = unansweredCount > 0
-                ? `Вы ответили не на все вопросы. Осталось: ${unansweredCount} из ${questions.length}. Завершить сейчас?`
+                ? `Вы ответили не на все вопросы.\n\nОсталось: ${unansweredCount} из ${questions.length}\n\nЗавершить сейчас?`
                 : 'Вы уверены, что хотите завершить викторину?';
 
-            uiConfirm(message).then(ok => {
-                if (ok) {
-                    isQuizActive = false;
-                    stopAutoSave();
-                    document.body.classList.remove('quiz-active');
-                    clearSavedProgress();
-                    showResults();
-                }
-            });
+            if (confirm(message)) {
+                isQuizActive = false;
+                stopAutoSave();
+                document.body.classList.remove('quiz-active');
+                clearSavedProgress();
+                showResults();
+            }
         }
 
         function failQuizForCheat() {
             isQuizActive = false;
             clearSavedProgress();
-            // BUG-17 fix: reset warning counter so a fresh attempt starts at 0
-            cheatWarnings = 0;
-            localStorage.removeItem(STORAGE_KEYS.CHEAT_WARNINGS);
 
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
@@ -3556,7 +3343,6 @@ name,email,role,department
                     </button>
                 </div>
             `;
-            // Static failure screen; no user data interpolated.
             loadingScreen.classList.add('active');
         }
 
@@ -3636,13 +3422,10 @@ name,email,role,department
                 }
             }
 
-            // Load cheat warnings (BUG-17 fix: only relevant while an exam is in
-            // progress; a page reload between attempts must start at 0)
+            // Load cheat warnings
             const savedWarnings = localStorage.getItem(STORAGE_KEYS.CHEAT_WARNINGS);
-            if (savedWarnings && isQuizActive) {
+            if (savedWarnings) {
                 cheatWarnings = parseInt(savedWarnings) || 0;
-            } else if (savedWarnings) {
-                localStorage.removeItem(STORAGE_KEYS.CHEAT_WARNINGS);
             }
 
             // Load sound preference
@@ -3668,10 +3451,7 @@ name,email,role,department
         // ========== LOCAL STORAGE ==========
 
         function saveProgress() {
-            // BUG-04 fix: autosave works in ALL modes while quiz is active.
-            // (Previously saved only exam, but offered restore only in non-exam —
-            //  mutually exclusive, so autosave never actually worked.)
-            if (isQuizActive) {
+            if (quizMode === 'exam' && isQuizActive) {
                 const progress = {
                     questions: questions,
                     currentQuestion,
@@ -3800,11 +3580,9 @@ name,email,role,department
             const currentQ = questions[currentQuestion];
 
             try {
-                // BUG-06 fix: /api/feedback requires auth — send the token
-                const response = await authFetch(`${API_BASE}/feedback`, {
+                const response = await fetch(`${API_BASE}/feedback`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
                     body: JSON.stringify({
                         question_id: currentQ.id,
                         feedback_type: selectedFeedbackType,
@@ -3841,12 +3619,8 @@ name,email,role,department
 
             // Adaptive mode uses different API
             if (quizMode === 'adaptive') {
-                const ok = await loadAdaptiveQuiz();
-                if (ok) {
-                    showQuestion();
-                    showScreen('quiz-screen');
-                }
-                return ok;
+                await loadAdaptiveQuiz();
+                return;
             }
 
             try {
@@ -3864,20 +3638,13 @@ name,email,role,department
 
                     questions = allQuestions.filter(q => {
                         return q.id && q.question && Array.isArray(q.options) &&
-                               q.options.length === 4;
+                               q.options.length === 4 && typeof q.correct === 'number';
                     });
 
                     originalQuestions = [...questions];
 
                     if (quizMode === 'quick') {
                         questions = shuffleArray([...questions]).slice(0, 15);
-                    } else if (quizMode === 'micro') {
-                        const cat = document.getElementById('micro-category')?.value || microCategory;
-                        microCategory = cat;
-                        questions = shuffleArray(questions.filter(q => q.category === cat)).slice(0, MICRO_QUIZ_SIZE);
-                    } else if (quizMode === 'prepost') {
-                        const byId = new Map(questions.map(q => [q.id, q]));
-                        questions = PREPOST_QUESTION_IDS.map(id => byId.get(id)).filter(Boolean);
                     } else {
                         questions = [...questions];
                     }
@@ -3892,29 +3659,10 @@ name,email,role,department
                 try {
                     const fallbackResponse = await fetch('/questions.json', { cache: 'no-store' });
                     if (!fallbackResponse.ok) throw new Error(`Fallback HTTP ${fallbackResponse.status}`);
-                    // BUG-18 fix: apply the same filters as the primary path —
-                    // role-based category filter + structural validation.
-                    let allQuestions = await fallbackResponse.json();
-
-                    if (selectedRole !== 'all' && roleCategories[selectedRole]) {
-                        allQuestions = allQuestions.filter(q =>
-                            roleCategories[selectedRole].includes(q.category)
-                        );
-                    }
-                    allQuestions = allQuestions.filter(q => {
-                        return q.id && q.question && Array.isArray(q.options) &&
-                               q.options.length === 4;
-                    });
+                    const allQuestions = await fallbackResponse.json();
 
                     if (quizMode === 'quick') {
                         questions = shuffleArray([...allQuestions]).slice(0, 15);
-                    } else if (quizMode === 'micro') {
-                        const cat = document.getElementById('micro-category')?.value || microCategory;
-                        microCategory = cat;
-                        questions = shuffleArray(allQuestions.filter(q => q.category === cat)).slice(0, MICRO_QUIZ_SIZE);
-                    } else if (quizMode === 'prepost') {
-                        const byId = new Map(allQuestions.map(q => [q.id, q]));
-                        questions = PREPOST_QUESTION_IDS.map(id => byId.get(id)).filter(Boolean);
                     } else {
                         questions = [...allQuestions];
                     }
@@ -3941,12 +3689,19 @@ name,email,role,department
 
         async function loadAdaptiveQuiz() {
             try {
-                const cats = selectedRole === 'all' ? null : (roleCategories[selectedRole] || null);
-                const user = getCurrentUser();
+                // Map role to categories (roleCategories is defined in loadQuestions scope)
+                // For adaptive: 'all' → ethics (default category with most questions), specific role → role's categories
+                let categories;
+                if (selectedRole === 'all' || !roleCategories[selectedRole]) {
+                    categories = ['ethics'];
+                } else {
+                    categories = roleCategories[selectedRole];
+                }
                 const response = await authFetch(`${API_BASE}/quiz/adaptive/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ categories: cats })
+                    redirectOnUnauthorized: false,
+                    body: JSON.stringify({ categories })
                 });
 
                 if (!response.ok) throw new Error('Failed to start adaptive quiz');
@@ -3968,13 +3723,20 @@ name,email,role,department
 
         async function loadNextAdaptiveQuestion() {
             try {
-                const cats = selectedRole === 'all' ? null : (roleCategories[selectedRole] || null);
+                // Map role to categories (same logic as loadAdaptiveQuiz)
+                let categories;
+                if (selectedRole === 'all' || !roleCategories[selectedRole]) {
+                    categories = ['ethics'];
+                } else {
+                    categories = roleCategories[selectedRole];
+                }
                 const response = await authFetch(`${API_BASE}/quiz/adaptive/next`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    redirectOnUnauthorized: false,
                     body: JSON.stringify({
                         session_id: adaptiveSession,
-                        categories: cats,
+                        categories,
                         recent_answers: recentAnswers.slice(-5)
                     })
                 });
@@ -3988,13 +3750,11 @@ name,email,role,department
                 const data = await response.json();
                 const q = data.question;
 
-                // Convert API format to quiz format (no correct answer — verified server-side)
+                // Convert API format to quiz format (correct answer and explanation are server-tracked)
                 questions = [{
                     id: q.id,
                     question: q.question,
-                    options: Array.isArray(q.options)
-                        ? q.options
-                        : [q.option_a, q.option_b, q.option_c, q.option_d].filter(Boolean),
+                    options: q.options || [q.option_a, q.option_b, q.option_c, q.option_d],
                     category: q.category,
                     adaptive_level: data.current_level
                 }];
@@ -4012,42 +3772,27 @@ name,email,role,department
                 ? Math.round((correctCount / adaptiveAnswers.length) * 100)
                 : 0;
 
-            // Reuse the standard results screen: set score display to adaptive stats
-            showScreen('results-screen');
-            document.getElementById('final-score').textContent = `${correctCount}/${adaptiveAnswers.length}`;
-            document.getElementById('results-percentage').textContent = `${percentage}%`;
+            showScreen('result-screen');
+            document.getElementById('final-score').textContent = `${adaptiveAnswers.length} вопросов`;
+            document.getElementById('final-percentage').textContent = `${percentage}%`;
 
-            // Grade badge
-            const gradeBadge = document.getElementById('grade-badge');
-            if (gradeBadge) {
-                let grade, gradeClass;
-                if (percentage >= 80) { grade = 'Эксперт'; gradeClass = 'excellent'; }
-                else if (percentage >= 60) { grade = 'Продвинутый'; gradeClass = 'good'; }
-                else if (percentage >= 40) { grade = 'Средний'; gradeClass = 'satisfactory'; }
-                else { grade = 'Начинающий'; gradeClass = 'poor'; }
-                gradeBadge.textContent = grade;
-                gradeBadge.className = `grade-badge ${gradeClass}`;
-            }
-
-            // Show adaptive level reached (element may not exist in all builds)
+            // Show adaptive level reached
             const levelElement = document.getElementById('adaptive-level-reached');
             if (levelElement) {
                 levelElement.textContent = `Ваш уровень: ${getLevelName(percentage)}`;
             }
 
             // Save adaptive results to server (only if meaningful session: >= 3 questions)
-            const currentUser = getCurrentUser();
-            if (currentUser && currentUser.id && adaptiveAnswers.length >= 3) {
+            if (adaptiveAnswers.length >= 3) {
                 try {
                     await authFetch(`${API_BASE}/quiz/complete`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         redirectOnUnauthorized: false,
                         body: JSON.stringify({
-                            score: correctCount,
-                            total_questions: adaptiveAnswers.length,
                             session_id: adaptiveSession,
-                            mode: 'adaptive'
+                            score: correctCount,
+                            total_questions: adaptiveAnswers.length
                         })
                     });
                 } catch (e) {
@@ -4080,24 +3825,14 @@ name,email,role,department
                     [options[i], options[j]] = [options[j], options[i]];
                 }
 
+                const newCorrect = options.findIndex(opt => opt.originalIndex === q.correct);
+
                 return {
                     ...q,
                     options: options.map(opt => opt.text),
-                    optionMap: options.map(opt => opt.originalIndex)
+                    correct: newCorrect
                 };
             });
-        }
-
-        // Options in the original (unshuffled) order, so stored original indices
-        // from check-answer line up with the option texts shown in review.
-        function getOriginalOptions(q) {
-            if (!q || !Array.isArray(q.options)) return [];
-            if (!Array.isArray(q.optionMap)) return [...q.options];
-            const original = [];
-            q.optionMap.forEach((originalIndex, shuffledIndex) => {
-                original[originalIndex] = q.options[shuffledIndex];
-            });
-            return original;
         }
 
         // ========== SCREEN MANAGEMENT ==========
@@ -4125,21 +3860,6 @@ name,email,role,department
             });
             const screen = document.getElementById(screenId);
             screen.classList.add('active');
-
-            // Hide mode-specific panels when leaving welcome screen (BUG-09/10)
-            if (screenId !== 'welcome-screen') {
-                const microWrap = document.getElementById('micro-category-wrap');
-                const prepostWrap = document.getElementById('prepost-phase-wrap');
-                if (microWrap) microWrap.classList.remove('visible');
-                if (prepostWrap) prepostWrap.classList.remove('visible');
-            }
-
-            // Hide confirm modal when switching screens (BUG-04: prevent modal showing during quiz)
-            const confirmModal = document.getElementById('confirm-modal');
-            if (confirmModal && screenId !== 'results-screen') {
-                confirmModal.classList.remove('active');
-                confirmCallback = null;
-            }
 
             // Enable touch gestures for quiz screen
             if (screenId === 'quiz-screen') {
@@ -4174,7 +3894,7 @@ name,email,role,department
                 <span style="font-size: 24px;">🎉</span>
                 <div>
                     <div style="font-weight: 600;">Сертификат создан!</div>
-                    <div style="font-size: 12px; opacity: 0.9;">Просмотрите в разделе «Сертификаты»</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Просмотрите в разделе "Сертификаты"</div>
                 </div>
                 <button data-action="closeParent" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; opacity: 0.7;">×</button>
             `;
@@ -4356,73 +4076,6 @@ name,email,role,department
             document.querySelectorAll('.mode-pill').forEach(pill => {
                 pill.classList.toggle('selected', pill.dataset.mode === mode);
             });
-            const microWrap = document.getElementById('micro-category-wrap');
-            const prepostWrap = document.getElementById('prepost-phase-wrap');
-            if (microWrap) microWrap.classList.toggle('visible', mode === 'micro');
-            if (prepostWrap) prepostWrap.classList.toggle('visible', mode === 'prepost');
-            if (mode === 'micro') updateMicroCategoryLabel();
-        }
-
-        function pluralizeQuestions(n) {
-            const mod10 = n % 10;
-            const mod100 = n % 100;
-            if (mod10 === 1 && mod100 !== 11) return 'вопрос';
-            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'вопроса';
-            return 'вопросов';
-        }
-
-        async function loadCategoryCounts() {
-            if (categoryCounts) return categoryCounts;
-            if (categoryCountsPromise) return categoryCountsPromise;
-            categoryCountsPromise = fetchCategoryCounts().finally(() => { categoryCountsPromise = null; });
-            return categoryCountsPromise;
-        }
-
-        async function fetchCategoryCounts() {
-            let bank = null;
-            try {
-                const res = await fetch(`${API_BASE}/questions`, { cache: 'no-store' });
-                if (res.ok) {
-                    const data = await res.json();
-                    bank = data.questions || [];
-                }
-            } catch (e) { /* fall through to static bank */ }
-            if (!bank) {
-                try {
-                    const res = await fetch('/questions.json', { cache: 'no-store' });
-                    if (res.ok) bank = await res.json();
-                } catch (e) { /* offline: leave counts unknown */ }
-            }
-            if (!Array.isArray(bank)) return null;
-            categoryCounts = bank.reduce((acc, q) => {
-                if (q && q.category) acc[q.category] = (acc[q.category] || 0) + 1;
-                return acc;
-            }, {});
-            return categoryCounts;
-        }
-
-        async function updateMicroCategoryLabel() {
-            const label = document.getElementById('micro-category-label');
-            if (!label) return;
-            const counts = await loadCategoryCounts();
-            // Re-read the selection after awaiting so a slow update cannot
-            // overwrite the label with a category the user already left
-            const cat = document.getElementById('micro-category')?.value || microCategory;
-            if (!counts) {
-                label.textContent = 'Категория микро-квиза';
-                return;
-            }
-            const available = Math.min(counts[cat] || 0, MICRO_QUIZ_SIZE);
-            label.textContent = available > 0
-                ? `Категория микро-квиза (${available} ${pluralizeQuestions(available)})`
-                : 'Категория микро-квиза (нет вопросов в этой теме)';
-        }
-
-        function selectPrepostPhase(phase) {
-            prepostPhase = phase === 'post' ? 'post' : 'pre';
-            localStorage.setItem('glm_prepost_phase', prepostPhase);
-            document.getElementById('prepost-pre-btn')?.classList.toggle('selected', prepostPhase === 'pre');
-            document.getElementById('prepost-post-btn')?.classList.toggle('selected', prepostPhase === 'post');
         }
 
         function selectRole(role) {
@@ -4440,24 +4093,20 @@ name,email,role,department
             cheatWarnings = 0;
             tabSwitchCount = 0;
             isPaused = false;
-            isMistakeReviewRun = false;
 
             const savedProgress = hasSavedProgress();
-            if (savedProgress) {
+            if (savedProgress && quizMode !== 'exam') {
                 const progress = loadProgress();
                 const timeDiff = new Date() - new Date(progress.timestamp);
                 const hoursDiff = timeDiff / (1000 * 60 * 60);
 
-                // BUG-04 fix: offer continuation in the SAME mode only.
-                // (Previously: any non-exam start silently adopted exam progress
-                //  with a substituted quizMode.)
-                if (hoursDiff < 24 && progress.quizMode === quizMode && progress.quizMode !== 'exam') {
-                    const shouldContinue = await uiConfirm(`Найден сохранённый прогресс (режим «${modeNames[progress.quizMode] || progress.quizMode}»). Продолжить?`);
-                    if (shouldContinue) {
+                if (hoursDiff < 24) {
+                    if (confirm(`Найден сохранённый прогресс. Продолжить?`)) {
                         questions = progress.questions;
                         currentQuestion = progress.currentQuestion;
                         score = progress.score;
                         userAnswers = progress.userAnswers;
+                        quizMode = progress.quizMode;
                         showQuestion();
                         showScreen('quiz-screen');
                         return;
@@ -4469,54 +4118,29 @@ name,email,role,department
                 }
             }
 
-            // Ensure user exists before loading quiz data (adaptive mode needs user_id)
-            // BUG-05 fix: abort start when guest session creation fails — every
-            // subsequent check-answer would 401 with a misleading "check connection" error.
-            const userReady = await ensureUserExists();
-            if (!userReady) {
-                isQuizActive = false;
-                document.body.classList.remove('quiz-active');
-                showScreen('welcome-screen');
-                return;
-            }
-
             const loaded = await loadQuestions();
             if (!loaded || questions.length === 0) {
                 showErrorMessage('Не удалось загрузить вопросы.');
                 return;
             }
 
-            // For exam mode, show rules via modal (not confirm() — blocks headless browsers)
+            // Ensure user exists for certificate generation
+            await ensureUserExists();
+
+            // For exam mode, show rules
             if (quizMode === 'exam') {
-                const modal = document.getElementById('confirm-modal');
-                const modalText = document.getElementById('confirm-text');
-                if (modal && modalText) {
-                    modalText.textContent = 'Официальная аттестация. Правила: запрещено копировать текст вопросов, запрещено переключаться на другие вкладки, 3 предупреждения — провал теста. Согласны с правилами?';
-                    modal.classList.add('active');
-                    // Set up one-time handlers on the existing modal buttons
-                    const cancelBtn = modal.querySelector('[data-action="closeModal"]');
-                    const okBtn = modal.querySelector('[data-action="confirmAction"]');
-                    const startExam = () => {
-                        modal.classList.remove('active');
-                        okBtn.removeEventListener('click', startExam);
-                        cancelBtn.removeEventListener('click', cancelExam);
-                        isQuizActive = true;
-                        document.body.classList.add('quiz-active');
-                        currentQuestion = 0;
-                        score = 0;
-                        userAnswers = [];
-                        showQuestion();
-                        showScreen('quiz-screen');
-                    };
-                    const cancelExam = () => {
-                        modal.classList.remove('active');
-                        okBtn.removeEventListener('click', startExam);
-                        cancelBtn.removeEventListener('click', cancelExam);
-                    };
-                    okBtn.addEventListener('click', startExam);
-                    cancelBtn.addEventListener('click', cancelExam);
+                const agreed = confirm(
+                    'Официальная аттестация\n\n' +
+                    'Правила:\n' +
+                    '• Запрещено копировать текст вопросов\n' +
+                    '• Запрещено переключаться на другие вкладки\n' +
+                    '• 3 предупреждения — провал теста\n\n' +
+                    'Согласны с правилами?'
+                );
+
+                if (!agreed) {
+                    return;
                 }
-                return;
             }
 
             isQuizActive = true;
@@ -4531,27 +4155,25 @@ name,email,role,department
             // Start auto-save
             startAutoSave();
 
-            // BUG-16 fix: global guards are registered ONCE at DOMContentLoaded
-            // (see initOneTimeQuizGuards) — not on every startQuiz() call.
-            updateAntiCheatIndicator();
-        }
-
-        // One-time global event guards (registered once, rely on state flags)
-        function initOneTimeQuizGuards() {
-            document.addEventListener('contextmenu', (e) => {
-                if (isExamStrictMode()) {
+            // Disable right-click during quiz
+            const contextMenuHandler = (e) => {
+                if (isQuizActive) {
                     e.preventDefault();
                     return false;
                 }
-            });
+            };
+            document.addEventListener('contextmenu', contextMenuHandler);
 
-            document.addEventListener('dragstart', (e) => {
-                if (isExamStrictMode()) {
+            // Disable drag&drop during quiz
+            const dragStartHandler = (e) => {
+                if (isQuizActive) {
                     e.preventDefault();
                     return false;
                 }
-            });
+            };
+            document.addEventListener('dragstart', dragStartHandler);
 
+            // Add beforeunload warning and cleanup
             window.addEventListener('beforeunload', (e) => {
                 stopAutoSave();
                 if (isQuizActive) {
@@ -4560,8 +4182,8 @@ name,email,role,department
                     return '';
                 }
             });
+            updateAntiCheatIndicator();
         }
-        initOneTimeQuizGuards();
 
         function showQuestion() {
             if (isPaused) {
@@ -4583,23 +4205,6 @@ name,email,role,department
             const q = questions[currentQuestion];
             if (!q) {
                 console.error('Question not found:', currentQuestion);
-                return;
-            }
-
-            // BUG-02 fix: block re-answering already-answered questions (back navigation).
-            // If this question was already answered, restore the saved outcome instead
-            // of allowing a second answer (score inflation / duplicate userAnswers entries).
-            const priorAnswerIndex = userAnswers.findIndex(a => a.questionId === q.id);
-            if (priorAnswerIndex !== -1 && quizMode !== 'adaptive') {
-                isAnswerSelected = true;
-                currentQuestionId = q.id;
-
-                document.getElementById('current-question').textContent = currentQuestion + 1;
-                document.getElementById('total-questions').textContent = questions.length;
-                document.getElementById('question-num').textContent = currentQuestion + 1;
-                document.getElementById('question-text').textContent = q.question;
-
-                renderAnsweredState(q, userAnswers[priorAnswerIndex]);
                 return;
             }
 
@@ -4671,19 +4276,6 @@ name,email,role,department
             document.getElementById('next-btn-container').style.display = 'none';
             document.getElementById('feedback-btn').style.display = 'none';
 
-            pendingAnswerIndex = null;
-            hintUsedForQuestion = false;
-            const confBar = document.getElementById('confidence-bar');
-            if (confBar) confBar.classList.remove('visible');
-            const hintBox = document.getElementById('hint-box');
-            if (hintBox) { hintBox.style.display = 'none'; hintBox.textContent = ''; }
-            const hintBtn = document.getElementById('hint-btn');
-            if (hintBtn) {
-                const showHint = (quizMode === 'training' || quizMode === 'micro');
-                hintBtn.style.display = showHint ? 'inline-block' : 'none';
-                hintBtn.disabled = false;
-            }
-
             const optionsContainer = document.getElementById('options-container');
             optionsContainer.innerHTML = '';
 
@@ -4693,7 +4285,7 @@ name,email,role,department
                 btn.className = 'option-btn no-select';
                 btn.setAttribute('role', 'radio');
                 btn.setAttribute('aria-checked', 'false');
-                btn.setAttribute('aria-label', `Вариант ${letters[index]}: ${escapeHtml(option)}`);
+                btn.setAttribute('aria-label', `Вариант ${letters[index]}`);
                 btn.setAttribute('tabindex', '0');
 
                 const letterSpan = document.createElement('span');
@@ -4708,12 +4300,12 @@ name,email,role,department
 
                 btn.onclick = (e) => {
                     e.preventDefault();
-                    pickAnswerOption(index);
+                    selectAnswer(index);
                 };
                 btn.onkeydown = (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        pickAnswerOption(index);
+                        selectAnswer(index);
                     }
                 };
                 optionsContainer.appendChild(btn);
@@ -4722,146 +4314,60 @@ name,email,role,department
             saveProgress();
         }
 
-        function pickAnswerOption(index) {
-            if (isAnswerSelected) return;
-            pendingAnswerIndex = index;
-            document.querySelectorAll('.option-btn').forEach((btn, i) => {
-                btn.classList.toggle('selected', i === index);
-                btn.setAttribute('aria-checked', i === index ? 'true' : 'false');
-            });
-            const confBar = document.getElementById('confidence-bar');
-            if (confBar) confBar.classList.add('visible');
-        }
-
-        function confirmConfidence(level) {
-            if (pendingAnswerIndex === null || isAnswerSelected) return;
-            const confBar = document.getElementById('confidence-bar');
-            if (confBar) confBar.classList.remove('visible');
-            selectAnswer(pendingAnswerIndex, level);
-        }
-
-        function showQuestionHint() {
-            if (hintUsedForQuestion || quizMode === 'exam') return;
-            const q = questions[currentQuestion];
-            if (!q) return;
-            hintUsedForQuestion = true;
-            const hintBtn = document.getElementById('hint-btn');
-            if (hintBtn) hintBtn.disabled = true;
-            const hintBox = document.getElementById('hint-box');
-            if (!hintBox) return;
-            const text = q.hint || (categoryNames[q.category]
-                ? `Тема: ${categoryNames[q.category]}`
-                : 'Опирайтесь на ФЗ-442 и этику.');
-            hintBox.textContent = '💡 ' + text;
-            hintBox.style.display = 'block';
-        }
-
-        // Render a previously-answered question in read-only state (BUG-02 fix)
-        function renderAnsweredState(q, answer) {
-            const buttons = document.querySelectorAll('.option-btn');
-
-            // Rebuild option buttons if the container is empty
-            const optionsContainer = document.getElementById('options-container');
-            if (!buttons.length && optionsContainer) {
-                const letters = ['А', 'Б', 'В', 'Г'];
-                q.options.forEach((option, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'option-btn no-select';
-                    btn.setAttribute('role', 'radio');
-                    btn.setAttribute('aria-checked', 'false');
-                    btn.setAttribute('aria-label', `Вариант ${letters[index]}: ${escapeHtml(option)}`);
-                    btn.setAttribute('tabindex', '0');
-                    const letterSpan = document.createElement('span');
-                    letterSpan.className = 'option-letter';
-                    letterSpan.textContent = letters[index];
-                    const textSpan = document.createElement('span');
-                    textSpan.textContent = option;
-                    btn.appendChild(letterSpan);
-                    btn.appendChild(textSpan);
-                    optionsContainer.appendChild(btn);
-                });
-            }
-
-            const freshButtons = document.querySelectorAll('.option-btn');
-            freshButtons.forEach(btn => {
-                btn.classList.add('disabled');
-                btn.classList.remove('correct', 'wrong', 'selected');
-                btn.setAttribute('aria-checked', 'false');
-            });
-
-            // Map original answer index back to displayed (shuffled) index
-            const displayIndex = Array.isArray(q.optionMap)
-                ? q.optionMap.indexOf(answer.userAnswer)
-                : answer.userAnswer;
-
-            if (displayIndex >= 0 && freshButtons[displayIndex]) {
-                freshButtons[displayIndex].classList.add(answer.correct ? 'correct' : 'wrong', 'selected');
-                freshButtons[displayIndex].setAttribute('aria-checked', 'true');
-            }
-
-            // Highlight the correct option when the user was wrong
-            if (!answer.correct && typeof answer.correctAnswer === 'number' && answer.correctAnswer >= 0) {
-                const correctDisplay = Array.isArray(q.optionMap)
-                    ? q.optionMap.indexOf(answer.correctAnswer)
-                    : answer.correctAnswer;
-                if (correctDisplay >= 0 && freshButtons[correctDisplay]) {
-                    freshButtons[correctDisplay].classList.add('correct');
-                }
-            }
-
-            // Show explanation if available
-            const explanationBox = document.getElementById('explanation-box');
-            if (explanationBox && answer.explanation) {
-                const expText = document.getElementById('explanation-text');
-                if (expText) expText.innerHTML = '';
-                expText && (expText.textContent = answer.explanation);
-                explanationBox.style.display = 'block';
-            }
-
-            // Show "Далее" for navigation
-            if (quizMode === 'training' || quizMode === 'micro' || quizMode === 'prepost' || isMistakeReviewRun) {
-                const container = document.getElementById('next-btn-container');
-                if (container) container.style.display = 'block';
-            }
-        }
-
-        async function selectAnswer(index, confidence = 'unsure') {
+        async function selectAnswer(index) {
             if (isAnswerSelected) return;
             isAnswerSelected = true;
 
             const q = questions[currentQuestion];
             const buttons = document.querySelectorAll('.option-btn');
-            const originalAnswer = q.optionMap ? q.optionMap[index] : index;
-
-            let result;
-            try {
-                result = await checkAnswer(
-                    q.id,
-                    originalAnswer,
-                    quizMode === 'adaptive' ? adaptiveSession : null
-                );
-            } catch (e) {
-                console.error('Answer check failed:', e);
-                isAnswerSelected = false;
-                showErrorMessage('Не удалось проверить ответ. Проверьте соединение.');
-                return;
-            }
-
-            const correctIndex = q.optionMap
-                ? q.optionMap.indexOf(result.correctIndex)
-                : result.correctIndex;
-            const isCorrect = result.correct;
+            const correctIndex = q.correct;
 
             buttons.forEach(btn => {
                 btn.classList.add('disabled');
                 btn.setAttribute('aria-checked', 'false');
             });
 
-            buttons[index].classList.add(isCorrect ? 'correct' : 'wrong', 'selected');
-            buttons[index].setAttribute('aria-checked', 'true');
-
-            if (!isCorrect && correctIndex >= 0) {
-                buttons[correctIndex].classList.add('correct');
+            // For adaptive mode, correct answer is server-tracked via session_id.
+            // We do a server-side checkAnswer to know if the user's pick was correct.
+            let isCorrect = false;
+            let correctIndex = null;
+            if (quizMode === 'adaptive' && adaptiveSession) {
+                try {
+                    const checkRes = await authFetch('/api/quiz/check-answer', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        redirectOnUnauthorized: false,
+                        body: JSON.stringify({
+                            questionId: q.id,
+                            answer: index,
+                            session_id: adaptiveSession
+                        })
+                    });
+                    if (checkRes.ok) {
+                        const checkData = await checkRes.json();
+                        isCorrect = !!checkData.correct;
+                        correctIndex = checkData.correctIndex;
+                        buttons[index].classList.add(isCorrect ? 'correct' : 'wrong', 'selected');
+                        buttons[index].setAttribute('aria-checked', 'true');
+                        if (!isCorrect && typeof correctIndex === 'number') {
+                            buttons[correctIndex].classList.add('correct');
+                        }
+                    } else {
+                        // Fallback: assume wrong if server check fails
+                        buttons[index].classList.add('selected');
+                    }
+                } catch (e) {
+                    console.error('Adaptive answer check failed:', e);
+                    buttons[index].classList.add('selected');
+                }
+            } else {
+                correctIndex = q.correct;
+                isCorrect = index === correctIndex;
+                buttons[index].classList.add(isCorrect ? 'correct' : 'wrong', 'selected');
+                buttons[index].setAttribute('aria-checked', 'true');
+                if (!isCorrect) {
+                    buttons[correctIndex].classList.add('correct');
+                }
             }
 
             if (isCorrect) {
@@ -4873,44 +4379,41 @@ name,email,role,department
                 question: q.question,
                 category: q.category,
                 options: q.options,
-                originalOptions: getOriginalOptions(q),
-                correctAnswer: result.correctIndex,
-                userAnswer: originalAnswer,
+                correctAnswer: q.correct,
+                userAnswer: index,
                 correct: isCorrect,
-                explanation: result.explanation,
-                wrong_explanation: result.wrong_explanation || '',
-                reference: result.reference_link,
-                confidence: confidence || 'unsure'
+                explanation: q.explanation,
+                reference: q.reference
             });
 
+            // Adaptive mode: track answers
             if (quizMode === 'adaptive') {
                 adaptiveAnswers.push(isCorrect);
                 recentAnswers.push(isCorrect);
+
+                // Show adaptive level indicator
                 const levelIndicator = document.getElementById('adaptive-level');
                 if (levelIndicator && q.adaptive_level) {
                     levelIndicator.textContent = `Уровень: ${getLevelName(q.adaptive_level)}`;
                     levelIndicator.className = 'adaptive-level-badge ' + q.adaptive_level;
                 }
-                // BUG-13 fix: adaptive session auto-finishes after 30 questions
-                // (previously ran indefinitely until the user exited manually)
-                if (adaptiveAnswers.length >= 30) {
-                    setTimeout(() => finishAdaptiveQuiz(), 2500);
-                    return;
-                }
             }
 
+            // Track mistakes by category for learning hints
             if (!isCorrect) {
                 categoryMistakes[q.category] = (categoryMistakes[q.category] || 0) + 1;
             }
+
+            // Show learning hint after 3 mistakes in a category
             if (!isCorrect && categoryMistakes[q.category] >= 3) {
                 showLearningHint(q.category);
             }
 
+            // Play sound effect
             playSound(isCorrect ? 'correct' : 'wrong');
 
-            const explanationText_ = result.explanation || '';
-            const wrongExp = result.wrong_explanation || '';
-            if (explanationText_ || wrongExp) {
+            // Show explanation after answer in ALL modes
+            if (q.explanation) {
                 const explanationBox = document.getElementById('explanation-box');
                 const explanationTitle = document.getElementById('explanation-title');
                 const explanationText = document.getElementById('explanation-text');
@@ -4918,13 +4421,10 @@ name,email,role,department
 
                 explanationTitle.textContent = isCorrect ? '✅ Правильно!' : '❌ Неправильно';
                 explanationBox.className = 'explanation-box ' + (isCorrect ? 'correct' : 'wrong');
-                let body = explanationText_;
-                if (!isCorrect && wrongExp) {
-                    body = wrongExp + (explanationText_ ? '\n\n' + explanationText_ : '');
-                }
-                explanationText.textContent = body;
-                explanationReference.textContent = result.reference_link ? `📚 ${result.reference_link}` : '';
+                explanationText.textContent = q.explanation;
+                explanationReference.textContent = q.reference_link ? `📚 ${q.reference_link}` : '';
 
+                // Show related topics for wrong answers
                 if (!isCorrect) {
                     showRelatedTopics(q);
                 } else {
@@ -4935,17 +4435,19 @@ name,email,role,department
                 explanationBox.style.display = 'block';
             }
 
-            if (quizMode === 'training' || quizMode === 'micro' || quizMode === 'prepost' || isMistakeReviewRun) {
+            if (quizMode === 'training') {
                 document.getElementById('next-btn-container').style.display = 'block';
                 document.getElementById('feedback-btn').style.display = 'block';
                 document.getElementById('next-btn-container').querySelector('button').focus();
             } else if (quizMode === 'adaptive') {
-                setTimeout(async () => {
-                    await loadNextAdaptiveQuestion();
+                // Adaptive mode: show explanation briefly, then load next
+                setTimeout(() => {
+                    loadNextAdaptiveQuestion();
                     showQuestion();
                     updateProgress();
                 }, 2500);
             } else {
+                // Exam/quick: show explanation briefly, then auto-advance
                 setTimeout(() => {
                     nextQuestion();
                 }, 2500);
@@ -4980,21 +4482,11 @@ name,email,role,department
                 item.className = 'related-topic-item';
                 item.onclick = () => jumpToQuestion(rq.id);
 
-                const badge = document.createElement('span');
-                badge.className = 'related-topic-badge';
-                badge.textContent = categoryNames[rq.category] || 'Общее';
-
-                const questionText = document.createElement('span');
-                questionText.className = 'related-topic-question';
-                questionText.textContent = rq.question;
-
-                const arrow = document.createElement('span');
-                arrow.className = 'related-topic-arrow';
-                arrow.textContent = '→';
-
-                item.appendChild(badge);
-                item.appendChild(questionText);
-                item.appendChild(arrow);
+                item.innerHTML = `
+                    <span class="related-topic-badge">${escapeHtml(categoryNames[rq.category] || 'Общее')}</span>
+                    <span class="related-topic-question">${escapeHtml(rq.question)}</span>
+                    <span class="related-topic-arrow">→</span>
+                `;
 
                 relatedList.appendChild(item);
             });
@@ -5052,18 +4544,17 @@ name,email,role,department
                         <span>${escapeHtml(categoryNames[catId] || catId)}</span>
                         <span class="weak-category-score">${wrongInCategory} ошибок</span>
                     </div>
-                    <div class="weak-category-questions"></div>
-                    <button class="practice-category-btn" data-action="practiceCategory" data-arg="${escapeHtml(catId)}" style="margin-top: 12px;">
+                    <div class="weak-category-questions">
+                        ${categoryQuestions.slice(0, 3).map(q => `
+                            <div class="weak-category-question">
+                                ${escapeHtml(q.question)}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="practice-category-btn" data-action="practiceCategory" data-arg="${catId}" style="margin-top: 12px;">
                         🔄 Тренировать эту тему
                     </button>
                 `;
-                const questionsContainer = section.querySelector('.weak-category-questions');
-                categoryQuestions.slice(0, 3).forEach(q => {
-                    const questionDiv = document.createElement('div');
-                    questionDiv.className = 'weak-category-question';
-                    questionDiv.textContent = q.question;
-                    questionsContainer.appendChild(questionDiv);
-                });
 
                 container.appendChild(section);
             });
@@ -5075,8 +4566,12 @@ name,email,role,department
             questions = shuffleArray([...categoryQuestions]);
 
             if (quizMode === 'exam') {
-                // Non-blocking: skip confirm() — just start the category quiz
-                // (confirm() blocks headless browsers indefinitely)
+                const agreed = confirm(
+                    `Тренировка по теме: ${categoryNames[categoryId] || categoryId}\n\n` +
+                    `Вопросов: ${questions.length}\n\n` +
+                    `Это тренировка, результаты не сохранятся в историю.`
+                );
+                if (!agreed) return;
             }
 
             currentQuestion = 0;
@@ -5086,16 +4581,6 @@ name,email,role,department
 
             showScreen('quiz-screen');
             showQuestion();
-        }
-
-        function updateProgress() {
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            const pct = questions.length > 0
-                ? Math.round(((currentQuestion + 1) / questions.length) * 100)
-                : 0;
-            if (progressBar) progressBar.style.width = pct + '%';
-            if (progressText) progressText.textContent = pct + '%';
         }
 
         function nextQuestion() {
@@ -5115,10 +4600,19 @@ name,email,role,department
         }
 
         function skipQuestion() {
+            // Save as wrong answer and move to next
             const q = questions[currentQuestion];
-            // Don't push skipped questions to userAnswers — they should not
-            // inflate the denominator or lower the percentage (BUG-12 fix).
-            // Only track that we've seen this question for navigation.
+            userAnswers.push({
+                questionId: q.id,
+                question: q.question,
+                category: q.category,
+                options: q.options,
+                correctAnswer: q.correct,
+                userAnswer: -1, // -1 means skipped
+                correct: false,
+                explanation: q.explanation,
+                reference: q.reference
+            });
 
             currentQuestion++;
             if (currentQuestion < questions.length) {
@@ -5373,13 +4867,9 @@ name,email,role,department
             clearSavedProgress();
             stopAutoSave(); // Stop auto-save when quiz ends
 
-            const answeredCount = userAnswers.length;
-            // BUG-03 fix: percentage and totals are based on ANSWERED questions,
-            // not the full question list — skips must not break /quiz/complete
-            // (server requires answers.length === total_questions).
-            const percentage = answeredCount > 0 ? Math.round((score / answeredCount) * 100) : 0;
+            const percentage = Math.round((score / questions.length) * 100);
 
-            document.getElementById('final-score').textContent = `${score}/${answeredCount}`;
+            document.getElementById('final-score').textContent = `${score}/${questions.length}`;
             document.getElementById('results-percentage').textContent = `${percentage}%`;
 
             const gradeBadge = document.getElementById('grade-badge');
@@ -5413,7 +4903,7 @@ name,email,role,department
 
             saveToHistory({
                 score,
-                total: answeredCount,
+                total: questions.length,
                 mode: quizMode,
                 percentage
             });
@@ -5427,24 +4917,23 @@ name,email,role,department
                     redirectOnUnauthorized: false,
                     body: JSON.stringify({
                         score: score,
-                        total_questions: answeredCount,
-                        mode: quizMode,
-                        answers: userAnswers.map(a => ({
-                            questionId: a.questionId,
-                            answer: a.userAnswer
+                        total_questions: questions.length,
+                        answers: userAnswers.map((a, i) => ({
+                            questionId: questions[i].id,
+                            correct: a.correct
                         }))
                     })
                 }).catch(err => console.error('Error updating user stats:', err));
 
                 // Update competency matrix
-                authFetch(`${API_BASE}/competency/update`, {
+                fetch(`${API_BASE}/competency/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
                     body: JSON.stringify({
-                        answers: userAnswers.map(a => ({
-                            questionId: a.questionId,
-                            answer: a.userAnswer
+                        user_id: currentUser.id,
+                        answers: userAnswers.map((a, i) => ({
+                            category: questions[i].category || 'general',
+                            is_correct: a.correct
                         }))
                     })
                 }).catch(err => console.error('Error updating competency:', err));
@@ -5457,62 +4946,8 @@ name,email,role,department
                 document.getElementById('review-mistakes-btn-container').style.display = 'none';
             }
 
-            // Confidence insights: sure but wrong
-            const sureWrong = userAnswers.filter(a => !a.correct && a.confidence === 'sure');
-            const confEl = document.getElementById('confidence-insights');
-            const confList = document.getElementById('confidence-insights-list');
-            if (confEl && confList) {
-                if (sureWrong.length > 0) {
-                    confEl.style.display = 'block';
-                    confList.innerHTML = sureWrong.map(a =>
-                        `<div style="margin-bottom:6px;">• ${escapeHtml((a.question || '').slice(0, 90))}…</div>`
-                    ).join('');
-                } else {
-                    confEl.style.display = 'none';
-                }
-            }
-
-            // Pre/post reporting
-            if (quizMode === 'prepost') {
-                const phase = prepostPhase;
-                authFetch(`${API_BASE}/prepost/complete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
-                    body: JSON.stringify({
-                        phase,
-                        score,
-                        total: answeredCount,
-                        answers: userAnswers.map(a => ({
-                            questionId: a.questionId,
-                            answer: a.userAnswer
-                        }))
-                    })
-                }).then(async (res) => {
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    const deltaEl = document.getElementById('prepost-delta');
-                    const deltaText = document.getElementById('prepost-delta-text');
-                    if (deltaEl && deltaText && data.delta) {
-                        deltaEl.style.display = 'block';
-                        const sign = data.delta.percentage >= 0 ? '+' : '';
-                        deltaText.textContent = `Pre ${data.pre.percentage}% → Post ${data.post.percentage}% (${sign}${data.delta.percentage} п.п.)`;
-                    } else if (deltaEl && deltaText) {
-                        deltaEl.style.display = 'block';
-                        deltaText.textContent = `Фаза «${phase}» сохранена: ${percentage}%. Пройдите вторую фазу для сравнения.`;
-                    }
-                }).catch(() => {});
-            }
-
-            const actionStatus = document.getElementById('action-plan-status');
-            const actionText = document.getElementById('action-plan-text');
-            if (actionStatus) actionStatus.style.display = 'none';
-            if (actionText) actionText.value = '';
-
-            // Show certificate only for exam mode (official attestation) with >=90% AND >=10 questions.
-            // Training/quick/micro/prepost use hints, back-navigation and skipping — not certifiable.
-            const isCertifiable = quizMode === 'exam';
-            if (percentage >= 90 && answeredCount >= 10 && isCertifiable) {
+            // Show certificate if >90% and generate it
+            if (percentage >= 90) {
                 document.getElementById('certificate-section').style.display = 'block';
                 const displayName = localStorage.getItem('userDisplayName') || localStorage.getItem('username') || 'Участник';
                 document.querySelector('.certificate-name').textContent = displayName;
@@ -5539,9 +4974,6 @@ name,email,role,department
             const reviewContainer = document.getElementById('review-questions');
             reviewContainer.innerHTML = '';
 
-            // In exam mode: hide correct answers to prevent cheating via review
-            const hideCorrect = quizMode === 'exam';
-
             if (wrongAnswers.length === 0) {
                 reviewContainer.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Нет неправильных ответов! 🎉</p>';
             } else {
@@ -5551,63 +4983,24 @@ name,email,role,department
 
                     const letters = ['А', 'Б', 'В', 'Г'];
 
-                    const questionTextDiv = document.createElement('div');
-                    questionTextDiv.className = 'question-text';
-                    questionTextDiv.textContent = answer.question;
-                    questionDiv.appendChild(questionTextDiv);
-
-                    // userAnswer/correctAnswer are indices into the original option
-                    // order, so never index the shuffled `options` array with them.
-                    const optionTexts = Array.isArray(answer.originalOptions) && answer.originalOptions.length
-                        ? answer.originalOptions
-                        : answer.options;
-                    const optionLabel = (idx) => (
-                        typeof idx === 'number' && idx >= 0 && optionTexts && optionTexts[idx] !== undefined
-                            ? `${letters[idx]}. ${escapeHtml(optionTexts[idx])}`
-                            : '—'
-                    );
-
-                    const wrongAnswer = document.createElement('div');
-                    wrongAnswer.className = 'review-answer wrong';
-                    wrongAnswer.innerHTML = `
-                        <div class="review-answer-label">❌ Ваш ответ:</div>
-                        <div class="review-answer-text">${answer.userAnswer === -1 ? 'Пропущено' : optionLabel(answer.userAnswer)}</div>
-                    `;
-                    questionDiv.appendChild(wrongAnswer);
-
-                    if (!hideCorrect) {
-                        const correctAnswer = document.createElement('div');
-                        correctAnswer.className = 'review-answer correct';
-                        correctAnswer.innerHTML = `
+                    questionDiv.innerHTML = `
+                        <div class="question-text">${escapeHtml(answer.question)}</div>
+                        <div class="review-answer wrong">
+                            <div class="review-answer-label">❌ Ваш ответ:</div>
+                            <div class="review-answer-text">${letters[answer.userAnswer]}. ${escapeHtml(answer.options[answer.userAnswer])}</div>
+                        </div>
+                        <div class="review-answer correct">
                             <div class="review-answer-label">✅ Правильный ответ:</div>
-                            <div class="review-answer-text">${optionLabel(answer.correctAnswer)}</div>
-                        `;
-                        questionDiv.appendChild(correctAnswer);
-                    }
-
-                    if (answer.explanation && !hideCorrect) {
-                        const explanationBox = document.createElement('div');
-                        explanationBox.style.cssText = 'margin-top: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;';
-
-                        const explanationLabel = document.createElement('div');
-                        explanationLabel.style.cssText = 'font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;';
-                        explanationLabel.textContent = '💡 Объяснение:';
-                        explanationBox.appendChild(explanationLabel);
-
-                        const explanationText = document.createElement('div');
-                        explanationText.style.cssText = 'font-size: 14px; color: var(--text-secondary);';
-                        explanationText.textContent = answer.explanation;
-                        explanationBox.appendChild(explanationText);
-
-                        if (answer.reference) {
-                            const reference = document.createElement('div');
-                            reference.style.cssText = 'font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-style: italic;';
-                            reference.textContent = '📚 ' + answer.reference;
-                            explanationBox.appendChild(reference);
-                        }
-
-                        questionDiv.appendChild(explanationBox);
-                    }
+                            <div class="review-answer-text">${letters[answer.correctAnswer]}. ${escapeHtml(answer.options[answer.correctAnswer])}</div>
+                        </div>
+                        ${answer.explanation ? `
+                            <div style="margin-top: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">💡 Объяснение:</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">${escapeHtml(answer.explanation)}</div>
+                                ${answer.reference ? `<div style="font-size: 12px; color: var(--text-tertiary); margin-top: 8px; font-style: italic;">📚 ${escapeHtml(answer.reference)}</div>` : ''}
+                            </div>
+                        ` : ''}
+                    `;
                     reviewContainer.appendChild(questionDiv);
                 });
             }
@@ -5616,52 +5009,6 @@ name,email,role,department
                 `${wrongAnswers.length} вопросов с неправильными ответами`;
 
             showScreen('review-screen');
-        }
-
-        async function retryMistakes() {
-            const wrongAnswers = userAnswers.filter(a => !a.correct);
-            if (wrongAnswers.length === 0) return;
-            const ids = new Set(wrongAnswers.map(a => a.questionId));
-            const pool = (originalQuestions.length ? originalQuestions : questions).filter(q => ids.has(q.id));
-            if (pool.length === 0) {
-                showErrorMessage('Не удалось загрузить вопросы для повтора.');
-                return;
-            }
-            isMistakeReviewRun = true;
-            questions = shuffleOptions(pool);
-            currentQuestion = 0;
-            score = 0;
-            userAnswers = [];
-            isQuizActive = true;
-            document.body.classList.add('quiz-active');
-            showQuestion();
-            showScreen('quiz-screen');
-        }
-
-        async function saveActionPlan() {
-            const text = (document.getElementById('action-plan-text')?.value || '').trim();
-            if (text.length < 3) {
-                showErrorMessage('Напишите хотя бы короткое действие.');
-                return;
-            }
-            try {
-                await ensureUserExists();
-                const res = await authFetch(`${API_BASE}/action-plans`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
-                    body: JSON.stringify({
-                        text,
-                        score,
-                        mode: quizMode
-                    })
-                });
-                if (!res.ok) throw new Error('fail');
-                const status = document.getElementById('action-plan-status');
-                if (status) status.style.display = 'block';
-            } catch (e) {
-                showErrorMessage('Не удалось сохранить план действия.');
-            }
         }
 
         // ========== USER-SUBMITTED QUESTIONS & QUALITY RATINGS ==========
@@ -5699,17 +5046,17 @@ name,email,role,department
                 : (explanation || null);
 
             try {
-                const response = await authFetch(`${API_BASE}/questions/submit`, {
+                const response = await fetch(`${API_BASE}/questions/submit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
                     body: JSON.stringify({
                         question_text: questionText,
                         options,
                         correct_answer: correctAnswer,
                         category,
                         explanation: fullExplanation,
-                        reference_link: null
+                        reference_link: null,
+                        user_id: user.id || null
                     })
                 });
 
@@ -5745,49 +5092,32 @@ name,email,role,department
             }
 
             section.style.display = 'block';
-            list.innerHTML = '';
-            userAnswers.forEach((answer, index) => {
+            list.innerHTML = userAnswers.map((answer, index) => {
                 const letters = ['А', 'Б', 'В', 'Г'];
                 const correctLetter = letters[answer.correctAnswer] || '-';
-
-                const item = document.createElement('div');
-                item.className = 'rating-item';
-                item.style.cssText = 'padding: 12px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;';
-
-                const info = document.createElement('div');
-                info.style.cssText = 'flex: 1; min-width: 200px;';
-
-                const questionTitle = document.createElement('div');
-                questionTitle.style.cssText = 'font-weight: 500; font-size: 14px; margin-bottom: 4px;';
-                questionTitle.textContent = `${index + 1}. ${answer.question}`;
-                info.appendChild(questionTitle);
-
-                const meta = document.createElement('div');
-                meta.style.cssText = 'font-size: 12px; color: var(--text-tertiary);';
-                meta.textContent = `Правильный ответ: ${correctLetter} • ${categoryNames[answer.category] || answer.category}`;
-                info.appendChild(meta);
-
-                const buttons = document.createElement('div');
-                buttons.style.cssText = 'display: flex; gap: 6px; flex-wrap: wrap;';
-                buttons.innerHTML = `
-                    <button class="btn btn-secondary btn-small" data-action="rateQuestion" data-arg="${escapeHtml(answer.questionId)}" data-val="1" title="Хороший вопрос">👍</button>
-                    <button class="btn btn-secondary btn-small" data-action="rateQuestion" data-arg="${escapeHtml(answer.questionId)}" data-val="-1" title="Плохой вопрос">👎</button>
-                    <button class="btn btn-danger btn-small" data-action="reportQuestion" data-arg="${escapeHtml(answer.questionId)}" title="Пожаловаться">🚩</button>
+                return `
+                    <div class="rating-item" style="padding: 12px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">${index + 1}. ${escapeHtml(answer.question)}</div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">Правильный ответ: ${correctLetter} • ${categoryNames[answer.category] || answer.category}</div>
+                        </div>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button class="btn btn-secondary btn-small" data-action="rateQuestion" data-arg="${answer.questionId}" data-val="1" title="Хороший вопрос">👍</button>
+                            <button class="btn btn-secondary btn-small" data-action="rateQuestion" data-arg="${answer.questionId}" data-val="-1" title="Плохой вопрос">👎</button>
+                            <button class="btn btn-danger btn-small" data-action="reportQuestion" data-arg="${answer.questionId}" title="Пожаловаться">🚩</button>
+                        </div>
+                    </div>
                 `;
-
-                item.appendChild(info);
-                item.appendChild(buttons);
-                list.appendChild(item);
-            });
+            }).join('');
         }
 
         async function rateQuestion(questionId, rating) {
+            const user = getCurrentUser();
             try {
-                const response = await authFetch(`${API_BASE}/questions/${questionId}/rate`, {
+                const response = await fetch(`${API_BASE}/questions/${questionId}/rate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
-                    body: JSON.stringify({ rating })
+                    body: JSON.stringify({ rating, user_id: user.id || null })
                 });
 
                 if (response.ok) {
@@ -5813,15 +5143,16 @@ name,email,role,department
             }
 
             const comment = prompt('Добавьте комментарий (необязательно):') || '';
+            const user = getCurrentUser();
 
             try {
-                const response = await authFetch(`${API_BASE}/questions/${questionId}/report`, {
+                const response = await fetch(`${API_BASE}/questions/${questionId}/report`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    redirectOnUnauthorized: false,
                     body: JSON.stringify({
                         reason: reasons[reasonIndex],
-                        comment
+                        comment,
+                        user_id: user.id || null
                     })
                 });
 
@@ -5885,21 +5216,15 @@ name,email,role,department
 
                     const topicItem = document.createElement('div');
                     topicItem.className = 'topic-item';
-
-                    const topicName = document.createElement('span');
-                    topicName.className = 'topic-name';
-                    topicName.textContent = name;
-                    topicItem.appendChild(topicName);
-
-                    const topicScore = document.createElement('div');
-                    topicScore.className = 'topic-score';
-                    topicScore.innerHTML = `
-                        <div class="topic-bar">
-                            <div class="topic-bar-fill ${barClass}" style="width: ${percent}%"></div>
+                    topicItem.innerHTML = `
+                        <span class="topic-name">${escapeHtml(name)}</span>
+                        <div class="topic-score">
+                            <div class="topic-bar">
+                                <div class="topic-bar-fill ${barClass}" style="width: ${percent}%"></div>
+                            </div>
+                            <span class="topic-percent">${percent}%</span>
                         </div>
-                        <span class="topic-percent">${percent}%</span>
                     `;
-                    topicItem.appendChild(topicScore);
                     topicsList.appendChild(topicItem);
                 });
 
@@ -5940,23 +5265,13 @@ name,email,role,department
                 const date = new Date(item.date);
                 const historyItem = document.createElement('div');
                 historyItem.className = 'history-item';
-                const historyInfo = document.createElement('div');
-                const historyDate = document.createElement('div');
-                historyDate.className = 'history-date';
-                historyDate.textContent = `${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}`;
-                historyInfo.appendChild(historyDate);
-
-                const historyMode = document.createElement('div');
-                historyMode.className = 'history-mode';
-                historyMode.textContent = modeNames[item.mode] || item.mode;
-                historyInfo.appendChild(historyMode);
-
-                const historyScore = document.createElement('div');
-                historyScore.className = 'history-score';
-                historyScore.textContent = `${item.score}/${item.total} (${item.percentage}%)`;
-
-                historyItem.appendChild(historyInfo);
-                historyItem.appendChild(historyScore);
+                historyItem.innerHTML = `
+                    <div>
+                        <div class="history-date">${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'})}</div>
+                        <div class="history-mode">${modeNames[item.mode] || item.mode}</div>
+                    </div>
+                    <div class="history-score">${item.score}/${item.total} (${item.percentage}%)</div>
+                `;
                 historyList.appendChild(historyItem);
             });
         }
@@ -6145,9 +5460,24 @@ name,email,role,department
         }
 
         async function loadResults() {
-            // BUG-07 fix: removed dead GET /api/results leaderboard block — that
-            // endpoint requires admin auth (guests get 401) and rank-display/
-            // rank-value elements do not exist in the DOM.
+            try {
+                const response = await fetch(`${API_BASE}/results`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.total_users > 1 && Array.isArray(data.scores)) {
+                        const rankDisplay = document.getElementById('rank-display');
+                        const rankValue = document.getElementById('rank-value');
+
+                        const lowerScores = data.scores.filter(s => s.score < score).length;
+                        const rank = data.total_users - lowerScores;
+
+                        rankDisplay.style.display = 'block';
+                        rankValue.textContent = `${rank} место из ${data.total_users}`;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load results:', e);
+            }
 
             try {
                 await authFetch(`${API_BASE}/results`, {
@@ -6156,7 +5486,7 @@ name,email,role,department
                     redirectOnUnauthorized: false,
                     body: JSON.stringify({
                         score,
-                        total_questions: userAnswers.length,
+                        total_questions: questions.length,
                         answers: userAnswers
                     })
                 });
@@ -6168,9 +5498,9 @@ name,email,role,department
         // ========== USER MANAGEMENT ==========
 
         async function ensureUserExists() {
-            if (getUserToken()) return true;
-
             try {
+                if (getUserToken()) return;
+
                 const user = getCurrentUser();
                 const username = localStorage.getItem('username') || `user_${Date.now()}`;
 
@@ -6187,32 +5517,12 @@ name,email,role,department
                     const data = await response.json();
                     if (data.user) {
                         setUserSession(data.user, data.token);
-                        return true;
+                        console.log('User session ready:', data.user.id);
                     }
-                } else if (response.status === 429) {
-                    showInlineError('Слишком много регистраций с вашего IP. Подождите минуту и попробуйте снова.');
-                } else {
-                    showInlineError('Не удалось создать гостевую сессию. Проверьте подключение к интернету.');
                 }
             } catch (error) {
                 console.error('Error creating user:', error);
-                showInlineError('Нет связи с сервером. Викторине нужно подключение к интернету.');
             }
-            return false;
-        }
-
-        function showInlineError(message) {
-            let el = document.getElementById('inline-error-banner');
-            if (!el) {
-                el = document.createElement('div');
-                el.id = 'inline-error-banner';
-                el.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#b54708;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;z-index:10000;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:90vw;text-align:center';
-                document.body.appendChild(el);
-            }
-            el.textContent = message;
-            el.style.display = 'block';
-            clearTimeout(el._timer);
-            el._timer = setTimeout(() => { el.style.display = 'none'; }, 8000);
         }
 
         function saveUserName(name) {
@@ -6230,24 +5540,6 @@ name,email,role,department
             updateWelcomeUserBar();
         }
 
-        async function loadServerInfo() {
-            const footer = document.getElementById('welcome-version-footer');
-            const banner = document.getElementById('server-alt-banner');
-            try {
-                const res = await fetch('/api/status', { cache: 'no-store' });
-                if (!res.ok) return;
-                const status = await res.json();
-                if (footer && status.version) {
-                    footer.textContent = `Версия ${status.version} · Режим по умолчанию: Тренировка`;
-                }
-                if (status.server_role === 'alternative' && banner) {
-                    banner.hidden = false;
-                }
-            } catch (e) {
-                console.warn('Server info unavailable:', e);
-            }
-        }
-
         // Load saved user name on page load
         document.addEventListener('DOMContentLoaded', () => {
             const savedName = localStorage.getItem('userDisplayName');
@@ -6256,7 +5548,6 @@ name,email,role,department
                 if (nameInput) nameInput.value = savedName;
             }
             updateWelcomeUserBar();
-            loadServerInfo();
         });
 
         // ========== CERTIFICATE ==========
@@ -6397,9 +5688,7 @@ name,email,role,department
             const tableData = questions.map((q, idx) => {
                 const userAnswer = userAnswers[idx];
                 const letters = ['А', 'Б', 'В', 'Г'];
-                const correct = userAnswer && userAnswer.correctAnswer != null
-                    ? letters[userAnswer.correctAnswer]
-                    : '-';
+                const correct = letters[q.correct];
                 const user = userAnswer ? letters[userAnswer.userAnswer] : '-';
                 const status = userAnswer && userAnswer.correct ? '✓' : '✗';
 
@@ -6580,34 +5869,18 @@ name,email,role,department
             }
 
             if (flashcards.length === 0) {
-                const container = document.getElementById('flashcards-session');
-                container.innerHTML = '';
-
-                const wrapper = document.createElement('div');
-                wrapper.style.cssText = 'text-align: center; padding: 40px;';
-
-                const icon = document.createElement('div');
-                icon.style.cssText = 'font-size: 48px; margin-bottom: 16px;';
-                icon.textContent = '📭';
-                wrapper.appendChild(icon);
-
-                const title = document.createElement('h2');
-                title.style.cssText = 'font-size: 24px; margin-bottom: 16px;';
-                title.textContent = 'Нет карточек';
-                wrapper.appendChild(title);
-
-                const message = document.createElement('p');
-                message.style.cssText = 'color: var(--text-secondary); margin-bottom: 24px;';
-                message.textContent = deckType === 'weak' ? 'У вас пока нет сложных карточек для повторения.' : 'В этой колоде пока нет карточек.';
-                wrapper.appendChild(message);
-
-                const button = document.createElement('button');
-                button.className = 'btn btn-secondary';
-                button.setAttribute('data-action', 'showFlashcardsDeckSelection');
-                button.textContent = '← Вернуться к выбору колоды';
-                wrapper.appendChild(button);
-
-                container.appendChild(wrapper);
+                document.getElementById('flashcards-session').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                        <h2 style="font-size: 24px; margin-bottom: 16px;">Нет карточек</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                            ${deckType === 'weak' ? 'У вас пока нет сложных карточек для повторения.' : 'В этой колоде пока нет карточек.'}
+                        </p>
+                        <button class="btn btn-secondary" data-action="showFlashcardsDeckSelection">
+                            ← Вернуться к выбору колоды
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
@@ -6630,33 +5903,17 @@ name,email,role,department
             document.getElementById('flashcard-back-category').textContent = categoryNames[card.category] || 'Общее';
             document.getElementById('flashcard-number').textContent = `${currentFlashcard + 1}/${flashcards.length}`;
             document.getElementById('flashcard-question').textContent = card.question;
-            document.getElementById('flashcard-answer').textContent = 'Нажмите, чтобы увидеть ответ';
-            document.getElementById('flashcard-explanation').textContent = '';
-            document.getElementById('flashcard-reference').textContent = '';
-            card._revealed = null;
+            document.getElementById('flashcard-answer').textContent = card.options[card.correct];
+            document.getElementById('flashcard-explanation').textContent = card.explanation || '';
+            document.getElementById('flashcard-reference').textContent = card.reference ? `📚 ${card.reference}` : '';
 
             document.getElementById('flashcards-controls').style.display = 'none';
 
             updateFlashcardsProgress();
         }
 
-        async function flipFlashcard() {
+        function flipFlashcard() {
             if (isFlipped) return;
-
-            const card = flashcards[currentFlashcard];
-            if (!card._revealed) {
-                try {
-                    card._revealed = await revealAnswer(card.id);
-                } catch (e) {
-                    console.error('Reveal failed:', e);
-                    return;
-                }
-            }
-
-            const rev = card._revealed;
-            document.getElementById('flashcard-answer').textContent = card.options[rev.correctIndex] || '';
-            document.getElementById('flashcard-explanation').textContent = rev.explanation || '';
-            document.getElementById('flashcard-reference').textContent = rev.reference_link ? `📚 ${rev.reference_link}` : '';
 
             isFlipped = true;
             document.getElementById('flashcard').classList.add('flipped');
@@ -6749,9 +6006,9 @@ name,email,role,department
         }
 
         function exitFlashcards() {
-            uiConfirm('Вы уверены, что хотите выйти? Прогресс этой сессии будет потерян.').then(ok => {
-                if (ok) showFlashcardsDeckSelection();
-            });
+            if (confirm('Вы уверены, что хотите выйти? Прогресс этой сессии будет потерян.')) {
+                showFlashcardsDeckSelection();
+            }
         }
 
         // ========== BATCH REGISTRATION ==========
@@ -6855,7 +6112,6 @@ name,email,role,department
                 <div>Роль</div>
                 <div>Подразделение</div>
             `;
-            // Header is static column labels; no user data.
             table.appendChild(header);
 
             // Rows
@@ -6863,25 +6119,12 @@ name,email,role,department
                 const row = document.createElement('div');
                 row.className = 'batch-preview-row';
                 row.style.background = p.error ? 'rgba(244, 67, 54, 0.1)' : 'transparent';
-                const cellName = document.createElement('div');
-                cellName.className = 'batch-preview-cell';
-                cellName.textContent = p.name || '-';
-                row.appendChild(cellName);
-
-                const cellEmail = document.createElement('div');
-                cellEmail.className = 'batch-preview-cell';
-                cellEmail.textContent = p.email || '-';
-                row.appendChild(cellEmail);
-
-                const cellRole = document.createElement('div');
-                cellRole.className = 'batch-preview-cell';
-                cellRole.textContent = p.role || '-';
-                row.appendChild(cellRole);
-
-                const cellDepartment = document.createElement('div');
-                cellDepartment.className = 'batch-preview-cell';
-                cellDepartment.textContent = p.department || '-';
-                row.appendChild(cellDepartment);
+                row.innerHTML = `
+                    <div class="batch-preview-cell">${escapeHtml(p.name || '-')}</div>
+                    <div class="batch-preview-cell">${escapeHtml(p.email || '-')}</div>
+                    <div class="batch-preview-cell">${escapeHtml(p.role || '-')}</div>
+                    <div class="batch-preview-cell">${escapeHtml(p.department || '-')}</div>
+                `;
                 table.appendChild(row);
             });
 
@@ -6937,34 +6180,23 @@ name,email,role,department
             const contentDiv = document.getElementById('batch-results-content');
 
             resultsDiv.style.display = 'block';
-            contentDiv.innerHTML = '';
-
-            const successDiv = document.createElement('div');
-            successDiv.className = 'batch-result-item success';
-            successDiv.innerHTML = `
-                <div>
-                    <strong>✅ Успешно импортировано:</strong> ${result.imported} участников
+            contentDiv.innerHTML = `
+                <div class="batch-result-item success">
+                    <div>
+                        <strong>✅ Успешно импортировано:</strong> ${result.imported} участников
+                    </div>
+                </div>
+                ${result.failed > 0 ? `
+                    <div class="batch-result-item error">
+                        <div>
+                            <strong>❌ Ошибок:</strong> ${result.failed}
+                        </div>
+                    </div>
+                ` : ''}
+                <div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
+                    ${result.message || ''}
                 </div>
             `;
-            contentDiv.appendChild(successDiv);
-
-            if (result.failed > 0) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'batch-result-item error';
-                errorDiv.innerHTML = `
-                    <div>
-                        <strong>❌ Ошибок:</strong> ${result.failed}
-                    </div>
-                `;
-                contentDiv.appendChild(errorDiv);
-            }
-
-            if (result.message) {
-                const messageDiv = document.createElement('div');
-                messageDiv.style.cssText = 'margin-top: 12px; font-size: 13px; color: var(--text-secondary);';
-                messageDiv.textContent = result.message;
-                contentDiv.appendChild(messageDiv);
-            }
 
             document.getElementById('batch-preview').style.display = 'none';
         }
@@ -6990,36 +6222,23 @@ name,email,role,department
 
         // ========== CONFIRMATION MODAL ==========
 
-        let _confirmResolve = null;
-
-        function uiConfirm(message) {
-            return new Promise((resolve) => {
-                document.getElementById('confirm-text').textContent = message;
-                _confirmResolve = resolve;
-                document.getElementById('confirm-modal').classList.add('active');
-            });
-        }
+        let confirmCallback = null;
 
         function confirmReset() {
-            uiConfirm('Вы уверены, что хотите начать заново? Текущий результат будет потерян.').then(ok => {
-                if (ok) resetQuiz();
-            });
+            document.getElementById('confirm-modal').classList.add('active');
+            confirmCallback = resetQuiz;
         }
 
         function closeModal() {
             document.getElementById('confirm-modal').classList.remove('active');
-            if (_confirmResolve) {
-                _confirmResolve(false);
-                _confirmResolve = null;
-            }
+            confirmCallback = null;
         }
 
         function confirmAction() {
-            if (_confirmResolve) {
-                _confirmResolve(true);
-                _confirmResolve = null;
+            if (confirmCallback) {
+                confirmCallback();
             }
-            document.getElementById('confirm-modal').classList.remove('active');
+            closeModal();
         }
 
         // ========== INITIALIZATION ==========
@@ -7092,14 +6311,6 @@ name,email,role,department
             if (batchFileInput) {
                 batchFileInput.addEventListener('change', (e) => handleBatchFile(e.target.files));
             }
-
-            const microCategorySelect = document.getElementById('micro-category');
-            if (microCategorySelect) {
-                microCategorySelect.addEventListener('change', (e) => {
-                    microCategory = e.target.value;
-                    updateMicroCategoryLabel();
-                });
-            }
         }
     </script>
 
@@ -7109,21 +6320,21 @@ name,email,role,department
             <span class="nav-icon">📝</span>
             <span class="nav-label">Викторина</span>
         </a>
-        <a href="/instruction" class="nav-item">
-            <span class="nav-icon">📘</span>
-            <span class="nav-label">Инструкция</span>
+        <a href="/learning.html" class="nav-item">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Обучение</span>
         </a>
-        <a href="/cases" class="nav-item">
+        <a href="/cases.html" class="nav-item">
             <span class="nav-icon">🔍</span>
             <span class="nav-label">Кейсы</span>
         </a>
-        <a href="/pulse" class="nav-item">
-            <span class="nav-icon">📡</span>
-            <span class="nav-label">Пульс</span>
+        <a href="/gamification.html" class="nav-item">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-label">Достижения</span>
         </a>
-        <a href="/status" class="nav-item" onclick="if(typeof hardRefreshApp==='function' && event.altKey){event.preventDefault();hardRefreshApp();}">
-            <span class="nav-icon">🔄</span>
-            <span class="nav-label">Статус</span>
+        <a href="/my-certificates.html" class="nav-item">
+            <span class="nav-icon">🎓</span>
+            <span class="nav-label">Сертификаты</span>
         </a>
     </nav>
 

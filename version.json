@@ -1,6 +1,6 @@
 {
-  "version": "2026.08.01.1",
-  "last_updated": "2026-08-01T14:30:00+03:00",
+  "version": "2026.08.17.1",
+  "last_updated": "2026-08-17T22:00:00+03:00",
   "total_questions": 84,
   "categories": [
     "ethics",
@@ -20,17 +20,35 @@
   ],
   "changes": {
     "current": {
-      "version": "2026.08.01.1",
-      "date": "2026-08-01",
+      "version": "2026.08.17.1",
+      "date": "2026-08-17",
       "changes": [
-        "V2 restyled to Claude.ai / Anthropic visual language: ivory canvas, warm slate ink, clay terracotta accent",
-        "Primary CTAs use slate (AA), clay reserved for brand marks, meters, selection and nav emphasis",
-        "Soft ring elevation, restrained motion, secondary outline buttons matching Anthropic patterns",
-        "Landing copy lightly framed around seminar «Не просто накормить» without narrowing the question bank",
-        "Dark theme flipped to warm near-black slate with ivory CTAs"
+        "Sync live production (147.45.174.206) into git: Aug 10–15 seminar bugfixes, V2 sunset to /",
+        "Restore questions.json from the live SQLite bank (no null options; public option order matches DB)",
+        "Lock GET /api/questions/user behind admin auth — it was leaking correct_answer without a token",
+        "Bump service-worker cache so clients drop the stale public question file"
       ]
     },
     "history": [
+      {
+        "version": "2026.08.12.1",
+        "date": "2026-08-12",
+        "changes": [
+          "Production seminar fixes on 147: check-answer rate limit 120/min, guest NAT registration limit, Kahoot question_count, adaptive asked-id tracker",
+          "V2 client sunset: /v2 redirects to the main app; static build kept under public/v2-disabled"
+        ]
+      },
+      {
+        "version": "2026.08.01.1",
+        "date": "2026-08-01",
+        "changes": [
+          "V2 restyled to Claude.ai / Anthropic visual language: ivory canvas, warm slate ink, clay terracotta accent",
+          "Primary CTAs use slate (AA), clay reserved for brand marks, meters, selection and nav emphasis",
+          "Soft ring elevation, restrained motion, secondary outline buttons matching Anthropic patterns",
+          "Landing copy lightly framed around seminar «Не просто накормить» without narrowing the question bank",
+          "Dark theme flipped to warm near-black slate with ivory CTAs"
+        ]
+      },
       {
         "version": "2026.07.30.1",
         "date": "2026-07-30",
@@ -53,7 +71,6 @@
           "Kahoot scoring modes, Pulse scale questions, moderated Live Q&A, seminar digest and backend decomposition"
         ]
       },
-
       {
         "version": "2026.07.17.4",
         "date": "2026-07-29",

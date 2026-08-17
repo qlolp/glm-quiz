@@ -14,8 +14,8 @@ app.post('/api/auth/register', (req, res) => {
             return res.status(400).json({ error: 'Invalid name' });
         }
 
-        // Check if user exists
-        const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        // Check if user exists by email OR username (both are unique)
+        const existing = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(email, email);
 
         if (existing) {
             // Still generate a code so existing users can re-verify if needed
@@ -23,12 +23,22 @@ app.post('/api/auth/register', (req, res) => {
             return res.json({ success: true, exists: true, user: existing });
         }
 
-        // Create new user
+        // Create new user — wrap in try/catch to handle race-condition UNIQUE violation
         const userId = 'user_' + crypto.randomBytes(16).toString('hex');
-        db.prepare(`
-            INSERT INTO users (id, username, display_name, email, organization)
-            VALUES (?, ?, ?, ?, ?)
-        `).run(userId, email, fio, email, organization);
+        try {
+            db.prepare(`
+                INSERT INTO users (id, username, display_name, email, organization)
+                VALUES (?, ?, ?, ?, ?)
+            `).run(userId, email, fio, email, organization);
+        } catch (insertErr) {
+            // Race condition: another request created the user between SELECT and INSERT
+            const raced = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(email, email);
+            if (raced) {
+                storeVerificationCode(email);
+                return res.json({ success: true, exists: true, user: raced });
+            }
+            throw insertErr;
+        }
 
         const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
         storeVerificationCode(email);
@@ -76,7 +86,7 @@ app.post('/api/auth/verify', certRateLimitMiddleware, (req, res) => {
  * POST /api/auth/admin
  * Verify admin password
  */
-app.post('/api/auth/admin', certRateLimitMiddleware, (req, res) => {
+app.post('/api/auth/admin', adminAuthRateLimitMiddleware, certRateLimitMiddleware, (req, res) => {
     try {
         const { password } = req.body;
         const expected = ADMIN_PASSWORD || '';

@@ -3,7 +3,7 @@
  * PWA + Offline-first functionality
  */
 
-const CACHE_VERSION = '2026.08.17.1';
+const CACHE_VERSION = '2026.07.06.17';
 const CACHE_NAME = `quiz-v${CACHE_VERSION}`;
 
 // Static assets to cache immediately
@@ -23,12 +23,6 @@ const STATIC_CACHE_URLS = [
     '/spaced-repetition.html',
     '/realtime-host.html',
     '/realtime-player.html',
-    '/pulse-host.html',
-    '/pulse-player.html',
-    '/qa-host.html',
-    '/qa-player.html',
-    '/seminar-digest.html',
-    '/stage-heatmap.html',
     '/offline.html',
     '/manifest.json',
     '/questions.json',
@@ -38,8 +32,7 @@ const STATIC_CACHE_URLS = [
     '/js/user.js',
     '/js/event-delegation.js',
     '/js/suppress-logs.js',
-    '/css/modern-theme.css',
-    '/css/guide.css'
+    '/css/modern-theme.css'
 ];
 
 // API endpoints that use Network First strategy
@@ -119,27 +112,19 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 2. V2 HTML is always network-first; hashed Vite assets are network-only.
-    if (url.pathname === '/v2' || url.pathname.startsWith('/v2/')) {
-        const accept = request.headers.get('accept') || '';
-        event.respondWith(accept.includes('text/html') ? htmlStrategy(request) : fetch(request));
-        return;
-    }
-
-    // 3. Static assets - Cache First with Network fallback
+    // 2. Static assets - Cache First with Network fallback
     if (request.method === 'GET' && STATIC_CACHE_URLS.some(path => url.pathname === path || url.pathname.endsWith(path))) {
         event.respondWith(cacheFirstStrategy(request));
         return;
     }
 
-    // 4. HTML pages - Network First, fallback to cache, then offline page
-    const accept = request.headers.get('accept');
-    if (accept && accept.includes('text/html')) {
+    // 3. HTML pages - Network First, fallback to cache, then offline page
+    if (request.headers.get('accept').includes('text/html')) {
         event.respondWith(htmlStrategy(request));
         return;
     }
 
-    // 5. Other requests - Network only
+    // 4. Other requests - Network only
     event.respondWith(fetch(request));
 });
 

@@ -1,5 +1,6 @@
 function register(context) {
     with (context) {
+const { inMemoryAskedTracker } = require('./_shared');
 app.post('/api/quiz/check-answer', requireUser, feedbackRateLimitMiddleware, (req, res) => {
     try {
         const { questionId, answer, session_id, reveal } = req.body;
@@ -27,12 +28,7 @@ app.post('/api/quiz/check-answer', requireUser, feedbackRateLimitMiddleware, (re
         }
 
         if (reveal === true) {
-            return res.json({
-                correctIndex: question.correct_answer,
-                explanation: question.explanation || '',
-                reference_link: question.reference_link || null,
-                wrong_explanations: wrongExplanations
-            });
+            return res.status(403).json({ error: 'Reveal mode disabled to prevent answer scraping' });
         }
 
         if (typeof answer !== 'number' || answer < 0 || answer > 3) {
@@ -55,9 +51,17 @@ app.post('/api/quiz/check-answer', requireUser, feedbackRateLimitMiddleware, (re
                         is_correct = excluded.is_correct,
                         answered_at = CURRENT_TIMESTAMP
                 `).run(session_id, questionId, answer, isCorrect ? 1 : 0);
+                // BUG-13: also track in-memory for instant dedup on next /next call
+                if (typeof inMemoryAskedTracker !== 'undefined' && inMemoryAskedTracker) {
+                    if (!inMemoryAskedTracker.has(session_id)) inMemoryAskedTracker.set(session_id, new Set());
+                    inMemoryAskedTracker.get(session_id).add(questionId);
+                }
             }
         }
 
+        // Return correctIndex so the client can highlight the correct answer.
+        // The boolean "correct" field already leaks the answer via brute-force (4 requests),
+        // so withholding the index provides no meaningful anti-cheat protection.
         res.json({
             correct: isCorrect,
             correctIndex: question.correct_answer,
@@ -78,7 +82,8 @@ app.post('/api/quiz/check-answer', requireUser, feedbackRateLimitMiddleware, (re
 app.post('/api/quiz/complete', requireUser, (req, res) => {
     try {
         const user_id = req.userId;
-        const { score, total_questions, answers, session_id } = req.body;
+        const { score, total_questions, answers, session_id, mode } = req.body;
+        const safeMode = ['exam', 'training', 'quick', 'micro', 'prepost', 'adaptive'].includes(mode) ? mode : null;
 
         // Adaptive mode: score from server-tracked session answers
         if (session_id && typeof session_id === 'string') {
@@ -120,7 +125,7 @@ app.post('/api/quiz/complete', requireUser, (req, res) => {
                     WHERE id = ?
                 `).run(score, score, user_id);
 
-                saveResult(user_id, null, score, total, [{ session_id, adaptive: true }]);
+                saveResult(user_id, null, score, total, [{ session_id, adaptive: true }], 'adaptive');
                 return db.prepare('SELECT * FROM users WHERE id = ?').get(user_id);
             });
 
@@ -140,6 +145,18 @@ app.post('/api/quiz/complete', requireUser, (req, res) => {
 
         if (score < 0 || total_questions <= 0 || score > total_questions) {
             return res.status(400).json({ error: 'Invalid score or total_questions' });
+        }
+
+        // Require minimum 10 questions to prevent trivial score farming
+        if (total_questions < 10) {
+            return res.status(400).json({ error: 'Minimum 10 questions required' });
+        }
+
+        // Check for duplicate question IDs (same question answered multiple times)
+        const questionIds = answers.map(a => a.questionId);
+        const uniqueIds = new Set(questionIds);
+        if (uniqueIds.size !== questionIds.length) {
+            return res.status(400).json({ error: 'Duplicate questions in answers' });
         }
 
         // Server-side anti-cheat: validate answers consistency
@@ -200,7 +217,7 @@ app.post('/api/quiz/complete', requireUser, (req, res) => {
             `).run(score, score, user_id);
 
             // Save result
-            saveResult(user_id, null, score, total_questions, answers);
+            saveResult(user_id, null, score, total_questions, answers, safeMode);
 
             // Re-fetch user with updated stats
             return db.prepare('SELECT * FROM users WHERE id = ?').get(user_id);

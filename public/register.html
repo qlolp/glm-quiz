@@ -149,17 +149,17 @@
             <form id="register-form">
                 <div class="form-group">
                     <label class="form-label">Электронная почта</label>
-                    <input type="email" class="form-input" id="email" placeholder="ivan@example.com">
+                    <input type="email" class="form-input" id="email" placeholder="ivan@example.com" maxlength="254" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Фамилия Имя Отчество</label>
-                    <input type="text" class="form-input" id="fio" placeholder="Иванов Иван Иванович">
+                    <input type="text" class="form-input" id="fio" placeholder="Иванов Иван Иванович" maxlength="200" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Учреждение (опционально)</label>
-                    <input type="text" class="form-input" id="organization" placeholder="ПНИ-9 Санкт-Петербург">
+                    <input type="text" class="form-input" id="organization" placeholder="ПНИ-9 Санкт-Петербург" maxlength="300">
                 </div>
 
                 <button type="submit" class="btn btn-primary">Получить код</button>
@@ -182,7 +182,7 @@
             <form id="code-form">
                 <div class="form-group">
                     <label class="form-label" for="verify-code">Введите код подтверждения</label>
-                    <input type="text" class="form-input" id="verify-code" placeholder="6 цифр или код организатора" autocomplete="one-time-code" inputmode="text">
+                    <input type="text" class="form-input" id="verify-code" placeholder="6 цифр или код организатора" autocomplete="one-time-code" inputmode="text" maxlength="32">
                 </div>
 
                 <div class="timer" id="timer">Код действителен: 5:00</div>

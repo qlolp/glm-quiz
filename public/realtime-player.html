@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kahoot-режим — Игрок</title>
+    <title>Kahoot-режим — Викторина</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -309,6 +309,15 @@
 
         // Auto-reconnect on page reload if game data is saved
         document.addEventListener('DOMContentLoaded', () => {
+            // BUG-11 fix: prefill the game code from ?game= URL parameter
+            // (host page now shares a direct join link)
+            const urlGame = new URLSearchParams(window.location.search).get('game');
+            if (urlGame) {
+                document.getElementById('game-code').value = urlGame.trim().toUpperCase();
+                document.getElementById('player-name').focus();
+                return;
+            }
+
             const savedGameId = localStorage.getItem('glm_game_id');
             const savedName = localStorage.getItem('glm_player_name');
             if (savedGameId && savedName) {
