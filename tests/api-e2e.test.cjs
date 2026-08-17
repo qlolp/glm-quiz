@@ -157,6 +157,10 @@ async function runTests() {
 
     const registerDup = await request('/api/auth/register', 'POST', { email, fio: 'Test User' });
     assert(registerDup.status === 200 && registerDup.body.exists === true, 'Duplicate register returns existing');
+    assert(!registerDup.body.user, 'Duplicate register does not leak user record');
+
+    const hijack = await request('/api/users', 'POST', { username: email, display_name: 'Hijack' });
+    assert(hijack.status === 409 && hijack.body.requires_verification === true, 'Registered username cannot be guest-tokened');
 
     const guest = await request('/api/users', 'POST', { username: `guest_${Date.now()}`, display_name: 'Guest' });
     assert(guest.status === 200 && guest.body.user && guest.body.token, 'Guest user receives token');

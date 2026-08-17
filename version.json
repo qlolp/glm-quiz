@@ -26,6 +26,7 @@
         "Sync live production (147.45.174.206) into git: Aug 10–15 seminar bugfixes, V2 sunset to /",
         "Restore questions.json from the live SQLite bank (no null options; public option order matches DB)",
         "Lock GET /api/questions/user behind admin auth — it was leaking correct_answer without a token",
+        "Do not return the user record on duplicate register; refuse guest tokens for email-registered usernames",
         "Bump service-worker cache so clients drop the stale public question file"
       ]
     },

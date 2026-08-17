@@ -18,9 +18,11 @@ app.post('/api/auth/register', (req, res) => {
         const existing = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(email, email);
 
         if (existing) {
-            // Still generate a code so existing users can re-verify if needed
+            // Still generate a code so existing users can re-verify if needed.
+            // Do NOT return the user record: this endpoint is public and the
+            // response would disclose account data for any known email.
             storeVerificationCode(email);
-            return res.json({ success: true, exists: true, user: existing });
+            return res.json({ success: true, exists: true });
         }
 
         // Create new user — wrap in try/catch to handle race-condition UNIQUE violation
@@ -35,7 +37,7 @@ app.post('/api/auth/register', (req, res) => {
             const raced = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(email, email);
             if (raced) {
                 storeVerificationCode(email);
-                return res.json({ success: true, exists: true, user: raced });
+                return res.json({ success: true, exists: true });
             }
             throw insertErr;
         }
