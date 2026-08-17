@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кабинет спикера — GLM Quiz</title>
+    <link rel="stylesheet" href="/css/modern-theme.css">
+    <style>
+        body { min-height: 100vh; padding: 24px 16px 48px; }
+        .host-wrap { max-width: 880px; margin: 0 auto; }
+        h1 { font-size: 30px; margin: 0 0 8px; }
+        .lead { color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+        .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .card {
+            background: var(--paper-strong); border: 1px solid var(--border);
+            border-radius: 18px; padding: 18px; box-shadow: var(--shadow-soft);
+        }
+        .card h2 { font-size: 18px; margin: 0 0 6px; }
+        .card p { color: var(--muted); font-size: 14px; margin: 0 0 12px; line-height: 1.4; }
+        .card a.btn {
+            display: inline-block; padding: 10px 14px; border-radius: 10px;
+            background: var(--accent-blue); color: #fff; text-decoration: none; font-weight: 600; font-size: 14px;
+        }
+        .copy-row {
+            display: flex; gap: 8px; align-items: center; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid var(--border);
+        }
+        .copy-row:last-child { border-bottom: 0; }
+        code { font-size: 13px; word-break: break-all; }
+        .copy-btn {
+            flex: 0 0 auto; border: 1px solid var(--border); background: #fff;
+            border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 13px;
+        }
+        .back { display: inline-block; margin-bottom: 16px; color: var(--accent-blue); text-decoration: none; }
+        .section { margin: 28px 0; }
+    </style>
+</head>
+<body>
+    <main class="host-wrap">
+        <a class="back" href="/">← К викторине</a>
+        <h1>Кабинет спикера</h1>
+        <p class="lead">Инструменты ведущего. Участникам отдавайте <strong>/join</strong> и ссылки игрока — не эти страницы.</p>
+
+        <section class="section">
+            <h2 style="margin-bottom:12px;">Ссылки участникам</h2>
+            <div class="card" id="copy-list"></div>
+        </section>
+
+        <section class="section">
+            <h2 style="margin-bottom:12px;">Хост-инструменты</h2>
+            <div class="grid">
+                <article class="card">
+                    <h2>Kahoot</h2>
+                    <p>Живая викторина с PIN. Можно стартовать пакет семинара.</p>
+                    <a class="btn" href="/realtime-host.html">Открыть хост</a>
+                </article>
+                <article class="card">
+                    <h2>Пульс зала</h2>
+                    <p>Анонимный MC или шкала. Пакеты «Питание» и «ИИ» на хосте.</p>
+                    <a class="btn" href="/pulse-host.html">Открыть хост</a>
+                </article>
+                <article class="card">
+                    <h2>Live Q&amp;A</h2>
+                    <p>Вопросы с премодерацией и голосованием зала.</p>
+                    <a class="btn" href="/qa-host.html">Открыть хост</a>
+                </article>
+                <article class="card">
+                    <h2>Дайджест дня</h2>
+                    <p>Сводка квизов, слабых тем и Q&amp;A. Нужен вход администратора.</p>
+                    <a class="btn" href="/seminar-digest.html">Открыть</a>
+                </article>
+                <article class="card">
+                    <h2>Heatmap сцены</h2>
+                    <p>Категории и слабые места для обсуждения на проекторе.</p>
+                    <a class="btn" href="/stage-heatmap.html">Открыть</a>
+                </article>
+                <article class="card">
+                    <h2>Админка</h2>
+                    <p>Вопросы, аналитика, пакетная регистрация.</p>
+                    <a class="btn" href="/admin.html">Открыть</a>
+                </article>
+                <article class="card">
+                    <h2>QR-слайд</h2>
+                    <p>На проектор или в чат зала.</p>
+                    <a class="btn" href="/qr.html">Открыть</a>
+                </article>
+                <article class="card">
+                    <h2>Статус</h2>
+                    <p>Диагностика на площадке, версия, сброс кэша.</p>
+                    <a class="btn" href="/status.html">Открыть</a>
+                </article>
+                <article class="card">
+                    <h2>Гайд спикера</h2>
+                    <p>Чеклист семинара. Тот же пароль, что у админки.</p>
+                    <a class="btn" href="/guide/speaker">Открыть</a>
+                </article>
+            </div>
+        </section>
+    </main>
+    <script>
+        const origin = location.origin;
+        const links = [
+            ['Вход в зал', origin + '/join'],
+            ['Kahoot — игрок', origin + '/realtime-player.html'],
+            ['Пульс — игрок', origin + '/pulse-player.html'],
+            ['Q&A — участник', origin + '/qa-player.html']
+        ];
+        const list = document.getElementById('copy-list');
+        links.forEach(([label, url]) => {
+            const row = document.createElement('div');
+            row.className = 'copy-row';
+            const info = document.createElement('div');
+            const name = document.createElement('div');
+            name.style.fontSize = '13px';
+            name.style.color = 'var(--muted)';
+            name.textContent = label;
+            const code = document.createElement('code');
+            code.textContent = url;
+            info.append(name, code);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'copy-btn';
+            btn.textContent = 'Копировать';
+            btn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(url);
+                } catch (e) {
+                    const ta = document.createElement('textarea');
+                    ta.value = url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                }
+                btn.textContent = 'Скопировано';
+                setTimeout(() => { btn.textContent = 'Копировать'; }, 1500);
+            });
+            row.append(info, btn);
+            list.append(row);
+        });
+    </script>
+</body>
+</html>

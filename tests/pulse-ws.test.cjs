@@ -163,6 +163,16 @@ async function run() {
     assert(scaleResults.total_answers === 1, 'Scale overwrite retains one vote');
     assert(scaleResults.mean === 5 && scaleResults.distribution.length === 5, 'Scale returns mean and five-bin histogram');
 
+    hostB.send({
+        type: 'pulse_ask',
+        pulse_id: pulseId,
+        kind: 'mc',
+        text: 'Что мешает достойному приёму пищи?',
+        options: ['Время персонала', 'Меню', 'Лечебные столы', 'Разбор остатков']
+    });
+    const inlineQ = await player1b.waitFor('pulse_question', m => m.question?.text === 'Что мешает достойному приёму пищи?');
+    assert(Array.isArray(inlineQ.question.options) && inlineQ.question.options.length === 4, 'Inline seminar MC question accepted');
+
     // Bad token must be rejected
     const impostor = new Client('impostor');
     await impostor.ready;

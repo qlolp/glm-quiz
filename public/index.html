@@ -388,6 +388,11 @@
             color: var(--bg-primary);
             border-color: var(--text-primary);
         }
+        #more-modes-btn {
+            margin: 0 auto 8px;
+            display: block;
+            background: transparent;
+        }
 
         /* Action grid */
         .action-grid {
@@ -2345,9 +2350,12 @@
                         </div>
 
                         <div class="mode-pills" id="mode-pills">
-                            <button class="mode-pill selected" data-mode="training" data-action="selectMode" data-arg="training">📚 Тренировка</button>
-                            <button class="mode-pill" data-mode="quick" data-action="selectMode" data-arg="quick">⚡ Быстрый тест</button>
+                            <button class="mode-pill selected" data-mode="quick" data-action="selectMode" data-arg="quick">⚡ Быстрый тест · 15</button>
+                            <button class="mode-pill" data-mode="training" data-action="selectMode" data-arg="training">📚 Тренировка · 10</button>
                             <button class="mode-pill" data-mode="micro" data-action="selectMode" data-arg="micro">🎯 Микро-квиз</button>
+                        </div>
+                        <button type="button" class="mode-pill" id="more-modes-btn" data-action="toggleMoreModes" aria-expanded="false" aria-controls="more-modes">Ещё режимы</button>
+                        <div class="mode-pills" id="more-modes" hidden>
                             <button class="mode-pill" data-mode="exam" data-action="selectMode" data-arg="exam">📝 Аттестация</button>
                             <button class="mode-pill" data-mode="adaptive" data-action="selectMode" data-arg="adaptive">🎯 Адаптивный</button>
                             <button class="mode-pill" data-mode="prepost" data-action="selectMode" data-arg="prepost">📊 Pre/Post</button>
@@ -2382,12 +2390,15 @@
                         </div>
 
                         <p style="font-size: 13px; color: var(--text-tertiary); margin-top: 12px;">
-                            Живой зал: <a href="/realtime-host.html">Kahoot</a> ·
-                            <a href="/pulse">Пульс зала</a> ·
-                            <a href="/qa-host.html">Live Q&amp;A</a> ·
-                            <a href="/seminar-digest.html">Дайджест</a> ·
-                            <a href="/status">Статус</a> ·
-                            <a href="/offline.html">Офлайн</a>
+                            Живой зал: <a href="/join">Войти по коду</a> ·
+                            <a href="/realtime-player.html">Kahoot</a> ·
+                            <a href="/pulse-player.html">Пульс зала</a> ·
+                            <a href="/qa-player.html">Вопрос спикеру</a>
+                        </p>
+                        <p style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                            Организаторам: <a href="/host">кабинет спикера</a> ·
+                            <a href="/status">статус</a> ·
+                            <a href="/offline.html">офлайн</a>
                         </p>
 
                         <div class="role-selection" style="margin-bottom: 20px;">
@@ -2424,7 +2435,7 @@
                 </div>
 
                 <div class="welcome-footer" id="welcome-version-footer">
-                    Режим по умолчанию: Тренировка
+                    Режим по умолчанию: быстрый тест (15 вопросов)
                 </div>
             </div>
         </div>
@@ -3050,7 +3061,7 @@ name,email,role,department
         let score = 0;
         let userAnswers = [];
         let selectedCorrectAnswer = null;
-        let quizMode = 'training';
+        let quizMode = 'quick';
         let selectedRole = 'all';
         let timerInterval = null;
         let timerSeconds = 0;
@@ -3100,6 +3111,7 @@ name,email,role,department
         // Fixed 7-question set for pre/post mode (must match server PREPOST_QUESTION_IDS)
         const PREPOST_QUESTION_IDS = [1, 5, 12, 15, 24, 36, 48];
         const MICRO_QUIZ_SIZE = 7;
+        const TRAINING_QUIZ_SIZE = 10;
         let categoryCounts = null;
         let categoryCountsPromise = null;
         let prepostPhase = localStorage.getItem('glm_prepost_phase') || 'pre';
@@ -3871,6 +3883,8 @@ name,email,role,department
 
                     if (quizMode === 'quick') {
                         questions = shuffleArray([...questions]).slice(0, 15);
+                    } else if (quizMode === 'training') {
+                        questions = shuffleArray([...questions]).slice(0, TRAINING_QUIZ_SIZE);
                     } else if (quizMode === 'micro') {
                         const cat = document.getElementById('micro-category')?.value || microCategory;
                         microCategory = cat;
@@ -3908,6 +3922,8 @@ name,email,role,department
 
                     if (quizMode === 'quick') {
                         questions = shuffleArray([...allQuestions]).slice(0, 15);
+                    } else if (quizMode === 'training') {
+                        questions = shuffleArray([...allQuestions]).slice(0, TRAINING_QUIZ_SIZE);
                     } else if (quizMode === 'micro') {
                         const cat = document.getElementById('micro-category')?.value || microCategory;
                         microCategory = cat;
@@ -4351,8 +4367,22 @@ name,email,role,department
 
         // ========== MODE SELECTION ==========
 
+        function toggleMoreModes() {
+            const extra = document.getElementById('more-modes');
+            const btn = document.getElementById('more-modes-btn');
+            if (!extra || !btn) return;
+            const open = extra.hasAttribute('hidden');
+            extra.toggleAttribute('hidden', !open);
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            btn.textContent = open ? 'Скрыть режимы' : 'Ещё режимы';
+        }
+
         function selectMode(mode) {
             quizMode = mode;
+            if (mode === 'exam' || mode === 'adaptive' || mode === 'prepost') {
+                const extra = document.getElementById('more-modes');
+                if (extra && extra.hasAttribute('hidden')) toggleMoreModes();
+            }
             document.querySelectorAll('.mode-pill').forEach(pill => {
                 pill.classList.toggle('selected', pill.dataset.mode === mode);
             });
@@ -7117,7 +7147,7 @@ name,email,role,department
             <span class="nav-icon">🔍</span>
             <span class="nav-label">Кейсы</span>
         </a>
-        <a href="/pulse" class="nav-item">
+        <a href="/join" class="nav-item">
             <span class="nav-icon">📡</span>
             <span class="nav-label">Пульс</span>
         </a>

@@ -27,10 +27,15 @@ function pulseAnsweredCount(session) {
     return count;
 }
 
+function pulseMcMax(question) {
+    const count = Array.isArray(question?.options) ? question.options.length : 4;
+    return Math.max(1, count) - 1;
+}
+
 function pulseDistribution(session) {
     const isScale = session.question?.kind === 'scale';
     const min = isScale ? session.question.scale_min : 0;
-    const max = isScale ? session.question.scale_max : 3;
+    const max = isScale ? session.question.scale_max : pulseMcMax(session.question);
     const counts = Array.from({ length: max - min + 1 }, () => 0);
     let answered = 0;
     let sum = 0;
@@ -202,7 +207,24 @@ function pulseAsk(ws, data) {
             label_min: escapeHtml(String(data.label_min || '').trim().slice(0, 40)),
             label_max: escapeHtml(String(data.label_max || '').trim().slice(0, 40))
         };
+    } else if (typeof data.text === 'string' && Array.isArray(data.options)) {
+        const text = String(data.text || '').trim().slice(0, 200);
+        const options = data.options
+            .map((opt) => escapeHtml(String(opt || '').trim().slice(0, 160)))
+            .filter(Boolean)
+            .slice(0, 4);
+        if (!text || options.length < 2) {
+            pulseSend(ws, { type: 'error', message: 'Invalid pulse question' });
+            return;
+        }
+        session.question = {
+            id: String(data.item_id || `inline_${Date.now()}`).slice(0, 40),
+            kind: 'mc',
+            text: escapeHtml(text),
+            options
+        };
     } else {
+        const { seminarCategoryFilter } = require('../seminar-packs');
         const questionId = typeof data.question_id === 'number' ? data.question_id : null;
     let question;
     if (questionId) {
@@ -211,10 +233,13 @@ function pulseAsk(ws, data) {
             FROM default_questions WHERE id = ?
         `).get(questionId);
     } else {
+        const core = seminarCategoryFilter();
         question = db.prepare(`
             SELECT id, question_text as text, option_a, option_b, option_c, option_d
-            FROM default_questions ORDER BY RANDOM() LIMIT 1
-        `).get();
+            FROM default_questions
+            WHERE ${core.sql}
+            ORDER BY RANDOM() LIMIT 1
+        `).get(...core.params);
     }
     if (!question) {
         ws.send(JSON.stringify({ type: 'error', message: 'Question not found' }));
@@ -244,7 +269,7 @@ function pulseAnswer(ws, data) {
     const isScale = session.question?.kind === 'scale';
     if (player.answered && !isScale) return;
     const min = isScale ? session.question.scale_min : 0;
-    const max = isScale ? session.question.scale_max : 3;
+    const max = isScale ? session.question.scale_max : pulseMcMax(session.question);
     if (!Number.isInteger(answer) || answer < min || answer > max) return;
     player.answered = true;
     player.answer = answer;

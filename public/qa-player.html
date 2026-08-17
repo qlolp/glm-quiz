@@ -52,7 +52,10 @@ function connect(){
 $('join-btn').onclick=()=>{const value=$('code').value.trim().toUpperCase();if(value!==qaId){playerToken=null;sessionStorage.removeItem('qa_player_token')}qaId=value;join()};
 $('text').oninput=event=>$('counter').textContent=event.target.value.length;
 $('submit').onclick=()=>{const text=$('text').value.trim();if(text)send({type:'qa_submit',qa_id:qaId,text})};
-if(qaId)$('code').value=qaId;connect();
+if(qaId)$('code').value=qaId;
+const urlCode=new URLSearchParams(location.search).get('code')||new URLSearchParams(location.search).get('game');
+if(urlCode)$('code').value=urlCode.trim().toUpperCase();
+connect();
 </script>
 </body>
 </html>

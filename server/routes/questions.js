@@ -8,13 +8,15 @@ function register(context) {
  */
 app.get('/api/questions', (req, res) => {
     try {
-        const cacheKey = 'questions_public_v3';
+        const { seminarCategoryFilter } = require('../seminar-packs');
+        const cacheKey = 'questions_public_v4';
 
         const cached = getCache(cacheKey);
         if (cached) {
             return res.json(cached);
         }
 
+        const core = seminarCategoryFilter('dq.category');
         const rows = db.prepare(`
             SELECT
                 dq.id,
@@ -27,8 +29,9 @@ app.get('/api/questions', (req, res) => {
                 dq.difficulty,
                 dq.hint
             FROM default_questions dq
+            WHERE ${core.sql}
             ORDER BY dq.id
-        `).all();
+        `).all(...core.params);
 
         const questions = rows.map(formatPublicQuestionRow);
         const response = { questions };

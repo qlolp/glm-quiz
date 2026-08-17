@@ -192,26 +192,56 @@ function startGame(ws, data) {
         return;
     }
 
-    // Load questions (BUG-11 fix: honour requested question_count, clamped 1-84)
-    const requestedCount = Number(data.question_count);
-    const questionCount = Number.isInteger(requestedCount) && requestedCount > 0
-        ? Math.min(requestedCount, 84)
-        : 10;
-    const questions = db.prepare(`
-        SELECT id, question_text as question, option_a, option_b, option_c, option_d,
-               correct_answer, category
-        FROM default_questions
-        ORDER BY RANDOM()
-        LIMIT ?
-    `).all(questionCount);
+    const { getPack, kahootRowsFromPack, seminarCategoryFilter } = require('../seminar-packs');
+    let questions = [];
+    const pack = getPack(data.pack_id);
+    const requestedIds = Array.isArray(data.question_ids)
+        ? data.question_ids.filter((id) => Number.isInteger(id)).slice(0, 20)
+        : [];
+
+    if (pack && pack.kahoot && pack.kahoot.length) {
+        questions = kahootRowsFromPack(pack);
+    } else if (requestedIds.length) {
+        const placeholders = requestedIds.map(() => '?').join(',');
+        const rows = db.prepare(`
+            SELECT id, question_text as question, option_a, option_b, option_c, option_d,
+                   correct_answer, category
+            FROM default_questions
+            WHERE id IN (${placeholders})
+        `).all(...requestedIds);
+        const byId = new Map(rows.map((row) => [row.id, row]));
+        questions = requestedIds.map((id) => byId.get(id)).filter(Boolean);
+    } else {
+        // Load questions (BUG-11 fix: honour requested question_count, clamped 1-84)
+        const requestedCount = Number(data.question_count);
+        const questionCount = Number.isInteger(requestedCount) && requestedCount > 0
+            ? Math.min(requestedCount, 84)
+            : 10;
+        const core = seminarCategoryFilter();
+        questions = db.prepare(`
+            SELECT id, question_text as question, option_a, option_b, option_c, option_d,
+                   correct_answer, category
+            FROM default_questions
+            WHERE ${core.sql}
+            ORDER BY RANDOM()
+            LIMIT ?
+        `).all(...core.params, questionCount);
+    }
+
+    if (!questions.length) {
+        ws.send(JSON.stringify({ type: 'error', message: 'No questions for this game' }));
+        return;
+    }
 
     session.questions = questions;
     session.currentQuestion = 0;
     session.state = 'active';
+    session.pack_id = pack ? pack.id : null;
 
     broadcastToSession(game_id, {
         type: 'game_starting',
-        question_count: questions.length
+        question_count: questions.length,
+        pack_id: session.pack_id
     });
 
     // Send first question after delay

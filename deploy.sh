@@ -20,7 +20,7 @@ rm -rf "$STAGING/server/node_modules"
 # Preserve the VPS database and never package local/test SQLite files.
 rm -f "$STAGING/server/"*.db "$STAGING/server/"*.db-* "$STAGING/server/"*.sqlite "$STAGING/server/"*.sqlite-*
 cp "$LOCAL_DIR/server/server.js" "$STAGING/server/server.js"
-cp "$LOCAL_DIR/questions.json" "$LOCAL_DIR/roles.json" "$LOCAL_DIR/version.json" "$STAGING/"
+cp "$LOCAL_DIR/questions.json" "$LOCAL_DIR/roles.json" "$LOCAL_DIR/version.json" "$LOCAL_DIR/seminar-packs.json" "$STAGING/"
 cp "$LOCAL_DIR"/{USER_GUIDE,SPEAKER_GUIDE,README,CONTINUE,ROADMAP,SEMINAR,CHECKPOINT,SESSION_REPORT}.md "$STAGING/" 2>/dev/null || true
 cp "$LOCAL_DIR/deploy.sh" "$STAGING/"
 

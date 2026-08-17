@@ -512,6 +512,66 @@ function loadDefaultQuestions() {
         insertMany(questions);
         console.log(`Loaded ${questions.length} default questions with categories and explanations`);
     }
+
+    loadSeminarPackQuestions();
+}
+
+function loadSeminarPackQuestions() {
+    let kahootQuestions = [];
+    try {
+        kahootQuestions = require('../seminar-packs').allKahootQuestions();
+    } catch (error) {
+        console.error('Failed to load seminar packs:', error.message);
+        return;
+    }
+    if (!kahootQuestions.length) return;
+
+    const insertQuestion = db.prepare(`
+        INSERT OR IGNORE INTO default_questions (id, question_text, option_a, option_b, option_c, option_d, correct_answer, category, explanation, reference_link, difficulty, hint, wrong_explanations)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const updateQuestion = db.prepare(`
+        UPDATE default_questions
+        SET question_text = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?,
+            correct_answer = ?, category = ?, explanation = ?, difficulty = ?
+        WHERE id = ?
+    `);
+
+    const insertMany = db.transaction((items) => {
+        for (const q of items) {
+            const options = q.options || [];
+            insertQuestion.run(
+                q.id,
+                q.question,
+                options[0],
+                options[1],
+                options[2],
+                options[3],
+                q.correct,
+                q.category || 'general',
+                q.explanation || null,
+                q.reference || null,
+                q.difficulty || 'medium',
+                q.hint || null,
+                null
+            );
+            updateQuestion.run(
+                q.question,
+                options[0],
+                options[1],
+                options[2],
+                options[3],
+                q.correct,
+                q.category || 'general',
+                q.explanation || null,
+                q.difficulty || 'medium',
+                q.id
+            );
+        }
+    });
+
+    insertMany(kahootQuestions);
+    console.log(`Loaded ${kahootQuestions.length} seminar-pack Kahoot questions`);
 }
 
 // Initialize sample case studies

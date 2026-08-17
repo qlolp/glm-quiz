@@ -311,7 +311,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             // BUG-11 fix: prefill the game code from ?game= URL parameter
             // (host page now shares a direct join link)
-            const urlGame = new URLSearchParams(window.location.search).get('game');
+            const params = new URLSearchParams(window.location.search);
+            const urlGame = params.get('game') || params.get('code');
             if (urlGame) {
                 document.getElementById('game-code').value = urlGame.trim().toUpperCase();
                 document.getElementById('player-name').focus();

@@ -35,9 +35,13 @@ function request(path, method = 'GET', body = null, token = null) {
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
                 try {
-                    resolve({ status: res.statusCode, body: data ? JSON.parse(data) : null });
+                    resolve({
+                        status: res.statusCode,
+                        headers: res.headers,
+                        body: data ? JSON.parse(data) : null
+                    });
                 } catch (e) {
-                    resolve({ status: res.statusCode, body: data });
+                    resolve({ status: res.statusCode, headers: res.headers, body: data });
                 }
             });
         });
@@ -136,6 +140,7 @@ async function runTests() {
     assert(swSource.status === 200 && swText.includes("'/pulse-host.html'"), 'SW caches pulse-host.html');
     assert(swText.includes("'/pulse-player.html'") && swText.includes("'/realtime-player.html'") && swText.includes("'/stage-heatmap.html'"), 'SW caches realtime-player, pulse-player, stage-heatmap');
     assert(swText.includes("'/qa-host.html'") && swText.includes("'/qa-player.html'") && swText.includes("'/seminar-digest.html'"), 'SW caches Q&A and seminar digest pages');
+    assert(swText.includes("'/join'") && swText.includes("'/host'"), 'SW caches /join and /host');
     // Derived from version.json so a release bump cannot leave the SW cache stale.
     const expectedVersion = require('../version.json').version;
     assert(swText.includes(`CACHE_VERSION = '${expectedVersion}'`), `SW cache version is ${expectedVersion}`);
@@ -378,6 +383,29 @@ async function runTests() {
     assert(pulseHost.status === 200 && String(pulseHost.body).includes('Пульс'), 'Pulse host page');
     const pulsePlayer = await request('/pulse-player.html');
     assert(pulsePlayer.status === 200 && String(pulsePlayer.body).includes('Пульс'), 'Pulse player page');
+    const joinPage = await request('/join');
+    assert(joinPage.status === 200 && String(joinPage.body).includes('Войти в зал'), 'Join page is player entry');
+    assert(typeof joinPage.body === 'string' && !joinPage.body.includes('pulse-host.html') && !joinPage.body.includes('realtime-host.html'), 'Join page has no host URLs');
+    const homePage = await request('/');
+    assert(homePage.status === 200 && String(homePage.body).includes('href="/join"'), 'Homepage links /join');
+    assert(String(homePage.body).includes('data-mode="quick"') && String(homePage.body).includes('Ещё режимы'), 'Homepage defaults to short start with extra modes collapsed');
+    assert(String(homePage.body).includes('pulse-player.html') && !String(homePage.body).includes('href="/realtime-host.html"'), 'Homepage live-hall links are player URLs');
+    const hostPage = await request('/host');
+    assert(hostPage.status === 200 && String(hostPage.body).includes('Кабинет спикера'), 'Host page is speaker hub');
+    assert(typeof hostPage.body === 'string' && hostPage.body.includes('/join') && hostPage.body.includes('pulse-host.html'), 'Host page links join and host tools');
+    const speakerRedirect = await request('/speaker');
+    assert(speakerRedirect.status === 302 && String(speakerRedirect.headers.location || '').includes('/host'), ' /speaker redirects to /host');
+    const pulseRedirect = await request('/pulse');
+    assert(pulseRedirect.status === 302 && String(pulseRedirect.headers.location || '').includes('pulse-player.html'), '/pulse redirects to player');
+    const packs = await request('/api/seminar-packs');
+    assert(packs.status === 200 && Array.isArray(packs.body.packs) && packs.body.packs.length === 2, 'Seminar packs: 2 talks');
+    const nutrition = packs.body.packs.find(p => p.id === 'nutrition');
+    const aiCare = packs.body.packs.find(p => p.id === 'ai_care');
+    assert(nutrition && nutrition.kahoot_count === 10 && nutrition.pulse.length === 7, 'Nutrition pack: 10 Kahoot + 7 pulse');
+    assert(aiCare && aiCare.kahoot_count === 10 && aiCare.pulse.length === 7, 'AI pack: 10 Kahoot + 7 pulse');
+    assert(packs.body.packs.every(p => !JSON.stringify(p).includes('"correct"')), 'Seminar packs API does not leak Kahoot answers');
+    const lookupMissing = await request('/api/join/lookup?code=ZZZZZZ');
+    assert(lookupMissing.status === 200 && lookupMissing.body.found === false, 'Join lookup unknown code');
     const stageHeat = await request('/stage-heatmap.html');
     assert(stageHeat.status === 200 && String(stageHeat.body).includes('Heatmap'), 'Stage heatmap page');
     const qaHost = await request('/qa-host.html');

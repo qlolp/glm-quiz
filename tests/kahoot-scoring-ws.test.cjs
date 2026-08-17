@@ -37,6 +37,11 @@ async function run(){
     const classic=await runMode('classic',['Классик']);
     assert(classic.created.scoring==='classic','Classic mode remains default contract');
     assert(classic.pointResults[0].points>1000,'Classic still awards time bonus');
+    const packHost=new Client('pack-host');await packHost.ready;packHost.send({type:'create_game',host_id:'test-pack'});const packCreated=await packHost.waitFor('game_created');
+    packHost.send({type:'start_game',game_id:packCreated.game_id,pack_id:'nutrition'});
+    const packQ=await packHost.waitFor('new_question');
+    assert(packQ.question&&packQ.question.id===301,'Nutrition pack starts with first curated question');
+    packHost.close();
     console.log(`\n📊 Kahoot scoring results: ${passed} passed, ${failed} failed`);process.exit(failed?1:0);
 }
 run().catch(error=>{console.error('Kahoot scoring test error:',error.message);process.exit(1)});

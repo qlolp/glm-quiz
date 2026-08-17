@@ -11,11 +11,12 @@ const wss = new WebSocket.Server({
     }
 });
 
-// Store active game sessions
-const gameSessions = new Map();
-const playerConnections = new Map();
-const pulseSessions = new Map(); // pulse_id -> pulse session
-const qaSessions = new Map(); // qa_id -> moderated Q&A session
+const {
+    gameSessions,
+    playerConnections,
+    pulseSessions,
+    qaSessions
+} = require('../live-sessions');
 const MAX_GAME_SESSIONS = 100;
 const GAME_SESSION_FINISHED_TTL = 2 * 60 * 1000; // 2 minutes
 const GAME_SESSION_MAX_TTL = 3 * 60 * 60 * 1000; // 3 hours

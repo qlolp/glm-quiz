@@ -1,6 +1,6 @@
 {
-  "version": "2026.08.17.1",
-  "last_updated": "2026-08-17T22:00:00+03:00",
+  "version": "2026.08.17.2",
+  "last_updated": "2026-08-17T22:30:00+03:00",
   "total_questions": 84,
   "categories": [
     "ethics",
@@ -20,17 +20,27 @@
   ],
   "changes": {
     "current": {
-      "version": "2026.08.17.1",
+      "version": "2026.08.17.2",
       "date": "2026-08-17",
       "changes": [
-        "Sync live production (147.45.174.206) into git: Aug 10–15 seminar bugfixes, V2 sunset to /",
-        "Restore questions.json from the live SQLite bank (no null options; public option order matches DB)",
-        "Lock GET /api/questions/user behind admin auth — it was leaking correct_answer without a token",
-        "Do not return the user record on duplicate register; refuse guest tokens for email-registered usernames",
-        "Bump service-worker cache so clients drop the stale public question file"
+        "Split hall vs speaker: /join for players, /host for organizers; /speaker redirects to /host",
+        "Homepage and bottom nav send participants to player URLs, not pulse-host or Kahoot host",
+        "Default first CTA is quick test (15); training is capped at 10; exam/adaptive/prepost sit behind «Ещё режимы»",
+        "Seminar packs for the two talks: nutrition and AI-in-care Kahoot playlists plus Pulse prompts"
       ]
     },
     "history": [
+      {
+        "version": "2026.08.17.1",
+        "date": "2026-08-17",
+        "changes": [
+          "Sync live production (147.45.174.206) into git: Aug 10–15 seminar bugfixes, V2 sunset to /",
+          "Restore questions.json from the live SQLite bank (no null options; public option order matches DB)",
+          "Lock GET /api/questions/user behind admin auth — it was leaking correct_answer without a token",
+          "Do not return the user record on duplicate register; refuse guest tokens for email-registered usernames",
+          "Bump service-worker cache so clients drop the stale public question file"
+        ]
+      },
       {
         "version": "2026.08.12.1",
         "date": "2026-08-12",

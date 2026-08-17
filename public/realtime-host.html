@@ -146,6 +146,10 @@
                     <option value="classic">Классический — скорость + точность</option>
                     <option value="accuracy">Точность — 1000 за верный ответ</option>
                 </select>
+                <label for="pack-select" style="display:block;font-weight:600;margin:12px 0 8px;">Набор вопросов</label>
+                <select id="pack-select" style="width:100%;padding:10px;border-radius:8px;background:var(--bg-secondary);color:#fff;border:1px solid var(--border);">
+                    <option value="">10 случайных из банка</option>
+                </select>
                 <div id="mode-label" style="margin-top:8px;color:var(--text-secondary);font-size:14px;">Режим: классический</div>
                 <button class="btn btn-primary" id="create-room-btn" style="width:100%;margin-top:12px;padding:12px;">Создать комнату</button>
             </div>
@@ -436,7 +440,7 @@
             const box = document.getElementById('join-link-box');
             const link = document.getElementById('join-link');
             if (!box || !link) return;
-            const url = `${window.location.origin}/realtime-player.html?game=${encodeURIComponent(gameId)}`;
+            const url = `${window.location.origin}/join?code=${encodeURIComponent(gameId)}`;
             link.href = url;
             link.textContent = url;
             box.style.display = 'block';
@@ -476,7 +480,8 @@
 
             ws.send(JSON.stringify({
                 type: 'start_game',
-                game_id: gameId
+                game_id: gameId,
+                pack_id: document.getElementById('pack-select')?.value || undefined
             }));
         }
 
@@ -586,6 +591,15 @@
             setScoringMode(event.target.value);
         });
         document.getElementById('create-room-btn').addEventListener('click', createGame);
+        fetch('/api/seminar-packs').then(r => r.json()).then(data => {
+            const sel = document.getElementById('pack-select');
+            (data.packs || []).forEach(pack => {
+                const opt = document.createElement('option');
+                opt.value = pack.id;
+                opt.textContent = `Пакет: ${pack.title} (${pack.kahoot_count} вопросов)`;
+                sel.appendChild(opt);
+            });
+        }).catch(() => {});
         connect();
     </script>
 </body>

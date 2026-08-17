@@ -214,16 +214,19 @@ app.post('/api/quiz/adaptive/start', requireUser, (req, res) => {
         else startingLevel = 'easy';
 
         // Select appropriate questions
+        const { seminarCategoryFilter } = require('../seminar-packs');
+        const core = seminarCategoryFilter();
         let questionQuery = `
             SELECT id, question_text as question, option_a, option_b, option_c, option_d,
                    correct_answer, category, explanation, difficulty
             FROM default_questions
+            WHERE ${core.sql}
         `;
-        const params = [];
+        const params = [...core.params];
 
         if (categories && categories.length > 0) {
             const placeholders = categories.map(() => '?').join(',');
-            questionQuery += ` WHERE category IN (${placeholders})`;
+            questionQuery += ` AND category IN (${placeholders})`;
             params.push(...categories);
         }
 
@@ -325,7 +328,10 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
         `;
 
         const params = [];
-        const conditions = [];
+        const { seminarCategoryFilter } = require('../seminar-packs');
+        const core = seminarCategoryFilter('dq.category');
+        const conditions = [core.sql];
+        params.push(...core.params);
 
         // Exclude already-asked questions (BUG-13 fix)
         if (askedQuestionIds.length > 0) {
@@ -359,15 +365,17 @@ app.post('/api/quiz/adaptive/next', requireUser, (req, res) => {
 
         if (!question) {
             // Fallback to any question if no match
+            const coreFallback = require('../seminar-packs').seminarCategoryFilter();
             let fallbackQuery = `
                 SELECT id, question_text as question, option_a, option_b, option_c, option_d,
                        correct_answer, category, explanation
                 FROM default_questions
+                WHERE ${coreFallback.sql}
             `;
-            const fallbackParams = [];
+            const fallbackParams = [...coreFallback.params];
             if (categories && categories.length > 0) {
                 const placeholders = categories.map(() => '?').join(',');
-                fallbackQuery += ` WHERE category IN (${placeholders})`;
+                fallbackQuery += ` AND category IN (${placeholders})`;
                 fallbackParams.push(...categories);
             }
             fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';

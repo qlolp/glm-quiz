@@ -261,6 +261,60 @@ app.get('/api/version', (req, res) => {
     }
 });
 
+/**
+ * GET /api/seminar-packs
+ * Named Kahoot/Pulse playlists for the two seminar talks (no correct answers).
+ */
+app.get('/api/seminar-packs', (req, res) => {
+    try {
+        const { loadSeminarPacks, publicPackSummary } = require('../seminar-packs');
+        res.json({ packs: loadSeminarPacks().map(publicPackSummary) });
+    } catch (error) {
+        console.error('Seminar packs error:', error);
+        res.status(500).json({ error: 'Failed to load seminar packs' });
+    }
+});
+
+/**
+ * GET /api/join/lookup?code=
+ * Resolve a live PIN/code to the player page (Kahoot / Pulse / Q&A).
+ */
+app.get('/api/join/lookup', (req, res) => {
+    const { gameSessions, pulseSessions, qaSessions } = require('../live-sessions');
+    const code = String(req.query.code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+    if (!code || code.length < 4) {
+        return res.status(400).json({ found: false, error: 'code required' });
+    }
+
+    const matches = [];
+    if (gameSessions.has(code)) {
+        matches.push({
+            type: 'kahoot',
+            path: `/realtime-player.html?game=${encodeURIComponent(code)}`
+        });
+    }
+    if (pulseSessions.has(code)) {
+        matches.push({
+            type: 'pulse',
+            path: `/pulse-player.html?code=${encodeURIComponent(code)}`
+        });
+    }
+    if (qaSessions.has(code)) {
+        matches.push({
+            type: 'qa',
+            path: `/qa-player.html?code=${encodeURIComponent(code)}`
+        });
+    }
+
+    if (matches.length === 1) {
+        return res.json({ found: true, code, ...matches[0] });
+    }
+    if (matches.length > 1) {
+        return res.json({ found: false, code, ambiguous: true, matches });
+    }
+    return res.json({ found: false, code });
+});
+
         Object.assign(context, { csvSafe, parseDigestRange });
     }
 }

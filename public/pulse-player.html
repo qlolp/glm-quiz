@@ -211,6 +211,8 @@
             sendJoin();
         };
 
+        const urlCode = new URLSearchParams(location.search).get('code') || new URLSearchParams(location.search).get('game');
+        if (urlCode) document.getElementById('code').value = urlCode.trim().toUpperCase();
         connect();
     </script>
 </body>

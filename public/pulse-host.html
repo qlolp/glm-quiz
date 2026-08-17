@@ -57,6 +57,12 @@
                 <button class="btn" id="ask-btn">Задать вопрос</button>
                 <button class="btn secondary" id="results-btn">Показать результаты</button>
             </div>
+            <div id="pack-bar" style="margin-top:16px;">
+                <div class="meta">Пакет семинара</div>
+                <button class="btn secondary" type="button" data-pack="nutrition">Пакет: питание</button>
+                <button class="btn secondary" type="button" data-pack="ai_care">Пакет: ИИ</button>
+                <div id="pack-items" style="margin-top:12px;"></div>
+            </div>
             <div id="question-preview" style="margin-top:16px;font-size:18px;line-height:1.4;"></div>
         </div>
 
@@ -101,6 +107,62 @@
                 return `<div class="meta">${letters[i]}. ${label} — ${d.percent}% (${d.count})</div>
                     <div class="bar"><span style="width:${d.percent}%"></span></div>`;
             }).join('');
+        }
+
+        let seminarPacks = [];
+        let activePackId = null;
+
+        async function loadPacks() {
+            try {
+                const res = await fetch('/api/seminar-packs');
+                const data = await res.json();
+                seminarPacks = data.packs || [];
+            } catch (e) {
+                seminarPacks = [];
+            }
+        }
+
+        function renderPack(packId) {
+            activePackId = packId;
+            const pack = seminarPacks.find(p => p.id === packId);
+            const box = document.getElementById('pack-items');
+            if (!pack) {
+                box.textContent = 'Пакет не загрузился';
+                return;
+            }
+            box.replaceChildren();
+            const title = document.createElement('div');
+            title.className = 'meta';
+            title.textContent = pack.title + ' — нажмите пункт, чтобы задать';
+            box.appendChild(title);
+            (pack.pulse || []).forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn secondary';
+                btn.type = 'button';
+                btn.style.display = 'block';
+                btn.style.width = '100%';
+                btn.style.textAlign = 'left';
+                const kindLabel = item.kind === 'scale' ? 'шкала' : 'выбор';
+                btn.textContent = `${index + 1}. [${kindLabel}] ${item.text}`;
+                btn.addEventListener('click', () => askPackItem(item));
+                box.appendChild(btn);
+            });
+        }
+
+        function askPackItem(item) {
+            if (!ws || !pulseId) return;
+            const payload = { type: 'pulse_ask', pulse_id: pulseId, item_id: item.id, kind: item.kind };
+            if (item.kind === 'scale') {
+                payload.text = item.text;
+                payload.scale_min = item.scale_min;
+                payload.scale_max = item.scale_max;
+                payload.label_min = item.label_min;
+                payload.label_max = item.label_max;
+            } else {
+                payload.text = item.text;
+                payload.options = item.options;
+            }
+            ws.send(JSON.stringify(payload));
         }
 
         async function loadQuestions() {
@@ -219,7 +281,11 @@
             document.getElementById('scale-fields').style.display = scale ? 'block' : 'none';
         };
         setCode(pulseId);
+        document.querySelectorAll('#pack-bar [data-pack]').forEach((btn) => {
+            btn.addEventListener('click', () => renderPack(btn.dataset.pack));
+        });
         loadQuestions();
+        loadPacks();
         connect();
     </script>
 </body>
