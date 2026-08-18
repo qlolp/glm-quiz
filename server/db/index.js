@@ -464,26 +464,37 @@ function loadDefaultQuestions() {
     if (fs.existsSync(questionsPath)) {
         const questions = JSON.parse(fs.readFileSync(questionsPath, 'utf8'));
 
-        const insertQuestion = db.prepare(`
-            INSERT OR IGNORE INTO default_questions (id, question_text, option_a, option_b, option_c, option_d, correct_answer, category, explanation, reference_link, difficulty, hint, wrong_explanations)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        const updateExtras = db.prepare(`
-            UPDATE default_questions
-            SET hint = ?, wrong_explanations = ?,
-                explanation = COALESCE(?, explanation),
-                reference_link = COALESCE(?, reference_link),
-                difficulty = COALESCE(?, difficulty)
-            WHERE id = ?
+        // Upsert by id so live wording/options change on deploy without wiping user results.
+        // Root questions.json must keep correct answers (public/questions.json is the stripped fallback).
+        const upsertQuestion = db.prepare(`
+            INSERT INTO default_questions (
+                id, question_text, option_a, option_b, option_c, option_d, correct_answer,
+                category, explanation, reference_link, difficulty, hint, wrong_explanations
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                question_text = excluded.question_text,
+                option_a = excluded.option_a,
+                option_b = excluded.option_b,
+                option_c = excluded.option_c,
+                option_d = excluded.option_d,
+                correct_answer = excluded.correct_answer,
+                category = excluded.category,
+                explanation = excluded.explanation,
+                reference_link = excluded.reference_link,
+                difficulty = excluded.difficulty,
+                hint = excluded.hint,
+                wrong_explanations = excluded.wrong_explanations
         `);
 
         const insertMany = db.transaction((questions) => {
             for (const q of questions) {
+                if (q.correct === undefined || q.correct === null) {
+                    throw new Error(`questions.json id ${q.id} is missing correct — refuse to overwrite live bank`);
+                }
                 const wrongExplanations = Array.isArray(q.wrong_explanations)
                     ? JSON.stringify(q.wrong_explanations)
                     : null;
-                insertQuestion.run(
+                upsertQuestion.run(
                     q.id,
                     q.question,
                     q.options[0],
@@ -497,14 +508,6 @@ function loadDefaultQuestions() {
                     q.difficulty || 'medium',
                     q.hint || null,
                     wrongExplanations
-                );
-                updateExtras.run(
-                    q.hint || null,
-                    wrongExplanations,
-                    q.explanation || null,
-                    q.reference || null,
-                    q.difficulty || 'medium',
-                    q.id
                 );
             }
         });
@@ -526,21 +529,33 @@ function loadSeminarPackQuestions() {
     }
     if (!kahootQuestions.length) return;
 
-    const insertQuestion = db.prepare(`
-        INSERT OR IGNORE INTO default_questions (id, question_text, option_a, option_b, option_c, option_d, correct_answer, category, explanation, reference_link, difficulty, hint, wrong_explanations)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const updateQuestion = db.prepare(`
-        UPDATE default_questions
-        SET question_text = ?, option_a = ?, option_b = ?, option_c = ?, option_d = ?,
-            correct_answer = ?, category = ?, explanation = ?, difficulty = ?
-        WHERE id = ?
+    const upsertQuestion = db.prepare(`
+        INSERT INTO default_questions (
+            id, question_text, option_a, option_b, option_c, option_d, correct_answer,
+            category, explanation, reference_link, difficulty, hint, wrong_explanations
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            question_text = excluded.question_text,
+            option_a = excluded.option_a,
+            option_b = excluded.option_b,
+            option_c = excluded.option_c,
+            option_d = excluded.option_d,
+            correct_answer = excluded.correct_answer,
+            category = excluded.category,
+            explanation = excluded.explanation,
+            reference_link = excluded.reference_link,
+            difficulty = excluded.difficulty,
+            hint = excluded.hint,
+            wrong_explanations = excluded.wrong_explanations
     `);
 
     const insertMany = db.transaction((items) => {
         for (const q of items) {
             const options = q.options || [];
-            insertQuestion.run(
+            const wrongExplanations = Array.isArray(q.wrong_explanations)
+                ? JSON.stringify(q.wrong_explanations)
+                : null;
+            upsertQuestion.run(
                 q.id,
                 q.question,
                 options[0],
@@ -553,19 +568,7 @@ function loadSeminarPackQuestions() {
                 q.reference || null,
                 q.difficulty || 'medium',
                 q.hint || null,
-                null
-            );
-            updateQuestion.run(
-                q.question,
-                options[0],
-                options[1],
-                options[2],
-                options[3],
-                q.correct,
-                q.category || 'general',
-                q.explanation || null,
-                q.difficulty || 'medium',
-                q.id
+                wrongExplanations
             );
         }
     });

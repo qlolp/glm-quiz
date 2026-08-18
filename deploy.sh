@@ -24,13 +24,15 @@ cp "$LOCAL_DIR/questions.json" "$LOCAL_DIR/roles.json" "$LOCAL_DIR/version.json"
 cp "$LOCAL_DIR"/{USER_GUIDE,SPEAKER_GUIDE,README,CONTINUE,ROADMAP,SEMINAR,CHECKPOINT,SESSION_REPORT}.md "$STAGING/" 2>/dev/null || true
 cp "$LOCAL_DIR/deploy.sh" "$STAGING/"
 
-# Strip correct answers from questions.json fallback (anti-cheat); keep hint + wrong_explanations for DB sync
+# Keep root questions.json intact for SQLite upsert (correct answers stay on the server).
+# Strip only the public HTTP fallback so /questions.json cannot leak the key.
 node -e "
 const fs=require('fs');
-const p='$STAGING/questions.json';
+const p='$STAGING/public/questions.json';
+if (!fs.existsSync(p)) process.exit(0);
 const q=JSON.parse(fs.readFileSync(p,'utf8'));
-const stripped=q.map(({correct,explanation,reference_link,reference,...rest})=>rest);
-fs.writeFileSync(p, JSON.stringify(stripped));
+const stripped=q.map(({correct,explanation,reference_link,reference,wrong_explanations,...rest})=>rest);
+fs.writeFileSync(p, JSON.stringify(stripped, null, 2));
 "
 
 echo "📦 Building archive..."

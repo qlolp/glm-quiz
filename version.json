@@ -1,6 +1,6 @@
 {
-  "version": "2026.08.18.1",
-  "last_updated": "2026-08-18T22:00:00+03:00",
+  "version": "2026.08.18.2",
+  "last_updated": "2026-08-18T22:20:00+03:00",
   "total_questions": 84,
   "categories": [
     "ethics",
@@ -20,15 +20,24 @@
   ],
   "changes": {
     "current": {
-      "version": "2026.08.18.1",
+      "version": "2026.08.18.2",
       "date": "2026-08-18",
       "changes": [
-        "Fix guest quiz 401 on check-answer: stale localStorage tokens no longer skip POST /api/users; mint a fresh guest session and retry",
-        "Resume-from-progress now creates a guest token before answers are graded",
-        "check-answer accepts numeric string questionId/answer from older clients"
+        "Rewrite the 84-question bank and seminar packs (nutrition, AI-in-care) with trickier distractors and dry professional humor for directors",
+        "Upsert default_questions by id on startup so live wording actually updates without wiping user results",
+        "Keep server seed questions.json intact on deploy; strip answers only from the public HTTP fallback"
       ]
     },
     "history": [
+      {
+        "version": "2026.08.18.1",
+        "date": "2026-08-18",
+        "changes": [
+          "Fix guest quiz 401 on check-answer: stale localStorage tokens no longer skip POST /api/users; mint a fresh guest session and retry",
+          "Resume-from-progress now creates a guest token before answers are graded",
+          "check-answer accepts numeric string questionId/answer from older clients"
+        ]
+      },
       {
         "version": "2026.08.17.2",
         "date": "2026-08-17",

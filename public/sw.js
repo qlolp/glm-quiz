@@ -3,7 +3,7 @@
  * PWA + Offline-first functionality
  */
 
-const CACHE_VERSION = '2026.08.18.1';
+const CACHE_VERSION = '2026.08.18.2';
 const CACHE_NAME = `quiz-v${CACHE_VERSION}`;
 
 // Static assets to cache immediately
