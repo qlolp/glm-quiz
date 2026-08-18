@@ -3,9 +3,11 @@ function register(context) {
 const { inMemoryAskedTracker } = require('./_shared');
 app.post('/api/quiz/check-answer', requireUser, feedbackRateLimitMiddleware, (req, res) => {
     try {
-        const { questionId, answer, session_id, reveal } = req.body;
+        const { session_id, reveal } = req.body;
+        const questionId = Number(req.body.questionId);
+        const answer = Number(req.body.answer);
 
-        if (typeof questionId !== 'number') {
+        if (!Number.isInteger(questionId) || questionId < 1) {
             return res.status(400).json({ error: 'Invalid questionId' });
         }
 
@@ -31,7 +33,7 @@ app.post('/api/quiz/check-answer', requireUser, feedbackRateLimitMiddleware, (re
             return res.status(403).json({ error: 'Reveal mode disabled to prevent answer scraping' });
         }
 
-        if (typeof answer !== 'number' || answer < 0 || answer > 3) {
+        if (!Number.isInteger(answer) || answer < 0 || answer > 3) {
             return res.status(400).json({ error: 'Invalid answer' });
         }
 

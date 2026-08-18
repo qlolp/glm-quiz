@@ -44,6 +44,54 @@ function clearUserSession() {
     localStorage.removeItem('userToken');
 }
 
+/**
+ * Mint or reuse a guest Bearer token via POST /api/users.
+ * check-answer requires requireUser; a stale localStorage token (rotated secret,
+ * other VPS, expired) must not skip this and then 401 as «нет связи».
+ */
+async function mintGuestSession({ force = false } = {}) {
+    if (!force && getUserToken()) return { ok: true, status: 200 };
+
+    const displayName = (getCurrentUser().displayName && getCurrentUser().displayName !== 'Участник')
+        ? getCurrentUser().displayName
+        : (localStorage.getItem('userDisplayName') || 'Участник');
+
+    if (force) {
+        clearUserSession();
+        if (displayName) localStorage.setItem('userDisplayName', displayName);
+    }
+
+    const username = localStorage.getItem('username') || `user_${Date.now()}`;
+
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username,
+                display_name: displayName || 'Участник'
+            })
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.user && data.token) {
+            setUserSession(data.user, data.token);
+            return { ok: true, status: response.status };
+        }
+
+        // Email-registered username cannot mint a guest token. Keep an existing
+        // session if we still have one; otherwise the caller should show login.
+        if (response.status === 409 && getUserToken()) {
+            return { ok: true, status: 409 };
+        }
+
+        return { ok: false, status: response.status, error: data.error || 'guest session failed' };
+    } catch (error) {
+        console.error('Error creating guest session:', error);
+        return { ok: false, status: 0, error: 'network' };
+    }
+}
+
 // Fetch wrapper that attaches the user token for protected endpoints.
 // Set redirectOnUnauthorized: false for background saves (quiz results, etc.).
 function authFetch(url, options = {}) {
@@ -66,6 +114,9 @@ function authFetch(url, options = {}) {
 async function checkAnswer(questionId, answer, sessionId) {
     const maxRetries = 3;
     const baseDelay = 2000; // 2 seconds, doubles each retry
+    const qid = Number(questionId);
+    const ans = Number(answer);
+    let refreshedGuest = false;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const res = await authFetch('/api/quiz/check-answer', {
@@ -73,13 +124,23 @@ async function checkAnswer(questionId, answer, sessionId) {
             headers: { 'Content-Type': 'application/json' },
             redirectOnUnauthorized: false,
             body: JSON.stringify({
-                questionId,
-                answer,
+                questionId: qid,
+                answer: ans,
                 session_id: sessionId || null
             })
         });
 
         if (res.ok) return res.json();
+
+        // Stale/missing guest token: mint a fresh one and retry once.
+        if (res.status === 401 && !refreshedGuest) {
+            refreshedGuest = true;
+            const minted = await mintGuestSession({ force: true });
+            if (minted.ok && getUserToken()) {
+                attempt -= 1;
+                continue;
+            }
+        }
 
         // On 429 (rate limited), retry with backoff — don't lose the answer
         if (res.status === 429 && attempt < maxRetries) {
@@ -91,7 +152,10 @@ async function checkAnswer(questionId, answer, sessionId) {
 
         // Non-429 error or retries exhausted — throw
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || (res.status === 429 ? 'Слишком много запросов. Попробуйте через минуту.' : 'Failed to check answer'));
+        const fallback = res.status === 401
+            ? 'Сессия истекла. Обновите страницу и войдите снова.'
+            : (res.status === 429 ? 'Слишком много запросов. Попробуйте через минуту.' : 'Failed to check answer');
+        throw new Error(err.error || fallback);
     }
 }
 

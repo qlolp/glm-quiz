@@ -105,6 +105,13 @@ async function runTests() {
     assert(check.status === 200 && typeof check.body.correct === 'boolean', 'Check-answer endpoint');
     assert(typeof check.body.wrong_explanation === 'string' || check.body.wrong_explanation === '', 'Check-answer returns wrong_explanation');
 
+    const checkAnon = await request('/api/quiz/check-answer', 'POST', { questionId: 1, answer: 0 });
+    assert(checkAnon.status === 401, 'Check-answer rejects missing token');
+    const checkBadToken = await request('/api/quiz/check-answer', 'POST', { questionId: 1, answer: 0 }, 'not-a-valid-token');
+    assert(checkBadToken.status === 401, 'Check-answer rejects stale token');
+    const checkStringIds = await request('/api/quiz/check-answer', 'POST', { questionId: '1', answer: '0' }, guestToken);
+    assert(checkStringIds.status === 200 && typeof checkStringIds.body.correct === 'boolean', 'Check-answer accepts numeric strings');
+
     const cases = await request('/api/cases');
     assert(cases.status === 200 && Array.isArray(cases.body.cases) && cases.body.cases.length >= 6, 'Cases: >= 6');
     assert(cases.body.cases.every(c => c.steps_count === 4), 'Cases: each has 4 steps');

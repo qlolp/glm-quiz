@@ -4484,6 +4484,13 @@ name,email,role,department
                 if (hoursDiff < 24 && progress.quizMode === quizMode && progress.quizMode !== 'exam') {
                     const shouldContinue = await uiConfirm(`Найден сохранённый прогресс (режим «${modeNames[progress.quizMode] || progress.quizMode}»). Продолжить?`);
                     if (shouldContinue) {
+                        const userReady = await ensureUserExists();
+                        if (!userReady) {
+                            isQuizActive = false;
+                            document.body.classList.remove('quiz-active');
+                            showScreen('welcome-screen');
+                            return;
+                        }
                         questions = progress.questions;
                         currentQuestion = progress.currentQuestion;
                         score = progress.score;
@@ -4873,7 +4880,10 @@ name,email,role,department
             } catch (e) {
                 console.error('Answer check failed:', e);
                 isAnswerSelected = false;
-                showErrorMessage('Не удалось проверить ответ. Проверьте соединение.');
+                const msg = (e && e.message && e.message !== 'Failed to check answer')
+                    ? e.message
+                    : 'Не удалось проверить ответ. Проверьте соединение.';
+                showErrorMessage(msg);
                 return;
             }
 
@@ -6198,35 +6208,18 @@ name,email,role,department
         // ========== USER MANAGEMENT ==========
 
         async function ensureUserExists() {
-            if (getUserToken()) return true;
+            const minted = typeof mintGuestSession === 'function'
+                ? await mintGuestSession()
+                : { ok: !!getUserToken(), status: 0, error: 'network' };
 
-            try {
-                const user = getCurrentUser();
-                const username = localStorage.getItem('username') || `user_${Date.now()}`;
+            if (minted.ok) return true;
 
-                const response = await fetch(`${API_BASE}/users`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username,
-                        display_name: user.displayName || localStorage.getItem('userDisplayName') || 'Участник'
-                    })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.user) {
-                        setUserSession(data.user, data.token);
-                        return true;
-                    }
-                } else if (response.status === 429) {
-                    showInlineError('Слишком много регистраций с вашего IP. Подождите минуту и попробуйте снова.');
-                } else {
-                    showInlineError('Не удалось создать гостевую сессию. Проверьте подключение к интернету.');
-                }
-            } catch (error) {
-                console.error('Error creating user:', error);
+            if (minted.status === 429) {
+                showInlineError('Слишком много регистраций с вашего IP. Подождите минуту и попробуйте снова.');
+            } else if (minted.error === 'network' || minted.status === 0) {
                 showInlineError('Нет связи с сервером. Викторине нужно подключение к интернету.');
+            } else {
+                showInlineError('Не удалось создать гостевую сессию. Проверьте подключение к интернету.');
             }
             return false;
         }

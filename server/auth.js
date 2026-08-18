@@ -93,7 +93,7 @@ function createAuth({ adminPassword, adminTokenSecret, userTokenSecret }) {
     }
 
     function requireUser(req, res, next) {
-        const token = req.headers.authorization?.replace('Bearer ', '');
+        const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
         const userId = verifyUserToken(token);
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -103,7 +103,7 @@ function createAuth({ adminPassword, adminTokenSecret, userTokenSecret }) {
     }
 
     function requireOwner(req, res, next) {
-        const token = req.headers.authorization?.replace('Bearer ', '');
+        const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
         const userId = verifyUserToken(token);
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });

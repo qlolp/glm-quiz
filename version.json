@@ -1,6 +1,6 @@
 {
-  "version": "2026.08.17.2",
-  "last_updated": "2026-08-17T22:30:00+03:00",
+  "version": "2026.08.18.1",
+  "last_updated": "2026-08-18T22:00:00+03:00",
   "total_questions": 84,
   "categories": [
     "ethics",
@@ -20,16 +20,25 @@
   ],
   "changes": {
     "current": {
-      "version": "2026.08.17.2",
-      "date": "2026-08-17",
+      "version": "2026.08.18.1",
+      "date": "2026-08-18",
       "changes": [
-        "Split hall vs speaker: /join for players, /host for organizers; /speaker redirects to /host",
-        "Homepage and bottom nav send participants to player URLs, not pulse-host or Kahoot host",
-        "Default first CTA is quick test (15); training is capped at 10; exam/adaptive/prepost sit behind «Ещё режимы»",
-        "Seminar packs for the two talks: nutrition and AI-in-care Kahoot playlists plus Pulse prompts"
+        "Fix guest quiz 401 on check-answer: stale localStorage tokens no longer skip POST /api/users; mint a fresh guest session and retry",
+        "Resume-from-progress now creates a guest token before answers are graded",
+        "check-answer accepts numeric string questionId/answer from older clients"
       ]
     },
     "history": [
+      {
+        "version": "2026.08.17.2",
+        "date": "2026-08-17",
+        "changes": [
+          "Split hall vs speaker: /join for players, /host for organizers; /speaker redirects to /host",
+          "Homepage and bottom nav send participants to player URLs, not pulse-host or Kahoot host",
+          "Default first CTA is quick test (15); training is capped at 10; exam/adaptive/prepost sit behind «Ещё режимы»",
+          "Seminar packs for the two talks: nutrition and AI-in-care Kahoot playlists plus Pulse prompts"
+        ]
+      },
       {
         "version": "2026.08.17.1",
         "date": "2026-08-17",
