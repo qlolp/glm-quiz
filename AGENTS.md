@@ -355,7 +355,7 @@ const test = async () => {
 cd /root/glm-quiz-local
 tar czf /tmp/update.tar.gz --exclude='server/node_modules' --exclude='tests/node_modules' \
   public server/server.js questions.json roles.json version.json deploy.sh tests \
-  USER_GUIDE.md SPEAKER_GUIDE.md README.md CONTINUE.md ROADMAP.md SEMINAR.md CHECKPOINT.md AGENTS.md
+  USER_GUIDE.md SPEAKER_GUIDE.md README.md SEMINAR.md AGENTS.md
 scp -P 443 -i ~/.ssh/id_ed25519 /tmp/update.tar.gz root@147.45.174.206:/tmp/
 ssh -p 443 -i ~/.ssh/id_ed25519 root@147.45.174.206 'cd /root/glm-quiz && tar xzf /tmp/update.tar.gz --overwrite && systemctl restart glm-quiz && sleep 2 && curl -s http://127.0.0.1:3002/api/health'
 ```
@@ -468,13 +468,9 @@ server {
 | Файл | Что внутри |
 |------|------------|
 | `README.md` | Обзор + быстрый старт + API-таблица |
-| `CONTINUE.md` | Что сделано, что в работе, следующие шаги |
-| `ROADMAP.md` | Статус готовности, метрики, техдолг |
 | `SEMINAR.md` | План семинара (расписание, спикеры) |
 | `USER_GUIDE.md` | Инструкция участника |
 | `SPEAKER_GUIDE.md` | Инструкция спикера |
-| `CHECKPOINT.md` | Снапшоты состояния |
-| `SESSION_REPORT.md` | Отчёт по сессиям разработки |
 | `/root/glm-quiz-audit-revision-2.md` | **Полный отчёт security-ревзии (на хосте, не в репо)** |
 
 ---
@@ -491,4 +487,4 @@ server {
 3. Запусти тесты.
 4. **Не верь слепо комментариям в коде** — они могут быть устаревшими. Верь коду и фактическому поведению API.
 5. **Перед большим изменением** — прочитай `/root/glm-quiz-audit-revision-2.md` (security-контекст).
-6. После значимых изменений — обнови `version.json`, бампни `public/sw.js` CACHE_VERSION, обнови AGENTS.md / CONTINUE.md / ROADMAP.md.
+6. После значимых изменений — обнови `version.json`, бампни `public/sw.js` CACHE_VERSION, обнови AGENTS.md.
